@@ -75,6 +75,9 @@ export default function Home() {
   const answerRef = useRef(false);
   const resultsRef = useRef({ score: 0, correct: 0, total: 0, bestStreak: 0, category: "all" });
 
+  // Live refs so timer closure always reads latest values
+  const gameStateRef = useRef({ streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: "all" });
+
   // Load name from localStorage
   useEffect(() => {
     try {
@@ -112,17 +115,20 @@ export default function Home() {
   );
 
   const handleAnswer = useCallback(
-    (ans: string, qs: any[], idx: number, curStreak: number, curScore: number, curCorrect: number, curTotal: number, curBest: number, curCat: string) => {
+    (ans: string, qs: any[], idx: number) => {
       if (answerRef.current) return;
       answerRef.current = true;
       if (timerRef.current) clearInterval(timerRef.current);
       setSelected(ans);
+      const { streak: curStreak, score: curScore, correct: curCorrect, total: curTotal, bestStreak: curBest, category: curCat } = gameStateRef.current;
       const isCorrect = ans === qs[idx].a;
       const newStreak = isCorrect ? curStreak + 1 : 0;
       const newScore = isCorrect ? curScore + 10 + Math.min(newStreak, 5) * 10 : curScore;
       const newCorrect = isCorrect ? curCorrect + 1 : curCorrect;
       const newTotal = curTotal + 1;
       const newBest = Math.max(newStreak, curBest);
+      // Update ref immediately so next call sees latest values
+      gameStateRef.current = { streak: newStreak, bestStreak: newBest, score: newScore, correct: newCorrect, total: newTotal, category: curCat };
       setStreak(newStreak);
       setAnim(isCorrect ? "pop" : "shake");
       if (isCorrect && newStreak > 1) {
@@ -152,19 +158,20 @@ export default function Home() {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timerRef.current!);
-          handleAnswer("__timeout__", questions, qIndex, streak, score, correct, total, bestStreak, category);
+          handleAnswer("__timeout__", questions, qIndex);
           return 0;
         }
         return t - 1;
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [screen, qIndex, selected, questions, streak, score, correct, total, bestStreak, handleAnswer, category]);
+  }, [screen, qIndex, selected, questions, handleAnswer]);
 
   function startGame(cat = category, size = roundSize) {
     const pool = toQ(CATEGORY_MAP[cat]?.questions ?? CATEGORY_MAP.all.questions);
     const qs = shuffle(pool).slice(0, size);
     const firstOpts = shuffle([qs[0].a, ...qs[0].w]);
+    gameStateRef.current = { streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: cat };
     setQuestions(qs);
     setQIndex(0);
     setOptions(firstOpts);
@@ -323,7 +330,7 @@ export default function Home() {
           ))}
         </div>
         <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
-          <button onClick={() => startGame(r.category, r.total)} style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 12, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "14px 28px", cursor: "pointer" }}>
+          <button onClick={() => startGame(r.category, roundSize)} style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 12, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "14px 28px", cursor: "pointer" }}>
             PLAY AGAIN ⚡
           </button>
           <button onClick={() => setScreen("home")} style={{ background: "#1a1a2e", border: "1px solid #2d2d44", borderRadius: 12, color: "#9ca3af", fontSize: "1rem", fontWeight: 600, padding: "14px 28px", cursor: "pointer" }}>
@@ -385,7 +392,7 @@ export default function Home() {
           const showResult = selected !== null;
           return (
             <button key={i}
-              onClick={() => handleAnswer(opt, questions, qIndex, streak, score, correct, total, bestStreak, category)}
+              onClick={() => handleAnswer(opt, questions, qIndex)}
               disabled={!!selected}
               className={selected === opt ? anim : ""}
               style={{
@@ -408,3 +415,4 @@ export default function Home() {
     </div>
   );
 }
+
