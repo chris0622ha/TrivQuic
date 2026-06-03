@@ -28,6 +28,7 @@ const CATEGORY_MAP: Record<string, { label: string; emoji: string; questions: an
 };
 
 const ROUND_SIZES = [10, 20, 30];
+// timer speed options
 const TIMER_OPTIONS = [
   { label: "3s",  value: 3 },
   { label: "5s",  value: 5 },
