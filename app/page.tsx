@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, auth, googleProvider } from "./lib/firebase";
-import { ref, get, set, update, onValue, off } from "firebase/database";
+import { ref, get, set, update, onValue, off, query, orderByChild, equalTo } from "firebase/database";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 
@@ -37,30 +37,51 @@ function shuffle(arr: any[]): any[] {
   return a;
 }
 
-// ── User stats helpers ────────────────────────────────────────────────────────
+// ── User helpers ──────────────────────────────────────────────────────────────
 
-async function loadUserStats(uid: string) {
+async function loadUserData(uid: string) {
   try {
     const snap = await get(ref(db, `users/${uid}`));
     return snap.exists() ? snap.val() : null;
   } catch { return null; }
 }
 
-async function saveUserStats(uid: string, name: string, gameResult: {
+async function isUsernameTaken(username: string, excludeUid?: string): Promise<boolean> {
+  try {
+    const snap = await get(ref(db, "usernames"));
+    if (!snap.exists()) return false;
+    const val = snap.val();
+    const uid = val[username.toLowerCase()];
+    if (!uid) return false;
+    if (excludeUid && uid === excludeUid) return false;
+    return true;
+  } catch { return false; }
+}
+
+async function claimUsername(uid: string, username: string, oldUsername?: string) {
+  const updates: any = {};
+  updates[`usernames/${username.toLowerCase()}`] = uid;
+  if (oldUsername) delete updates[`usernames/${oldUsername.toLowerCase()}`];
+  await update(ref(db), updates);
+}
+
+async function saveUserStats(uid: string, username: string, displayName: string, gameResult: {
   score: number; bestStreak: number; correct: number; total: number; category: string;
 }) {
   try {
-    const existing = await loadUserStats(uid);
+    const existing = await loadUserData(uid);
     const prev = existing || {
-      name, gamesPlayed: 0, totalScore: 0, totalCorrect: 0, totalQuestions: 0,
-      bestScore: 0, bestStreak: 0, categoryBests: {},
+      username, displayName, gamesPlayed: 0, totalScore: 0, totalCorrect: 0,
+      totalQuestions: 0, bestScore: 0, bestStreak: 0, categoryBests: {},
+      usernameChangesLeft: 3, friendIds: [],
     };
     const categoryBests = { ...(prev.categoryBests || {}) };
-    const prevCatBest = categoryBests[gameResult.category] || 0;
-    if (gameResult.score > prevCatBest) categoryBests[gameResult.category] = gameResult.score;
-
-    await set(ref(db, `users/${uid}`), {
-      name,
+    if (gameResult.score > (categoryBests[gameResult.category] || 0)) {
+      categoryBests[gameResult.category] = gameResult.score;
+    }
+    await update(ref(db, `users/${uid}`), {
+      username,
+      displayName,
       gamesPlayed: (prev.gamesPlayed || 0) + 1,
       totalScore: (prev.totalScore || 0) + gameResult.score,
       totalCorrect: (prev.totalCorrect || 0) + gameResult.correct,
@@ -73,118 +94,423 @@ async function saveUserStats(uid: string, name: string, gameResult: {
   } catch {}
 }
 
-// ── Global leaderboard (UID-keyed) ───────────────────────────────────────────
-
-async function saveToGlobalLB(uid: string, name: string, score: number, streak: number, category: string) {
+async function saveToGlobalLB(uid: string, displayName: string, username: string, score: number, streak: number, category: string) {
   try {
     const lbRef = ref(db, `leaderboard/${uid}`);
     const snap = await get(lbRef);
-    if (snap.exists() && snap.val().score >= score) return;
-    await set(lbRef, { name, score, streak, category, date: new Date().toLocaleDateString() });
+    const lbName = displayName.toLowerCase() !== username.toLowerCase()
+      ? `${displayName}(${username})`
+      : displayName;
+    if (snap.exists() && snap.val().score >= score) {
+      await update(lbRef, { name: lbName });
+      return;
+    }
+    await set(lbRef, { name: lbName, username, score, streak, category, date: new Date().toLocaleDateString() });
   } catch {}
+}
+
+// ── Username picker modal ─────────────────────────────────────────────────────
+
+function UsernamePickerModal({ user, onDone }: { user: User; onDone: (username: string, userData: any) => void }) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const suggested = (user.displayName?.split(" ")[0] || user.email?.split("@")[0] || "player").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 15);
+
+  async function handleSubmit() {
+    const clean = value.trim();
+    if (!clean) { setError("Enter a username"); return; }
+    if (clean.length < 2) { setError("At least 2 characters"); return; }
+    if (clean.length > 15) { setError("Max 15 characters"); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(clean)) { setError("Letters, numbers, underscores only"); return; }
+    setLoading(true);
+    const taken = await isUsernameTaken(clean);
+    if (taken) { setError("That username is taken"); setLoading(false); return; }
+    const newUserData = {
+      username: clean,
+      displayName: clean,
+      usernameChangesLeft: 3,
+      friendIds: [],
+      photoURL: user.photoURL || null,
+      gamesPlayed: 0, totalScore: 0, totalCorrect: 0,
+      totalQuestions: 0, bestScore: 0, bestStreak: 0,
+      categoryBests: {}, lastPlayed: null,
+    };
+    await set(ref(db, `users/${user.uid}`), newUserData);
+    await claimUsername(user.uid, clean);
+    setLoading(false);
+    onDone(clean, newUserData);
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:500,
+      display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20,
+        padding:"32px 28px", width:"100%", maxWidth:380, color:"#fff" }}>
+        <div style={{ textAlign:"center", marginBottom:24 }}>
+          <div style={{ fontSize:40, marginBottom:10 }}>⚡</div>
+          <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:6 }}>Choose your username</div>
+          <div style={{ fontSize:13, color:"#6b7280", lineHeight:1.6 }}>
+            Choose wisely — you can only change it{" "}
+            <span style={{ color:"#f59e0b", fontWeight:700 }}>3 times</span>.
+          </div>
+        </div>
+
+        {user.photoURL && (
+          <div style={{ textAlign:"center", marginBottom:20 }}>
+            <img src={user.photoURL} alt="" width={52} height={52}
+              style={{ borderRadius:"50%", border:"3px solid #2d2d44" }} />
+          </div>
+        )}
+
+        <input
+          autoFocus
+          value={value}
+          maxLength={15}
+          placeholder={suggested}
+          onChange={e => { setValue(e.target.value.replace(/[^a-zA-Z0-9_]/g, "")); setError(""); }}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${error ? "#ef4444" : "#2d2d44"}`,
+            borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, padding:"12px 16px",
+            outline:"none", boxSizing:"border-box", textAlign:"center", letterSpacing:"0.05em" }}
+        />
+        {error && <div style={{ color:"#ef4444", fontSize:12, marginTop:6, textAlign:"center" }}>{error}</div>}
+        <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", marginTop:6 }}>
+          Letters, numbers, underscores · max 15
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{ width:"100%", background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none",
+            borderRadius:12, color:"#fff", fontSize:"1rem", fontWeight:800,
+            padding:"14px", cursor: loading ? "default" : "pointer", marginTop:18,
+            opacity: loading ? 0.6 : 1 }}
+        >
+          {loading ? "Checking…" : "Claim Username ⚡"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ── Profile Modal ─────────────────────────────────────────────────────────────
 
-function ProfileModal({ user, onClose }: { user: User; onClose: () => void }) {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+function ProfileModal({ user, userData, onClose, onUserDataChange }: {
+  user: User; userData: any; onClose: () => void; onUserDataChange: (d: any) => void;
+}) {
+  const [tab, setTab] = useState<"stats"|"edit"|"friends">("stats");
+
+  // Edit tab state
+  const [newUsername, setNewUsername] = useState(userData?.username || "");
+  const [newPhotoURL, setNewPhotoURL] = useState(userData?.photoURL || user.photoURL || "");
+  const [usernameError, setUsernameError] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  // Friends tab state
+  const [friendInput, setFriendInput] = useState("");
+  const [friendError, setFriendError] = useState("");
+  const [friendMsg, setFriendMsg] = useState("");
+  const [friendProfiles, setFriendProfiles] = useState<any[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+
+  const changesLeft = userData?.usernameChangesLeft ?? 3;
+  const displayName = userData?.username || user.displayName?.split(" ")[0] || "Player";
+  const photoSrc = userData?.photoURL || user.photoURL || null;
+  const acc = userData?.totalQuestions > 0
+    ? Math.round((userData.totalCorrect / userData.totalQuestions) * 100) : null;
 
   useEffect(() => {
-    loadUserStats(user.uid).then((s) => { setStats(s); setLoading(false); });
-  }, [user.uid]);
+    if (tab !== "friends") return;
+    const ids: string[] = userData?.friendIds || [];
+    if (!ids.length) { setFriendProfiles([]); return; }
+    setLoadingFriends(true);
+    Promise.all(ids.map((id: string) => get(ref(db, `users/${id}`)).then(s => s.exists() ? { uid: id, ...s.val() } : null)))
+      .then(results => { setFriendProfiles(results.filter(Boolean)); setLoadingFriends(false); });
+  }, [tab, userData?.friendIds]);
 
-  const displayName = user.displayName?.split(" ")[0] || user.email?.split("@")[0] || "Player";
-  const acc = stats && stats.totalQuestions > 0
-    ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
-    : null;
+  async function saveProfile() {
+    setSaving(true); setSaveMsg(""); setUsernameError(""); setPhotoError("");
+    const trimmed = newUsername.trim();
+    if (!trimmed || trimmed.length < 2 || trimmed.length > 15 || !/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+      setUsernameError("2–15 chars, letters/numbers/underscores only");
+      setSaving(false); return;
+    }
+    if (trimmed !== userData?.username) {
+      if (changesLeft <= 0) { setUsernameError("No changes left"); setSaving(false); return; }
+      const taken = await isUsernameTaken(trimmed, user.uid);
+      if (taken) { setUsernameError("That username is taken"); setSaving(false); return; }
+      await claimUsername(user.uid, trimmed, userData?.username);
+    }
+    const updates: any = {
+      username: trimmed,
+      displayName: trimmed,
+      photoURL: newPhotoURL || user.photoURL || null,
+    };
+    if (trimmed !== userData?.username) {
+      updates.usernameChangesLeft = changesLeft - 1;
+    }
+    await update(ref(db, `users/${user.uid}`), updates);
+    const updated = { ...userData, ...updates };
+    onUserDataChange(updated);
+    setSaveMsg("Saved!");
+    setSaving(false);
+    setTimeout(() => setSaveMsg(""), 2000);
+  }
+
+  async function addFriend() {
+    setFriendError(""); setFriendMsg("");
+    const input = friendInput.trim();
+    if (!input) return;
+
+    let targetUid: string | null = null;
+
+    // Try as Friend ID (UID) first
+    const snapDirect = await get(ref(db, `users/${input}`));
+    if (snapDirect.exists()) {
+      targetUid = input;
+    } else {
+      // Try as username lookup
+      const snapUN = await get(ref(db, `usernames/${input.toLowerCase()}`));
+      if (snapUN.exists()) targetUid = snapUN.val();
+    }
+
+    if (!targetUid) { setFriendError("User not found"); return; }
+    if (targetUid === user.uid) { setFriendError("That's you!"); return; }
+    const existing: string[] = userData?.friendIds || [];
+    if (existing.includes(targetUid)) { setFriendError("Already friends"); return; }
+
+    const newFriends = [...existing, targetUid];
+    await update(ref(db, `users/${user.uid}`), { friendIds: newFriends });
+    onUserDataChange({ ...userData, friendIds: newFriends });
+    setFriendMsg("Friend added!");
+    setFriendInput("");
+    setTimeout(() => setFriendMsg(""), 2000);
+  }
+
+  async function removeFriend(uid: string) {
+    const newFriends = (userData?.friendIds || []).filter((id: string) => id !== uid);
+    await update(ref(db, `users/${user.uid}`), { friendIds: newFriends });
+    onUserDataChange({ ...userData, friendIds: newFriends });
+    setFriendProfiles(fp => fp.filter(f => f.uid !== uid));
+  }
+
+  const TabBtn = ({ id, label }: { id: typeof tab; label: string }) => (
+    <button onClick={() => setTab(id)} style={{
+      flex:1, background: tab === id ? "rgba(245,158,11,0.15)" : "transparent",
+      border:"none", borderBottom: `2px solid ${tab === id ? "#f59e0b" : "transparent"}`,
+      color: tab === id ? "#f59e0b" : "#6b7280", fontSize:13, fontWeight:700,
+      padding:"10px 0", cursor:"pointer", transition:"all 0.15s",
+    }}>{label}</button>
+  );
 
   return (
-    <div
-      onClick={onClose}
-      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:300,
-        display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20,
-          padding:"28px 24px", width:"100%", maxWidth:400, position:"relative", color:"#fff" }}
-      >
-        <button
-          onClick={onClose}
-          style={{ position:"absolute", top:14, right:16, background:"transparent",
-            border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}
-        >×</button>
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:300,
+      display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44",
+        borderRadius:20, padding:"0", width:"100%", maxWidth:400, color:"#fff", overflow:"hidden" }}>
 
         {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:24 }}>
-          {user.photoURL ? (
-            <img src={user.photoURL} alt="" width={52} height={52}
-              style={{ borderRadius:"50%", border:"3px solid #f59e0b" }} />
-          ) : (
-            <div style={{ width:52, height:52, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
-              border:"3px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:22, fontWeight:900 }}>
-              {displayName[0]?.toUpperCase()}
-            </div>
-          )}
-          <div>
-            <div style={{ fontSize:"1.25rem", fontWeight:900 }}>{displayName}</div>
-            <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>{user.email}</div>
+        <div style={{ padding:"24px 24px 16px", display:"flex", alignItems:"center", gap:14 }}>
+          <div style={{ position:"relative", flexShrink:0 }}>
+            {photoSrc ? (
+              <img src={photoSrc} alt="" width={52} height={52}
+                style={{ borderRadius:"50%", border:"3px solid #f59e0b", display:"block" }} />
+            ) : (
+              <div style={{ width:52, height:52, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
+                border:"3px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:22, fontWeight:900, color:"#f59e0b" }}>
+                {displayName[0]?.toUpperCase()}
+              </div>
+            )}
           </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:"1.1rem", fontWeight:900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{displayName}</div>
+            <div style={{ fontSize:11, color:"#6b7280", marginTop:2 }}>
+              Friend ID: <span style={{ color:"#9ca3af", fontFamily:"monospace", fontSize:11 }}>{user.uid.slice(0,12)}…</span>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:"transparent", border:"none",
+            color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1, padding:"4px 8px" }}>×</button>
         </div>
 
-        {loading ? (
-          <div style={{ textAlign:"center", color:"#6b7280", padding:"20px 0" }}>Loading stats…</div>
-        ) : !stats || stats.gamesPlayed === 0 ? (
-          <div style={{ textAlign:"center", color:"#6b7280", padding:"20px 0", lineHeight:1.7 }}>
-            No games played yet.<br />
-            <span style={{ color:"#f59e0b" }}>Start playing to track your stats!</span>
-          </div>
-        ) : (
-          <>
-            {/* Stat grid */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:20 }}>
-              {[
-                ["Games Played", stats.gamesPlayed, "#e5e7eb"],
-                ["Best Score",   stats.bestScore,   "#f59e0b"],
-                ["Best Streak",  `${stats.bestStreak}🔥`, "#ef4444"],
-                ["Accuracy",     acc !== null ? `${acc}%` : "—", "#10b981"],
-              ].map(([label, val, color]) => (
-                <div key={label as string} style={{ background:"#0f0f1a", borderRadius:12,
-                  padding:"14px 12px", textAlign:"center", border:"1px solid #2d2d44" }}>
-                  <div style={{ fontSize:22, fontWeight:900, color: color as string }}>{val}</div>
-                  <div style={{ fontSize:10, color:"#6b7280", marginTop:4,
-                    textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
-                </div>
-              ))}
-            </div>
+        {/* Tabs */}
+        <div style={{ display:"flex", borderBottom:"1px solid #2d2d44" }}>
+          <TabBtn id="stats" label="Stats" />
+          <TabBtn id="edit" label="Edit Profile" />
+          <TabBtn id="friends" label="Friends" />
+        </div>
 
-            {/* Category bests */}
-            {stats.categoryBests && Object.keys(stats.categoryBests).length > 0 && (
-              <>
+        <div style={{ padding:"20px 24px 24px", maxHeight:420, overflowY:"auto" }}>
+
+          {/* STATS TAB */}
+          {tab === "stats" && (
+            !userData || userData.gamesPlayed === 0 ? (
+              <div style={{ textAlign:"center", color:"#6b7280", padding:"20px 0", lineHeight:1.7 }}>
+                No games played yet.<br />
+                <span style={{ color:"#f59e0b" }}>Start playing to track your stats!</span>
+              </div>
+            ) : (<>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:16 }}>
+                {[
+                  ["Games", userData.gamesPlayed, "#e5e7eb"],
+                  ["Best Score", userData.bestScore, "#f59e0b"],
+                  ["Best Streak", `${userData.bestStreak}🔥`, "#ef4444"],
+                  ["Accuracy", acc !== null ? `${acc}%` : "—", "#10b981"],
+                ].map(([label, val, color]) => (
+                  <div key={label as string} style={{ background:"#0f0f1a", borderRadius:12,
+                    padding:"14px 12px", textAlign:"center", border:"1px solid #2d2d44" }}>
+                    <div style={{ fontSize:22, fontWeight:900, color: color as string }}>{val}</div>
+                    <div style={{ fontSize:10, color:"#6b7280", marginTop:4,
+                      textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              {userData.categoryBests && Object.keys(userData.categoryBests).length > 0 && (<>
                 <div style={{ fontSize:11, color:"#f59e0b", textTransform:"uppercase",
-                  letterSpacing:"0.1em", fontWeight:700, marginBottom:10 }}>Category Bests</div>
-                {Object.entries(stats.categoryBests)
+                  letterSpacing:"0.1em", fontWeight:700, marginBottom:10 }}>Category bests</div>
+                {Object.entries(userData.categoryBests)
                   .sort(([,a],[,b]) => (b as number) - (a as number))
                   .map(([cat, score]) => (
                     <div key={cat} style={{ display:"flex", justifyContent:"space-between",
-                      alignItems:"center", padding:"7px 6px",
-                      borderBottom:"1px solid #2d2d44" }}>
+                      alignItems:"center", padding:"7px 0", borderBottom:"1px solid #2d2d44" }}>
                       <span style={{ color:"#d1d5db", fontSize:13 }}>
                         {CATEGORY_MAP[cat]?.emoji} {CATEGORY_MAP[cat]?.label ?? cat}
                       </span>
-                      <span style={{ color:"#f59e0b", fontWeight:800, fontSize:14 }}>{score as number}</span>
+                      <span style={{ color:"#f59e0b", fontWeight:800 }}>{score as number}</span>
                     </div>
                   ))}
-              </>
-            )}
+              </>)}
+              <div style={{ marginTop:12, fontSize:11, color:"#4b5563", textAlign:"right" }}>
+                Last played: {userData.lastPlayed}
+              </div>
+            </>)
+          )}
 
-            <div style={{ marginTop:14, fontSize:11, color:"#4b5563", textAlign:"right" }}>
-              Last played: {stats.lastPlayed}
+          {/* EDIT TAB */}
+          {tab === "edit" && (<>
+            <div style={{ marginBottom:18 }}>
+              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+                letterSpacing:"0.05em", marginBottom:8 }}>
+                Username
+                <span style={{ marginLeft:8, color: changesLeft > 0 ? "#f59e0b" : "#ef4444", fontWeight:700 }}>
+                  {changesLeft} change{changesLeft !== 1 ? "s" : ""} left
+                </span>
+              </div>
+              <input
+                value={newUsername}
+                maxLength={15}
+                onChange={e => { setNewUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "")); setUsernameError(""); }}
+                style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${usernameError ? "#ef4444" : "#2d2d44"}`,
+                  borderRadius:10, color: changesLeft <= 0 ? "#4b5563" : "#fff",
+                  fontSize:15, padding:"11px 14px", outline:"none", boxSizing:"border-box" }}
+              />
+              {usernameError && <div style={{ color:"#ef4444", fontSize:12, marginTop:4 }}>{usernameError}</div>}
+              {changesLeft <= 0 && <div style={{ color:"#ef4444", fontSize:12, marginTop:4 }}>No username changes remaining.</div>}
             </div>
-          </>
-        )}
+
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+                letterSpacing:"0.05em", marginBottom:8 }}>Profile picture URL</div>
+              <input
+                value={newPhotoURL}
+                placeholder="https://..."
+                onChange={e => { setNewPhotoURL(e.target.value); setPhotoError(""); }}
+                style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${photoError ? "#ef4444" : "#2d2d44"}`,
+                  borderRadius:10, color:"#fff", fontSize:14, padding:"11px 14px",
+                  outline:"none", boxSizing:"border-box" }}
+              />
+              {photoError && <div style={{ color:"#ef4444", fontSize:12, marginTop:4 }}>{photoError}</div>}
+              {newPhotoURL && (
+                <img src={newPhotoURL} alt="" onError={() => setPhotoError("Could not load image")}
+                  style={{ width:48, height:48, borderRadius:"50%", marginTop:10,
+                    border:"2px solid #2d2d44", display:"block" }} />
+              )}
+            </div>
+
+            <button onClick={saveProfile} disabled={saving} style={{
+              width:"100%", background:"linear-gradient(135deg, #f59e0b, #ef4444)",
+              border:"none", borderRadius:10, color:"#fff", fontSize:"0.95rem",
+              fontWeight:800, padding:"13px", cursor: saving ? "default" : "pointer",
+              opacity: saving ? 0.7 : 1,
+            }}>
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+            {saveMsg && <div style={{ color:"#10b981", textAlign:"center", marginTop:8, fontWeight:700 }}>{saveMsg}</div>}
+          </>)}
+
+          {/* FRIENDS TAB */}
+          {tab === "friends" && (<>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+                letterSpacing:"0.05em", marginBottom:8 }}>Add by Friend ID or username</div>
+              <div style={{ display:"flex", gap:8 }}>
+                <input
+                  value={friendInput}
+                  placeholder="username or Friend ID"
+                  onChange={e => { setFriendInput(e.target.value); setFriendError(""); setFriendMsg(""); }}
+                  onKeyDown={e => e.key === "Enter" && addFriend()}
+                  style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44",
+                    borderRadius:10, color:"#fff", fontSize:14, padding:"10px 12px",
+                    outline:"none", boxSizing:"border-box" as const }}
+                />
+                <button onClick={addFriend} style={{
+                  background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)",
+                  borderRadius:10, color:"#f59e0b", fontWeight:800, fontSize:14,
+                  padding:"10px 14px", cursor:"pointer", flexShrink:0,
+                }}>Add</button>
+              </div>
+              {friendError && <div style={{ color:"#ef4444", fontSize:12, marginTop:6 }}>{friendError}</div>}
+              {friendMsg && <div style={{ color:"#10b981", fontSize:12, marginTop:6, fontWeight:700 }}>{friendMsg}</div>}
+              <div style={{ fontSize:11, color:"#4b5563", marginTop:6 }}>
+                Your Friend ID: <span style={{ color:"#9ca3af", fontFamily:"monospace" }}>{user.uid}</span>
+              </div>
+            </div>
+
+            <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+              letterSpacing:"0.05em", marginBottom:10 }}>
+              Friends ({(userData?.friendIds || []).length})
+            </div>
+
+            {loadingFriends ? (
+              <div style={{ color:"#6b7280", fontSize:13, textAlign:"center", padding:"12px 0" }}>Loading…</div>
+            ) : friendProfiles.length === 0 ? (
+              <div style={{ color:"#4b5563", fontSize:13, textAlign:"center", padding:"12px 0" }}>
+                No friends yet. Add someone above!
+              </div>
+            ) : friendProfiles.map(fp => (
+              <div key={fp.uid} style={{ display:"flex", alignItems:"center", gap:10,
+                padding:"10px 0", borderBottom:"1px solid #2d2d44" }}>
+                {fp.photoURL ? (
+                  <img src={fp.photoURL} alt="" width={36} height={36}
+                    style={{ borderRadius:"50%", border:"2px solid #2d2d44", flexShrink:0 }} />
+                ) : (
+                  <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
+                    border:"2px solid #2d2d44", display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:14, fontWeight:900, color:"#f59e0b", flexShrink:0 }}>
+                    {(fp.username || "?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontWeight:700, fontSize:14, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                    {fp.username}
+                  </div>
+                  <div style={{ fontSize:11, color:"#6b7280" }}>
+                    Best: {fp.bestScore ?? 0} · {fp.gamesPlayed ?? 0} games
+                  </div>
+                </div>
+                <button onClick={() => removeFriend(fp.uid)} style={{
+                  background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
+                  borderRadius:8, color:"#ef4444", fontSize:11, padding:"5px 10px",
+                  cursor:"pointer", flexShrink:0,
+                }}>Remove</button>
+              </div>
+            ))}
+          </>)}
+        </div>
       </div>
     </div>
   );
@@ -209,7 +535,9 @@ export default function Home() {
   const [anim, setAnim] = useState("");
   const [globalLB, setGlobalLB] = useState<any[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -235,13 +563,20 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setAuthLoading(false);
-      if (u && !name) {
-        const displayName = u.displayName?.split(" ")[0] || u.email?.split("@")[0] || "";
-        setName(displayName);
-        try { localStorage.setItem("onetap_name", displayName); } catch {}
+      if (u) {
+        const data = await loadUserData(u.uid);
+        if (!data || !data.username) {
+          setShowUsernamePicker(true);
+        } else {
+          setUserData(data);
+          setName(data.username);
+          try { localStorage.setItem("onetap_name", data.username); } catch {}
+        }
+      } else {
+        setUserData(null);
       }
     });
     return () => unsub();
@@ -260,7 +595,6 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Subscribe to global leaderboard
   useEffect(() => {
     const lbRef = ref(db, "leaderboard");
     const unsub = onValue(lbRef, (snap) => {
@@ -276,17 +610,15 @@ export default function Home() {
       if (timerRef.current) clearInterval(timerRef.current);
       resultsRef.current = { score: finalScore, correct: finalCorrect, total: finalTotal, bestStreak: finalBest, category: finalCat };
 
-      const lbName = user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || name || "Anonymous";
-
-      // Save user stats if logged in (UID-keyed)
-      if (user) {
-        await saveUserStats(user.uid, lbName, {
+      if (user && userData?.username) {
+        const currentName = name || userData.username;
+        await saveUserStats(user.uid, userData.username, currentName, {
           score: finalScore, bestStreak: finalBest,
           correct: finalCorrect, total: finalTotal, category: finalCat,
         });
-        await saveToGlobalLB(user.uid, lbName, finalScore, finalBest, finalCat);
-      } else {
-        // Anonymous: use name as key (legacy behavior)
+        await saveToGlobalLB(user.uid, currentName, userData.username, finalScore, finalBest, finalCat);
+      } else if (!user) {
+        const lbName = name || "Anonymous";
         try {
           const lbRef = ref(db, "leaderboard");
           const snap = await get(lbRef);
@@ -308,7 +640,7 @@ export default function Home() {
       setBestStreak(finalBest);
       setScreen("result");
     },
-    [name, user]
+    [name, user, userData]
   );
 
   const handleAnswer = useCallback(
@@ -389,48 +721,29 @@ export default function Home() {
   const pct = (qIndex / (questions.length || 1)) * 100;
   const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
-  // ── MODALS ──────────────────────────────────────────────────────────────────
+  // ── MODALS ───────────────────────────────────────────────────────────────────
   const InfoModal = ({ type }: { type: "about"|"updates" }) => (
-    <div
-      onClick={() => setModal(null)}
-      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:400, position:"relative", color:"#fff" }}
-      >
-        <button
-          onClick={() => setModal(null)}
-          style={{ position:"absolute", top:14, right:16, background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}
-        >×</button>
-
+    <div onClick={() => setModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:400, position:"relative", color:"#fff" }}>
+        <button onClick={() => setModal(null)} style={{ position:"absolute", top:14, right:16, background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}>×</button>
         {type === "about" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>⚡ About</div>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
-            <strong style={{ color:"#f59e0b" }}>QuicTriv</strong> is a fast-paced trivia game built for people who hate slow trivia games. 3 seconds. One tap. No mercy.
-          </p>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
-            Play solo across 6 categories — Geography, Science, History, Math, Sports, and Entertainment — or go head-to-head with friends in real-time multiplayer.
-          </p>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>
-            Built with Next.js, Firebase, and a lot of caffeine. Free to play, no ads, no nonsense.
-          </p>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}><strong style={{ color:"#f59e0b" }}>QuicTriv</strong> is a fast-paced trivia game. 3 seconds. One tap. No mercy.</p>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>Play solo across 6 categories or go head-to-head in real-time multiplayer.</p>
           <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563", lineHeight:1.8 }}>
-            <div>By: Chris</div>
-            <div>Made in: 2026</div>
+            <div>By: Chris</div><div>Made in: 2026</div>
             <div>Email: <a href="mailto:chris0622ha@gmail.com" style={{ color:"#f59e0b", textDecoration:"none" }}>chris0622ha@gmail.com</a></div>
           </div>
         </>)}
-
         {type === "updates" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
           {[
+            { version:"v1.6", date:"Jun 2026", items:["Username picker on first login — choose wisely (3 changes total)", "Leaderboard shows displayName(username) when name differs", "Friends system — add by username or Friend ID", "Profile picture editing via URL"] },
             { version:"v1.5", date:"Jun 2026", items:["User profiles with per-category stats", "Leaderboard now UID-keyed — no more duplicate names", "Profile modal accessible from your avatar"] },
             { version:"v1.4", date:"Jun 2026", items:["Changed layout — solo left, multiplayer right", "Timer speed: type any number (1–900s) or click ∞ for no timer"] },
             { version:"v1.3", date:"Jun 2025", items:["Google sign-in added", "About & Updates modals"] },
-            { version:"v1.2", date:"Jun 2025", items:["Global Firebase leaderboard (live across all players)", "Bug fix: result screen showing 0/total"] },
-            { version:"v1.1", date:"Jun 2025", items:["Category picker (Geography, Science, History, Math, Sports, Entertainment)", "Round size selector: 10 / 20 / 30 questions", "Play Again now replays same category & round size"] },
-            { version:"v1.0", date:"Jun 2025", items:["Initial launch: solo mode + real-time multiplayer", "3-second timer, streak bonuses, leaderboard"] },
+            { version:"v1.2", date:"Jun 2025", items:["Global Firebase leaderboard (live across all players)"] },
+            { version:"v1.0", date:"Jun 2025", items:["Initial launch: solo mode + real-time multiplayer"] },
           ].map(({ version, date, items }) => (
             <div key={version} style={{ marginBottom:16 }}>
               <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
@@ -438,9 +751,7 @@ export default function Home() {
                 <span style={{ color:"#4b5563", fontSize:12 }}>{date}</span>
               </div>
               {items.map(item => (
-                <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid #2d2d44", marginBottom:3 }}>
-                  {item}
-                </div>
+                <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid #2d2d44", marginBottom:3 }}>{item}</div>
               ))}
             </div>
           ))}
@@ -454,38 +765,30 @@ export default function Home() {
     <div style={{ position:"fixed", top:0, right:0, padding:"12px 16px", zIndex:200, display:"flex", alignItems:"center", gap:10 }}>
       {authLoading ? null : user ? (
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          {/* Clickable avatar → profile modal */}
-          <button
-            onClick={() => setModal("profile")}
-            title="View your profile"
-            style={{ background:"transparent", border:"none", cursor:"pointer", padding:0, display:"flex", alignItems:"center", gap:8 }}
-          >
-            {user.photoURL ? (
-              <img src={user.photoURL} alt="" width={32} height={32}
+          <button onClick={() => setModal("profile")} title="View your profile"
+            style={{ background:"transparent", border:"none", cursor:"pointer", padding:0, display:"flex", alignItems:"center", gap:8 }}>
+            {(userData?.photoURL || user.photoURL) ? (
+              <img src={userData?.photoURL || user.photoURL} alt="" width={32} height={32}
                 style={{ borderRadius:"50%", border:"2px solid #f59e0b", display:"block" }} />
             ) : (
               <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
                 border:"2px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
                 fontSize:14, fontWeight:900, color:"#f59e0b" }}>
-                {(user.displayName || user.email || "?")[0].toUpperCase()}
+                {(userData?.username || user.email || "?")[0].toUpperCase()}
               </div>
             )}
             <span style={{ color:"#e5e7eb", fontSize:13, fontWeight:600, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-              {user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
+              {userData?.username || user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
             </span>
           </button>
-          <button
-            onClick={() => signOut(auth)}
-            style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}
-          >
+          <button onClick={() => signOut(auth)}
+            style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
             Sign out
           </button>
         </div>
       ) : (
-        <button
-          onClick={async () => { try { await signInWithPopup(auth, googleProvider); } catch {} }}
-          style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:8, color:"#1f2937", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}
-        >
+        <button onClick={async () => { try { await signInWithPopup(auth, googleProvider); } catch {} }}
+          style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:8, color:"#1f2937", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}>
           <svg width="16" height="16" viewBox="0 0 48 48">
             <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.7 29.3 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.4-4z"/>
             <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 16.3 3 9.7 7.9 6.3 14.7z"/>
@@ -502,9 +805,7 @@ export default function Home() {
   const LeaderboardView = () =>
     globalLB.length > 0 ? (
       <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px" }}>
-        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
-          🏆 Global Leaderboard
-        </div>
+        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>🏆 Global Leaderboard</div>
         {globalLB.slice(0, 5).map((e, i) => (
           <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 6px", borderBottom: i < 4 ? "1px solid #2d2d44" : "none" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -527,96 +828,76 @@ export default function Home() {
   if (screen === "home") return (
     <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
       <AuthHeader />
-      {modal === "profile" && user && <ProfileModal user={user} onClose={() => setModal(null)} />}
+      {showUsernamePicker && user && (
+        <UsernamePickerModal user={user} onDone={(username, ud) => {
+          setUserData(ud);
+          setName(username);
+          try { localStorage.setItem("onetap_name", username); } catch {}
+          setShowUsernamePicker(false);
+        }} />
+      )}
+      {modal === "profile" && user && (
+        <ProfileModal user={user} userData={userData} onClose={() => setModal(null)}
+          onUserDataChange={(d) => { setUserData(d); setName(d.username); try { localStorage.setItem("onetap_name", d.username); } catch {} }} />
+      )}
       {(modal === "about" || modal === "updates") && <InfoModal type={modal} />}
 
       <div style={{ textAlign:"center", marginBottom:28 }}>
         <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
-        <h1 style={{ fontSize:"2.8rem", fontWeight:900, letterSpacing:"-0.03em", margin:0, background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
-          QuicTriv
-        </h1>
+        <h1 style={{ fontSize:"2.8rem", fontWeight:900, letterSpacing:"-0.03em", margin:0, background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>QuicTriv</h1>
         <p style={{ color:"#6b7280", marginTop:8, fontSize:"1.1rem" }}>3 seconds. One tap. No mercy.</p>
       </div>
 
-      {/* Name field */}
       <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, background:"#1a1a2e", borderRadius:16, padding:"16px 24px", marginBottom:16 }}>
-        <div style={{ fontSize:12, color:"#6b7280", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase" }}>Your name</div>
+        <div style={{ fontSize:12, color:"#6b7280", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase" }}>
+          {user ? "Name for this round" : "Your name"}
+        </div>
         <input
           value={name}
           onChange={(e) => { setName(e.target.value); try { localStorage.setItem("onetap_name", e.target.value); } catch {} }}
-          placeholder="Enter your name..."
+          placeholder={userData?.username || "Enter your name..."}
           style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box" }}
         />
+        {user && userData?.username && name && name.toLowerCase() !== userData.username.toLowerCase() && (
+          <div style={{ fontSize:11, color:"#6b7280", marginTop:6 }}>
+            Will show as <span style={{ color:"#f59e0b" }}>{name}({userData.username})</span> on the leaderboard
+          </div>
+        )}
       </div>
 
-      {/* Two-column layout */}
       <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:16, alignItems:"start" }}>
-
-        {/* LEFT — Solo */}
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>⚡ Solo</div>
-
-          {/* Category picker */}
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
             <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Category</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
               {Object.entries(CATEGORY_MAP).map(([key, cat]) => (
-                <button
-                  key={key}
-                  onClick={() => { setCategory(key); try { localStorage.setItem("onetap_category", key); } catch {} }}
-                  style={{
-                    background: category === key ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${category === key ? "#f59e0b" : "#2d2d44"}`,
-                    borderRadius:10, color: category === key ? "#f59e0b" : "#9ca3af",
-                    fontSize:12, fontWeight:600, padding:"9px 6px", cursor:"pointer", transition:"all 0.15s",
-                    gridColumn: key === "all" ? "span 2" : "span 1",
-                  }}
-                >
+                <button key={key} onClick={() => { setCategory(key); try { localStorage.setItem("onetap_category", key); } catch {} }}
+                  style={{ background: category === key ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${category === key ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: category === key ? "#f59e0b" : "#9ca3af", fontSize:12, fontWeight:600, padding:"9px 6px", cursor:"pointer", transition:"all 0.15s", gridColumn: key === "all" ? "span 2" : "span 1" }}>
                   {cat.emoji} {cat.label}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Round size */}
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
             <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Questions per round</div>
             <div style={{ display:"flex", gap:8 }}>
               {ROUND_SIZES.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => { setRoundSize(n); try { localStorage.setItem("onetap_round", String(n)); } catch {} }}
-                  style={{
-                    flex:1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${roundSize === n ? "#f59e0b" : "#2d2d44"}`,
-                    borderRadius:10, color: roundSize === n ? "#f59e0b" : "#9ca3af",
-                    fontSize:15, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s",
-                  }}
-                >
+                <button key={n} onClick={() => { setRoundSize(n); try { localStorage.setItem("onetap_round", String(n)); } catch {} }}
+                  style={{ flex:1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${roundSize === n ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: roundSize === n ? "#f59e0b" : "#9ca3af", fontSize:15, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
                   {n}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Timer speed */}
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
             <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Timer (seconds)</div>
             <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={3}
+              <input type="text" inputMode="numeric" maxLength={3}
                 value={timerDuration === 0 ? "" : String(timerDuration)}
-                placeholder="e.g. 3"
-                disabled={timerDuration === 0}
+                placeholder="e.g. 3" disabled={timerDuration === 0}
                 onFocus={(e) => e.target.select()}
-                onBlur={(e) => {
-                  if (e.target.value === "" && timerDuration !== 0) {
-                    setTimerDuration(3);
-                    try { localStorage.setItem("onetap_timer", "3"); } catch {}
-                  }
-                }}
+                onBlur={(e) => { if (e.target.value === "" && timerDuration !== 0) { setTimerDuration(3); try { localStorage.setItem("onetap_timer", "3"); } catch {} } }}
                 onChange={(e) => {
                   const raw = e.target.value;
                   if (raw === "∞") { setTimerDuration(0); try { localStorage.setItem("onetap_timer", "0"); } catch {}; return; }
@@ -626,77 +907,41 @@ export default function Home() {
                   setTimerDuration(num);
                   try { localStorage.setItem("onetap_timer", String(num)); } catch {}
                 }}
-                style={{
-                  flex:1, background: timerDuration === 0 ? "rgba(255,255,255,0.02)" : "#0f0f1a",
-                  border: `1px solid ${timerDuration === 0 ? "#2d2d44" : "#f59e0b"}`,
-                  borderRadius:10, color: timerDuration === 0 ? "#4b5563" : "#fff",
-                  fontSize:18, fontWeight:700, padding:"10px 14px", outline:"none",
-                  textAlign:"center", opacity: timerDuration === 0 ? 0.4 : 1,
-                }}
+                style={{ flex:1, background: timerDuration === 0 ? "rgba(255,255,255,0.02)" : "#0f0f1a", border:`1px solid ${timerDuration === 0 ? "#2d2d44" : "#f59e0b"}`, borderRadius:10, color: timerDuration === 0 ? "#4b5563" : "#fff", fontSize:18, fontWeight:700, padding:"10px 14px", outline:"none", textAlign:"center", opacity: timerDuration === 0 ? 0.4 : 1 }}
               />
-              <button
-                onClick={() => {
-                  const next = timerDuration === 0 ? 3 : 0;
-                  setTimerDuration(next);
-                  try { localStorage.setItem("onetap_timer", String(next)); } catch {}
-                }}
-                style={{
-                  background: timerDuration === 0 ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${timerDuration === 0 ? "#f59e0b" : "#2d2d44"}`,
-                  borderRadius:10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af",
-                  fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0,
-                }}
-              >
+              <button onClick={() => { const next = timerDuration === 0 ? 3 : 0; setTimerDuration(next); try { localStorage.setItem("onetap_timer", String(next)); } catch {} }}
+                style={{ background: timerDuration === 0 ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${timerDuration === 0 ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af", fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0 }}>
                 ∞
               </button>
             </div>
           </div>
-
-          <button
-            onClick={() => startGame(category, roundSize, timerDuration)}
-            style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:14, color:"#fff", fontSize:"1.1rem", fontWeight:800, padding:"16px", cursor:"pointer", width:"100%" }}
-          >
+          <button onClick={() => startGame(category, roundSize, timerDuration)}
+            style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:14, color:"#fff", fontSize:"1.1rem", fontWeight:800, padding:"16px", cursor:"pointer", width:"100%" }}>
             START GAME ⚡
           </button>
         </div>
 
-        {/* RIGHT — Multiplayer + Leaderboard */}
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 Multiplayer</div>
-
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
-            <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>
-              🎮 Host a Game
-            </a>
+            <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>🎮 Host a Game</a>
             <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", letterSpacing:"0.05em" }}>— or join with a code —</div>
             <input id="jc" maxLength={6} placeholder="GAME CODE"
               style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, letterSpacing:"0.3em", padding:"11px 14px", outline:"none", textTransform:"uppercase", boxSizing:"border-box", textAlign:"center" }} />
-            <button
-              onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); window.location.href = c ? `/multiplayer?join=${c}` : "/multiplayer"; }}
-              style={{ width:"100%", background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer" }}
-            >
+            <button onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); window.location.href = c ? `/multiplayer?join=${c}` : "/multiplayer"; }}
+              style={{ width:"100%", background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer" }}>
               Join Game →
             </button>
           </div>
-
           <LeaderboardView />
         </div>
       </div>
 
-      {/* Footer */}
       <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}
-        >
-          About
-        </button>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"updates" }))}
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}
-        >
-          Updates
-        </button>
+        <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>About</button>
+        <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"updates" }))}
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
       </div>
     </div>
   );
@@ -709,7 +954,7 @@ export default function Home() {
     const msg = r.correct >= Math.round(r.total * 0.85) ? "Legendary!" : r.correct >= Math.round(r.total * 0.6) ? "On Fire!" : r.correct >= Math.round(r.total * 0.35) ? "Not Bad!" : "Keep Practicing!";
     return (
       <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
-        {modal === "profile" && user && <ProfileModal user={user} onClose={() => setModal(null)} />}
+        {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
         <AuthHeader />
         <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontSize:64, marginBottom:8 }}>{emoji}</div>
@@ -724,24 +969,10 @@ export default function Home() {
             </div>
           ))}
         </div>
-
-        {/* Profile CTA for logged-in users */}
-        {user && (
-          <button
-            onClick={() => setModal("profile")}
-            style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, color:"#f59e0b", fontSize:13, fontWeight:600, padding:"10px 20px", cursor:"pointer", marginBottom:20 }}
-          >
-            📊 View My Stats
-          </button>
-        )}
-
+        {user && <button onClick={() => setModal("profile")} style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, color:"#f59e0b", fontSize:13, fontWeight:600, padding:"10px 20px", cursor:"pointer", marginBottom:20 }}>📊 View My Stats</button>}
         <div style={{ display:"flex", gap:12, marginBottom:32 }}>
-          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:12, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"14px 28px", cursor:"pointer" }}>
-            PLAY AGAIN ⚡
-          </button>
-          <button onClick={() => setScreen("home")} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#9ca3af", fontSize:"1rem", fontWeight:600, padding:"14px 28px", cursor:"pointer" }}>
-            Home
-          </button>
+          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:12, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"14px 28px", cursor:"pointer" }}>PLAY AGAIN ⚡</button>
+          <button onClick={() => setScreen("home")} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#9ca3af", fontSize:"1rem", fontWeight:600, padding:"14px 28px", cursor:"pointer" }}>Home</button>
         </div>
         <LeaderboardView />
       </div>
@@ -750,11 +981,10 @@ export default function Home() {
 
   // ── GAME ──────────────────────────────────────────────────────────────────────
   if (!q) return null;
-
   return (
     <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:"20px", color:"#fff" }}>
       <AuthHeader />
-      {modal === "profile" && user && <ProfileModal user={user} onClose={() => setModal(null)} />}
+      {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
       <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
         <div style={{ fontSize:22, fontWeight:900, color:"#f59e0b" }}>{score}</div>
         <div style={{ fontSize:13, color:"#6b7280" }}>{qIndex + 1} / {questions.length}</div>
@@ -763,16 +993,13 @@ export default function Home() {
       <div style={{ width:"100%", maxWidth:480, height:4, background:"#1a1a2e", borderRadius:2, marginBottom:24, overflow:"hidden" }}>
         <div style={{ height:"100%", width: pct + "%", background:"linear-gradient(90deg, #f59e0b, #ef4444)", borderRadius:2, transition:"width 0.3s" }} />
       </div>
-
       <div style={{ fontSize:11, color:"#4b5563", marginBottom:16, letterSpacing:"0.08em", textTransform:"uppercase" }}>
         {CATEGORY_MAP[category]?.emoji} {CATEGORY_MAP[category]?.label}
       </div>
-
       {gameStateRef.current.timerDuration !== 0 && <div style={{ position:"relative", width:80, height:80, marginBottom:24 }}>
         <svg width="80" height="80" style={{ transform:"rotate(-90deg)" }}>
           <circle cx="40" cy="40" r="34" fill="none" stroke="#1a1a2e" strokeWidth="6" />
-          <circle cx="40" cy="40" r="34" fill="none"
-            stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#f59e0b" : "#10b981"}
+          <circle cx="40" cy="40" r="34" fill="none" stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#f59e0b" : "#10b981"}
             strokeWidth="6" strokeDasharray={213.6} strokeDashoffset={213.6 * (1 - timeLeft / 3)}
             style={{ transition:"stroke-dashoffset 0.9s linear, stroke 0.3s" }} />
         </svg>
@@ -780,44 +1007,25 @@ export default function Home() {
           {selected ? "✓" : timeLeft}
         </div>
       </div>}
-
-      {showStreak && (
-        <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius:16, padding:"12px 24px", fontSize:22, fontWeight:900, zIndex:100 }}>
-          🔥 {streak}x STREAK!
-        </div>
-      )}
-
+      {showStreak && <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius:16, padding:"12px 24px", fontSize:22, fontWeight:900, zIndex:100 }}>🔥 {streak}x STREAK!</div>}
       <div style={{ width:"100%", maxWidth:480, background:"#1a1a2e", borderRadius:20, padding:"28px 24px", marginBottom:20, textAlign:"center" }}>
         <div style={{ fontSize:"1.3rem", fontWeight:700, lineHeight:1.4 }}>{q.q}</div>
       </div>
-
       <div style={{ width:"100%", maxWidth:480, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         {options.map((opt, i) => {
           const isCorrect = opt === q.a;
           const isWrong = selected === opt && !isCorrect;
           const showResult = selected !== null;
           return (
-            <button key={i}
-              onClick={() => handleAnswer(opt, questions, qIndex)}
-              disabled={!!selected}
+            <button key={i} onClick={() => handleAnswer(opt, questions, qIndex)} disabled={!!selected}
               className={selected === opt ? anim : ""}
-              style={{
-                background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1a1a2e",
-                border: `2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#2d2d44"}`,
-                borderRadius:14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb",
-                fontSize:"1rem", fontWeight:700, padding:"20px 16px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3,
-              }}>
+              style={{ background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1a1a2e", border:`2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#2d2d44"}`, borderRadius:14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb", fontSize:"1rem", fontWeight:700, padding:"20px 16px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3 }}>
               {opt}
             </button>
           );
         })}
       </div>
-
-      {selected === "__timeout__" && (
-        <div style={{ marginTop:20, color:"#ef4444", fontWeight:700, fontSize:"1.1rem" }}>
-          ⏰ Too slow! Answer: <span style={{ color:"#10b981" }}>{q.a}</span>
-        </div>
-      )}
+      {selected === "__timeout__" && <div style={{ marginTop:20, color:"#ef4444", fontWeight:700, fontSize:"1.1rem" }}>⏰ Too slow! Answer: <span style={{ color:"#10b981" }}>{q.a}</span></div>}
     </div>
   );
 }
