@@ -266,11 +266,13 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
   useEffect(() => {
     if (tab !== "friends") return;
     // Load friends
-    const ids: string[] = userData?.friendIds || [];
+    // Firebase may return friendIds as object or array
+    const rawIds = userData?.friendIds || [];
+    const ids: string[] = Array.isArray(rawIds) ? rawIds : Object.values(rawIds);
     setLoadingFriends(true);
     if (ids.length) {
       Promise.all(ids.map((id: string) => get(ref(db, `users/${id}`)).then(s => s.exists() ? { uid: id, ...s.val() } : null)))
-        .then(results => { setFriendProfiles(results.filter(Boolean)); setLoadingFriends(false); });
+        .then(results => { setFriendProfiles(results.filter(Boolean) as any[]); setLoadingFriends(false); });
     } else {
       setFriendProfiles([]); setLoadingFriends(false);
     }
@@ -661,8 +663,8 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
                 No friends yet — send a request above!
               </div>
             ) : friendProfiles.map(fp => (
-              <div key={fp.uid} style={{ display:"flex", alignItems:"center", gap:10,
-                padding:"10px 0", borderBottom:"1px solid #2d2d44" }}>
+              <div key={fp.uid} onClick={() => setChatFriend(fp)} style={{ display:"flex", alignItems:"center", gap:10,
+                padding:"10px 0", borderBottom:"1px solid #2d2d44", cursor:"pointer" }}>
                 {fp.photoURL ? (
                   <img src={fp.photoURL} alt="" width={36} height={36}
                     style={{ borderRadius:"50%", border:"2px solid #2d2d44", flexShrink:0 }} />
