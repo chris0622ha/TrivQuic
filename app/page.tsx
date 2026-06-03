@@ -256,14 +256,17 @@ export default function Home() {
           <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>
             Built with Next.js, Firebase, and a lot of caffeine. Free to play, no ads, no nonsense.
           </p>
-          <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563" }}>
-            Made by chris0622ha · 2025
+          <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563", lineHeight:1.8 }}>
+            <div>By: Chris</div>
+            <div>Made in: 2026</div>
+            <div>Email: <a href="mailto:chris0622ha@gmail.com" style={{ color:"#f59e0b", textDecoration:"none" }}>chris0622ha@gmail.com</a></div>
           </div>
         </>)}
 
         {type === "updates" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
           {[
+            { version:"v1.4", date:"Jun 2026", items:["Changed layout — solo left, multiplayer right", "Timer speed: type any number (1–900s) or click ∞ for no timer"] },
             { version:"v1.3", date:"Jun 2025", items:["Google sign-in added", "About & Updates modals"] },
             { version:"v1.2", date:"Jun 2025", items:["Global Firebase leaderboard (live across all players)", "Bug fix: result screen showing 0/total"] },
             { version:"v1.1", date:"Jun 2025", items:["Category picker (Geography, Science, History, Math, Sports, Entertainment)", "Round size selector: 10 / 20 / 30 questions", "Play Again now replays same category & round size"] },
