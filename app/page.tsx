@@ -13,7 +13,6 @@ import { math } from "./data/math";
 import { sports } from "./data/sports";
 import { entertainment } from "./data/entertainment";
 
-// Normalize solo questions (wrong -> w) to unified shape
 const toQ = (arr: any[]) =>
   arr.map((x) => ({ q: x.q, a: x.a, w: x.w ?? x.wrong ?? [] }));
 
@@ -28,14 +27,6 @@ const CATEGORY_MAP: Record<string, { label: string; emoji: string; questions: an
 };
 
 const ROUND_SIZES = [10, 20, 30];
-// timer speed options
-const TIMER_OPTIONS = [
-  { label: "3s",  value: 3 },
-  { label: "5s",  value: 5 },
-  { label: "10s", value: 10 },
-  { label: "15s", value: 15 },
-  { label: "∞",   value: 0 },
-];
 
 function shuffle(arr: any[]): any[] {
   const a = [...arr];
@@ -46,19 +37,160 @@ function shuffle(arr: any[]): any[] {
   return a;
 }
 
-// ── Firebase global leaderboard ──────────────────────────────────────────────
-async function saveToGlobalLB(name: string, score: number, streak: number, category: string) {
+// ── User stats helpers ────────────────────────────────────────────────────────
+
+async function loadUserStats(uid: string) {
   try {
-    const lbRef = ref(db, "leaderboard");
-    const snap = await get(lbRef);
-    const existing: any[] = snap.exists() ? Object.values(snap.val()) : [];
-    // Only save if it's a personal best for this name
-    const prev = existing.find((e) => e.name === name);
-    if (prev && prev.score >= score) return;
-    const key = name.replace(/[.#$[\]]/g, "_");
-    await set(ref(db, `leaderboard/${key}`), { name, score, streak, category, date: new Date().toLocaleDateString() });
+    const snap = await get(ref(db, `users/${uid}`));
+    return snap.exists() ? snap.val() : null;
+  } catch { return null; }
+}
+
+async function saveUserStats(uid: string, name: string, gameResult: {
+  score: number; bestStreak: number; correct: number; total: number; category: string;
+}) {
+  try {
+    const existing = await loadUserStats(uid);
+    const prev = existing || {
+      name, gamesPlayed: 0, totalScore: 0, totalCorrect: 0, totalQuestions: 0,
+      bestScore: 0, bestStreak: 0, categoryBests: {},
+    };
+    const categoryBests = { ...(prev.categoryBests || {}) };
+    const prevCatBest = categoryBests[gameResult.category] || 0;
+    if (gameResult.score > prevCatBest) categoryBests[gameResult.category] = gameResult.score;
+
+    await set(ref(db, `users/${uid}`), {
+      name,
+      gamesPlayed: (prev.gamesPlayed || 0) + 1,
+      totalScore: (prev.totalScore || 0) + gameResult.score,
+      totalCorrect: (prev.totalCorrect || 0) + gameResult.correct,
+      totalQuestions: (prev.totalQuestions || 0) + gameResult.total,
+      bestScore: Math.max(prev.bestScore || 0, gameResult.score),
+      bestStreak: Math.max(prev.bestStreak || 0, gameResult.bestStreak),
+      categoryBests,
+      lastPlayed: new Date().toLocaleDateString(),
+    });
   } catch {}
 }
+
+// ── Global leaderboard (UID-keyed) ───────────────────────────────────────────
+
+async function saveToGlobalLB(uid: string, name: string, score: number, streak: number, category: string) {
+  try {
+    const lbRef = ref(db, `leaderboard/${uid}`);
+    const snap = await get(lbRef);
+    if (snap.exists() && snap.val().score >= score) return;
+    await set(lbRef, { name, score, streak, category, date: new Date().toLocaleDateString() });
+  } catch {}
+}
+
+// ── Profile Modal ─────────────────────────────────────────────────────────────
+
+function ProfileModal({ user, onClose }: { user: User; onClose: () => void }) {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserStats(user.uid).then((s) => { setStats(s); setLoading(false); });
+  }, [user.uid]);
+
+  const displayName = user.displayName?.split(" ")[0] || user.email?.split("@")[0] || "Player";
+  const acc = stats && stats.totalQuestions > 0
+    ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
+    : null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:300,
+        display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20,
+          padding:"28px 24px", width:"100%", maxWidth:400, position:"relative", color:"#fff" }}
+      >
+        <button
+          onClick={onClose}
+          style={{ position:"absolute", top:14, right:16, background:"transparent",
+            border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}
+        >×</button>
+
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:24 }}>
+          {user.photoURL ? (
+            <img src={user.photoURL} alt="" width={52} height={52}
+              style={{ borderRadius:"50%", border:"3px solid #f59e0b" }} />
+          ) : (
+            <div style={{ width:52, height:52, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
+              border:"3px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:22, fontWeight:900 }}>
+              {displayName[0]?.toUpperCase()}
+            </div>
+          )}
+          <div>
+            <div style={{ fontSize:"1.25rem", fontWeight:900 }}>{displayName}</div>
+            <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>{user.email}</div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign:"center", color:"#6b7280", padding:"20px 0" }}>Loading stats…</div>
+        ) : !stats || stats.gamesPlayed === 0 ? (
+          <div style={{ textAlign:"center", color:"#6b7280", padding:"20px 0", lineHeight:1.7 }}>
+            No games played yet.<br />
+            <span style={{ color:"#f59e0b" }}>Start playing to track your stats!</span>
+          </div>
+        ) : (
+          <>
+            {/* Stat grid */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:20 }}>
+              {[
+                ["Games Played", stats.gamesPlayed, "#e5e7eb"],
+                ["Best Score",   stats.bestScore,   "#f59e0b"],
+                ["Best Streak",  `${stats.bestStreak}🔥`, "#ef4444"],
+                ["Accuracy",     acc !== null ? `${acc}%` : "—", "#10b981"],
+              ].map(([label, val, color]) => (
+                <div key={label as string} style={{ background:"#0f0f1a", borderRadius:12,
+                  padding:"14px 12px", textAlign:"center", border:"1px solid #2d2d44" }}>
+                  <div style={{ fontSize:22, fontWeight:900, color: color as string }}>{val}</div>
+                  <div style={{ fontSize:10, color:"#6b7280", marginTop:4,
+                    textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Category bests */}
+            {stats.categoryBests && Object.keys(stats.categoryBests).length > 0 && (
+              <>
+                <div style={{ fontSize:11, color:"#f59e0b", textTransform:"uppercase",
+                  letterSpacing:"0.1em", fontWeight:700, marginBottom:10 }}>Category Bests</div>
+                {Object.entries(stats.categoryBests)
+                  .sort(([,a],[,b]) => (b as number) - (a as number))
+                  .map(([cat, score]) => (
+                    <div key={cat} style={{ display:"flex", justifyContent:"space-between",
+                      alignItems:"center", padding:"7px 6px",
+                      borderBottom:"1px solid #2d2d44" }}>
+                      <span style={{ color:"#d1d5db", fontSize:13 }}>
+                        {CATEGORY_MAP[cat]?.emoji} {CATEGORY_MAP[cat]?.label ?? cat}
+                      </span>
+                      <span style={{ color:"#f59e0b", fontWeight:800, fontSize:14 }}>{score as number}</span>
+                    </div>
+                  ))}
+              </>
+            )}
+
+            <div style={{ marginTop:14, fontSize:11, color:"#4b5563", textAlign:"right" }}>
+              Last played: {stats.lastPlayed}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [screen, setScreen] = useState("home");
@@ -78,10 +210,9 @@ export default function Home() {
   const [globalLB, setGlobalLB] = useState<any[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [modal, setModal] = useState<"about"|"updates"|null>(null);
+  const [modal, setModal] = useState<"about"|"updates"|"profile"|null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Settings
   const [category, setCategory] = useState("all");
   const [roundSize, setRoundSize] = useState(20);
   const [timerDuration, setTimerDuration] = useState(3);
@@ -89,11 +220,8 @@ export default function Home() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerRef = useRef(false);
   const resultsRef = useRef({ score: 0, correct: 0, total: 0, bestStreak: 0, category: "all" });
-
-  // Live refs so timer closure always reads latest values
   const gameStateRef = useRef({ streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: "all", timerDuration: 3 });
 
-  // Load name from localStorage
   useEffect(() => {
     try {
       setName(localStorage.getItem("onetap_name") || "");
@@ -106,7 +234,6 @@ export default function Home() {
     } catch {}
   }, []);
 
-  // Auth state listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -120,14 +247,12 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  // Footer modal event listener
   useEffect(() => {
     const handler = (e: Event) => setModal((e as CustomEvent).detail);
     window.addEventListener("onetap-modal", handler);
     return () => window.removeEventListener("onetap-modal", handler);
   }, []);
 
-  // Responsive breakpoint
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700);
     check();
@@ -147,18 +272,43 @@ export default function Home() {
   }, []);
 
   const endGame = useCallback(
-    (finalScore: number, finalBest: number, finalCorrect: number, finalTotal: number, finalCat: string) => {
+    async (finalScore: number, finalBest: number, finalCorrect: number, finalTotal: number, finalCat: string) => {
       if (timerRef.current) clearInterval(timerRef.current);
       resultsRef.current = { score: finalScore, correct: finalCorrect, total: finalTotal, bestStreak: finalBest, category: finalCat };
+
       const lbName = user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || name || "Anonymous";
-      saveToGlobalLB(lbName, finalScore, finalBest, finalCat);
+
+      // Save user stats if logged in (UID-keyed)
+      if (user) {
+        await saveUserStats(user.uid, lbName, {
+          score: finalScore, bestStreak: finalBest,
+          correct: finalCorrect, total: finalTotal, category: finalCat,
+        });
+        await saveToGlobalLB(user.uid, lbName, finalScore, finalBest, finalCat);
+      } else {
+        // Anonymous: use name as key (legacy behavior)
+        try {
+          const lbRef = ref(db, "leaderboard");
+          const snap = await get(lbRef);
+          const existing: any[] = snap.exists() ? Object.values(snap.val()) : [];
+          const prev = existing.find((e) => e.name === lbName && !e.uid);
+          if (!prev || prev.score < finalScore) {
+            const key = `anon_${lbName.replace(/[.#$[\]]/g, "_")}`;
+            await set(ref(db, `leaderboard/${key}`), {
+              name: lbName, score: finalScore, streak: finalBest, category: finalCat,
+              date: new Date().toLocaleDateString(),
+            });
+          }
+        } catch {}
+      }
+
       setScore(finalScore);
       setCorrect(finalCorrect);
       setTotal(finalTotal);
       setBestStreak(finalBest);
       setScreen("result");
     },
-    [name]
+    [name, user]
   );
 
   const handleAnswer = useCallback(
@@ -174,7 +324,6 @@ export default function Home() {
       const newCorrect = isCorrect ? curCorrect + 1 : curCorrect;
       const newTotal = curTotal + 1;
       const newBest = Math.max(newStreak, curBest);
-      // Update ref immediately so next call sees latest values
       gameStateRef.current = { streak: newStreak, bestStreak: newBest, score: newScore, correct: newCorrect, total: newTotal, category: curCat, timerDuration: gameStateRef.current.timerDuration };
       setStreak(newStreak);
       setAnim(isCorrect ? "pop" : "shake");
@@ -190,7 +339,8 @@ export default function Home() {
           setQIndex(idx + 1);
           setOptions(shuffle([next.a, ...next.w]));
           setSelected(null);
-          const td = gameStateRef.current.timerDuration; setTimeLeft(td === 0 ? 99 : td);
+          const td = gameStateRef.current.timerDuration;
+          setTimeLeft(td === 0 ? 99 : td);
           setAnim("");
           answerRef.current = false;
         }
@@ -201,7 +351,7 @@ export default function Home() {
 
   useEffect(() => {
     if (screen !== "game" || selected !== null) return;
-    if (gameStateRef.current.timerDuration === 0) return; // no timer mode
+    if (gameStateRef.current.timerDuration === 0) return;
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -239,8 +389,8 @@ export default function Home() {
   const pct = (qIndex / (questions.length || 1)) * 100;
   const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
-  // ── MODALS ──────────────────────────────────────────────────────────────
-  const Modal = ({ type }: { type: "about"|"updates" }) => (
+  // ── MODALS ──────────────────────────────────────────────────────────────────
+  const InfoModal = ({ type }: { type: "about"|"updates" }) => (
     <div
       onClick={() => setModal(null)}
       style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
@@ -275,6 +425,7 @@ export default function Home() {
         {type === "updates" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
           {[
+            { version:"v1.5", date:"Jun 2026", items:["User profiles with per-category stats", "Leaderboard now UID-keyed — no more duplicate names", "Profile modal accessible from your avatar"] },
             { version:"v1.4", date:"Jun 2026", items:["Changed layout — solo left, multiplayer right", "Timer speed: type any number (1–900s) or click ∞ for no timer"] },
             { version:"v1.3", date:"Jun 2025", items:["Google sign-in added", "About & Updates modals"] },
             { version:"v1.2", date:"Jun 2025", items:["Global Firebase leaderboard (live across all players)", "Bug fix: result screen showing 0/total"] },
@@ -298,31 +449,42 @@ export default function Home() {
     </div>
   );
 
-  // ── AUTH HEADER ─────────────────────────────────────────────────────────
+  // ── AUTH HEADER ──────────────────────────────────────────────────────────────
   const AuthHeader = () => (
-    <div style={{ position: "fixed", top: 0, right: 0, padding: "12px 16px", zIndex: 200, display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ position:"fixed", top:0, right:0, padding:"12px 16px", zIndex:200, display:"flex", alignItems:"center", gap:10 }}>
       {authLoading ? null : user ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {user.photoURL && (
-            <img src={user.photoURL} alt="" width={30} height={30}
-              style={{ borderRadius: "50%", border: "2px solid #f59e0b" }} />
-          )}
-          <span style={{ color: "#e5e7eb", fontSize: 13, fontWeight: 600, maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
-          </span>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          {/* Clickable avatar → profile modal */}
+          <button
+            onClick={() => setModal("profile")}
+            title="View your profile"
+            style={{ background:"transparent", border:"none", cursor:"pointer", padding:0, display:"flex", alignItems:"center", gap:8 }}
+          >
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" width={32} height={32}
+                style={{ borderRadius:"50%", border:"2px solid #f59e0b", display:"block" }} />
+            ) : (
+              <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
+                border:"2px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:14, fontWeight:900, color:"#f59e0b" }}>
+                {(user.displayName || user.email || "?")[0].toUpperCase()}
+              </div>
+            )}
+            <span style={{ color:"#e5e7eb", fontSize:13, fontWeight:600, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              {user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
+            </span>
+          </button>
           <button
             onClick={() => signOut(auth)}
-            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid #2d2d44", borderRadius: 8, color: "#9ca3af", fontSize: 12, fontWeight: 600, padding: "5px 12px", cursor: "pointer" }}
+            style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}
           >
             Sign out
           </button>
         </div>
       ) : (
         <button
-          onClick={async () => {
-            try { await signInWithPopup(auth, googleProvider); } catch {}
-          }}
-          style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "none", borderRadius: 8, color: "#1f2937", fontSize: 13, fontWeight: 700, padding: "8px 14px", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
+          onClick={async () => { try { await signInWithPopup(auth, googleProvider); } catch {} }}
+          style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:8, color:"#1f2937", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}
         >
           <svg width="16" height="16" viewBox="0 0 48 48">
             <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.7 29.3 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.4-4z"/>
@@ -336,66 +498,68 @@ export default function Home() {
     </div>
   );
 
-  // ── LEADERBOARD WIDGET ───────────────────────────────────────────────────
+  // ── LEADERBOARD WIDGET ───────────────────────────────────────────────────────
   const LeaderboardView = () =>
     globalLB.length > 0 ? (
-      <div style={{ width: "100%", maxWidth: 400, background: "#1a1a2e", borderRadius: 16, padding: "20px" }}>
-        <div style={{ fontSize: 13, color: "#f59e0b", marginBottom: 14, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
+      <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px" }}>
+        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
           🏆 Global Leaderboard
         </div>
         {globalLB.slice(0, 5).map((e, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 6px", borderBottom: i < 4 ? "1px solid #2d2d44" : "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 18, width: 24 }}>{medals[i]}</span>
+          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 6px", borderBottom: i < 4 ? "1px solid #2d2d44" : "none" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <span style={{ fontSize:18, width:24 }}>{medals[i]}</span>
               <div>
-                <span style={{ color: "#e5e7eb", fontWeight: 600 }}>{e.name}</span>
-                <div style={{ fontSize: 10, color: "#4b5563" }}>{CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}</div>
+                <span style={{ color:"#e5e7eb", fontWeight:600 }}>{e.name}</span>
+                <div style={{ fontSize:10, color:"#4b5563" }}>{CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}</div>
               </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ color: "#f59e0b", fontWeight: 800, fontSize: 18 }}>{e.score}</div>
-              <div style={{ color: "#6b7280", fontSize: 11 }}>🔥{e.streak}</div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:18 }}>{e.score}</div>
+              <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
             </div>
           </div>
         ))}
       </div>
     ) : null;
 
-  // ── HOME ─────────────────────────────────────────────────────────────────
+  // ── HOME ──────────────────────────────────────────────────────────────────────
   if (screen === "home") return (
-    <div style={{ minHeight: "100vh", background: "#0f0f1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", color: "#fff" }}>
+    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
       <AuthHeader />
-      {modal && <Modal type={modal} />}
-      <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div style={{ fontSize: 56, marginBottom: 8 }}>⚡</div>
-        <h1 style={{ fontSize: "2.8rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0, background: "linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+      {modal === "profile" && user && <ProfileModal user={user} onClose={() => setModal(null)} />}
+      {(modal === "about" || modal === "updates") && <InfoModal type={modal} />}
+
+      <div style={{ textAlign:"center", marginBottom:28 }}>
+        <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
+        <h1 style={{ fontSize:"2.8rem", fontWeight:900, letterSpacing:"-0.03em", margin:0, background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
           QuicTriv
         </h1>
-        <p style={{ color: "#6b7280", marginTop: 8, fontSize: "1.1rem" }}>3 seconds. One tap. No mercy.</p>
+        <p style={{ color:"#6b7280", marginTop:8, fontSize:"1.1rem" }}>3 seconds. One tap. No mercy.</p>
       </div>
 
-      {/* Name field — full width above columns */}
-      <div style={{ width: "100%", maxWidth: isMobile ? 460 : 860, background: "#1a1a2e", borderRadius: 16, padding: "16px 24px", marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, letterSpacing: "0.05em", textTransform: "uppercase" }}>Your name</div>
+      {/* Name field */}
+      <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, background:"#1a1a2e", borderRadius:16, padding:"16px 24px", marginBottom:16 }}>
+        <div style={{ fontSize:12, color:"#6b7280", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase" }}>Your name</div>
         <input
           value={name}
           onChange={(e) => { setName(e.target.value); try { localStorage.setItem("onetap_name", e.target.value); } catch {} }}
           placeholder="Enter your name..."
-          style={{ width: "100%", background: "#0f0f1a", border: "1px solid #2d2d44", borderRadius: 10, color: "#fff", fontSize: 16, padding: "12px 16px", outline: "none", boxSizing: "border-box" }}
+          style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box" }}
         />
       </div>
 
       {/* Two-column layout */}
-      <div style={{ width: "100%", maxWidth: isMobile ? 460 : 860, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, alignItems: "start" }}>
+      <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:16, alignItems:"start" }}>
 
         {/* LEFT — Solo */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", paddingLeft: 4 }}>⚡ Solo</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>⚡ Solo</div>
 
           {/* Category picker */}
-          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px" }}>
-            <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>Category</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Category</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
               {Object.entries(CATEGORY_MAP).map(([key, cat]) => (
                 <button
                   key={key}
@@ -403,8 +567,8 @@ export default function Home() {
                   style={{
                     background: category === key ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
                     border: `1px solid ${category === key ? "#f59e0b" : "#2d2d44"}`,
-                    borderRadius: 10, color: category === key ? "#f59e0b" : "#9ca3af",
-                    fontSize: 12, fontWeight: 600, padding: "9px 6px", cursor: "pointer", transition: "all 0.15s",
+                    borderRadius:10, color: category === key ? "#f59e0b" : "#9ca3af",
+                    fontSize:12, fontWeight:600, padding:"9px 6px", cursor:"pointer", transition:"all 0.15s",
                     gridColumn: key === "all" ? "span 2" : "span 1",
                   }}
                 >
@@ -415,18 +579,18 @@ export default function Home() {
           </div>
 
           {/* Round size */}
-          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px" }}>
-            <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>Questions per round</div>
-            <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Questions per round</div>
+            <div style={{ display:"flex", gap:8 }}>
               {ROUND_SIZES.map((n) => (
                 <button
                   key={n}
                   onClick={() => { setRoundSize(n); try { localStorage.setItem("onetap_round", String(n)); } catch {} }}
                   style={{
-                    flex: 1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
+                    flex:1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
                     border: `1px solid ${roundSize === n ? "#f59e0b" : "#2d2d44"}`,
-                    borderRadius: 10, color: roundSize === n ? "#f59e0b" : "#9ca3af",
-                    fontSize: 15, fontWeight: 700, padding: "10px 0", cursor: "pointer", transition: "all 0.15s",
+                    borderRadius:10, color: roundSize === n ? "#f59e0b" : "#9ca3af",
+                    fontSize:15, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s",
                   }}
                 >
                   {n}
@@ -436,9 +600,9 @@ export default function Home() {
           </div>
 
           {/* Timer speed */}
-          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px" }}>
-            <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>Timer (seconds)</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Timer (seconds)</div>
+            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
               <input
                 type="text"
                 inputMode="numeric"
@@ -448,7 +612,7 @@ export default function Home() {
                 disabled={timerDuration === 0}
                 onChange={(e) => {
                   const raw = e.target.value;
-                  if (raw === "∞") { setTimerDuration(0); try { localStorage.setItem("onetap_timer", "0"); } catch {} return; }
+                  if (raw === "∞") { setTimerDuration(0); try { localStorage.setItem("onetap_timer", "0"); } catch {}; return; }
                   const cleaned = raw.replace(/[^0-9]/g, "");
                   const num = Math.min(900, Math.max(1, Number(cleaned) || 1));
                   if (cleaned === "") return;
@@ -456,11 +620,11 @@ export default function Home() {
                   try { localStorage.setItem("onetap_timer", String(num)); } catch {}
                 }}
                 style={{
-                  flex: 1, background: timerDuration === 0 ? "rgba(255,255,255,0.02)" : "#0f0f1a",
+                  flex:1, background: timerDuration === 0 ? "rgba(255,255,255,0.02)" : "#0f0f1a",
                   border: `1px solid ${timerDuration === 0 ? "#2d2d44" : "#f59e0b"}`,
-                  borderRadius: 10, color: timerDuration === 0 ? "#4b5563" : "#fff",
-                  fontSize: 18, fontWeight: 700, padding: "10px 14px", outline: "none",
-                  textAlign: "center", opacity: timerDuration === 0 ? 0.4 : 1,
+                  borderRadius:10, color: timerDuration === 0 ? "#4b5563" : "#fff",
+                  fontSize:18, fontWeight:700, padding:"10px 14px", outline:"none",
+                  textAlign:"center", opacity: timerDuration === 0 ? 0.4 : 1,
                 }}
               />
               <button
@@ -472,8 +636,8 @@ export default function Home() {
                 style={{
                   background: timerDuration === 0 ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
                   border: `1px solid ${timerDuration === 0 ? "#f59e0b" : "#2d2d44"}`,
-                  borderRadius: 10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af",
-                  fontSize: 20, fontWeight: 700, padding: "10px 18px", cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
+                  borderRadius:10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af",
+                  fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0,
                 }}
               >
                 ∞
@@ -483,47 +647,46 @@ export default function Home() {
 
           <button
             onClick={() => startGame(category, roundSize, timerDuration)}
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 14, color: "#fff", fontSize: "1.1rem", fontWeight: 800, padding: "16px", cursor: "pointer", width: "100%" }}
+            style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:14, color:"#fff", fontSize:"1.1rem", fontWeight:800, padding:"16px", cursor:"pointer", width:"100%" }}
           >
             START GAME ⚡
           </button>
         </div>
 
-        {/* RIGHT — Multiplayer */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontSize: 11, color: "#10b981", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", paddingLeft: 4 }}>🎮 Multiplayer</div>
+        {/* RIGHT — Multiplayer + Leaderboard */}
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 Multiplayer</div>
 
-          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
-            <a href="/multiplayer" style={{ display: "block", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", borderRadius: 10, color: "#10b981", fontSize: "1rem", fontWeight: 800, padding: "13px", cursor: "pointer", textAlign: "center", textDecoration: "none" }}>
+          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
+            <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>
               🎮 Host a Game
             </a>
-            <div style={{ fontSize: 11, color: "#4b5563", textAlign: "center", letterSpacing: "0.05em" }}>— or join with a code —</div>
+            <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", letterSpacing:"0.05em" }}>— or join with a code —</div>
             <input id="jc" maxLength={6} placeholder="GAME CODE"
-              style={{ width: "100%", background: "#0f0f1a", border: "1px solid #2d2d44", borderRadius: 10, color: "#fff", fontSize: 18, fontWeight: 700, letterSpacing: "0.3em", padding: "11px 14px", outline: "none", textTransform: "uppercase", boxSizing: "border-box", textAlign: "center" }} />
+              style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, letterSpacing:"0.3em", padding:"11px 14px", outline:"none", textTransform:"uppercase", boxSizing:"border-box", textAlign:"center" }} />
             <button
               onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); window.location.href = c ? `/multiplayer?join=${c}` : "/multiplayer"; }}
-              style={{ width: "100%", background: "linear-gradient(135deg,#10b981,#059669)", border: "none", borderRadius: 10, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "13px", cursor: "pointer" }}
+              style={{ width:"100%", background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer" }}
             >
               Join Game →
             </button>
           </div>
 
-          {/* Leaderboard on the right below multiplayer */}
           <LeaderboardView />
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ display: "flex", gap: 8, marginTop: 24, marginBottom: 8 }}>
+      <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
         <button
-          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail: "about" }))}
-          style={{ background: "transparent", border: "1px solid #2d2d44", borderRadius: 8, color: "#4b5563", fontSize: 12, fontWeight: 600, padding: "6px 14px", cursor: "pointer", letterSpacing: "0.04em" }}
+          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}
         >
           About
         </button>
         <button
-          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail: "updates" }))}
-          style={{ background: "transparent", border: "1px solid #2d2d44", borderRadius: 8, color: "#4b5563", fontSize: 12, fontWeight: 600, padding: "6px 14px", cursor: "pointer", letterSpacing: "0.04em" }}
+          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"updates" }))}
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}
         >
           Updates
         </button>
@@ -531,32 +694,45 @@ export default function Home() {
     </div>
   );
 
-  // ── RESULT ───────────────────────────────────────────────────────────────
+  // ── RESULT ────────────────────────────────────────────────────────────────────
   if (screen === "result") {
     const r = resultsRef.current;
     const acc = Math.round((r.correct / (r.total || 1)) * 100);
     const emoji = r.correct >= Math.round(r.total * 0.85) ? "🏆" : r.correct >= Math.round(r.total * 0.6) ? "🔥" : r.correct >= Math.round(r.total * 0.35) ? "👍" : "💀";
     const msg = r.correct >= Math.round(r.total * 0.85) ? "Legendary!" : r.correct >= Math.round(r.total * 0.6) ? "On Fire!" : r.correct >= Math.round(r.total * 0.35) ? "Not Bad!" : "Keep Practicing!";
     return (
-      <div style={{ minHeight: "100vh", background: "#0f0f1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", color: "#fff" }}>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontSize: 64, marginBottom: 8 }}>{emoji}</div>
-          <h2 style={{ fontSize: "2rem", fontWeight: 900, margin: 0 }}>{msg}</h2>
-          <p style={{ color: "#6b7280", marginTop: 6 }}>{r.correct}/{r.total} correct · {CATEGORY_MAP[r.category]?.emoji} {CATEGORY_MAP[r.category]?.label}</p>
+      <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
+        {modal === "profile" && user && <ProfileModal user={user} onClose={() => setModal(null)} />}
+        <AuthHeader />
+        <div style={{ textAlign:"center", marginBottom:28 }}>
+          <div style={{ fontSize:64, marginBottom:8 }}>{emoji}</div>
+          <h2 style={{ fontSize:"2rem", fontWeight:900, margin:0 }}>{msg}</h2>
+          <p style={{ color:"#6b7280", marginTop:6 }}>{r.correct}/{r.total} correct · {CATEGORY_MAP[r.category]?.emoji} {CATEGORY_MAP[r.category]?.label}</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 32, width: "100%", maxWidth: 400 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:32, width:"100%", maxWidth:400 }}>
           {([["Score", r.score, "#f59e0b"], ["Best Streak", `${r.bestStreak}🔥`, "#ef4444"], ["Accuracy", `${acc}%`, "#10b981"]] as [string,any,string][]).map(([label, val, color]) => (
-            <div key={label} style={{ background: "#1a1a2e", borderRadius: 12, padding: "16px 12px", textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color }}>{val}</div>
-              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+            <div key={label} style={{ background:"#1a1a2e", borderRadius:12, padding:"16px 12px", textAlign:"center" }}>
+              <div style={{ fontSize:22, fontWeight:900, color }}>{val}</div>
+              <div style={{ fontSize:11, color:"#6b7280", marginTop:4, textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
-          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 12, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "14px 28px", cursor: "pointer" }}>
+
+        {/* Profile CTA for logged-in users */}
+        {user && (
+          <button
+            onClick={() => setModal("profile")}
+            style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, color:"#f59e0b", fontSize:13, fontWeight:600, padding:"10px 20px", cursor:"pointer", marginBottom:20 }}
+          >
+            📊 View My Stats
+          </button>
+        )}
+
+        <div style={{ display:"flex", gap:12, marginBottom:32 }}>
+          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:12, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"14px 28px", cursor:"pointer" }}>
             PLAY AGAIN ⚡
           </button>
-          <button onClick={() => setScreen("home")} style={{ background: "#1a1a2e", border: "1px solid #2d2d44", borderRadius: 12, color: "#9ca3af", fontSize: "1rem", fontWeight: 600, padding: "14px 28px", cursor: "pointer" }}>
+          <button onClick={() => setScreen("home")} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#9ca3af", fontSize:"1rem", fontWeight:600, padding:"14px 28px", cursor:"pointer" }}>
             Home
           </button>
         </div>
@@ -565,51 +741,50 @@ export default function Home() {
     );
   }
 
-  // ── GAME ─────────────────────────────────────────────────────────────────
+  // ── GAME ──────────────────────────────────────────────────────────────────────
   if (!q) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0f0f1a", display: "flex", flexDirection: "column", alignItems: "center", padding: "20px", color: "#fff" }}>
+    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:"20px", color:"#fff" }}>
       <AuthHeader />
-      <div style={{ width: "100%", maxWidth: 480, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <div style={{ fontSize: 22, fontWeight: 900, color: "#f59e0b" }}>{score}</div>
-        <div style={{ fontSize: 13, color: "#6b7280" }}>{qIndex + 1} / {questions.length}</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: streak > 0 ? "#ef4444" : "#4b5563" }}>🔥{streak}</div>
+      {modal === "profile" && user && <ProfileModal user={user} onClose={() => setModal(null)} />}
+      <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div style={{ fontSize:22, fontWeight:900, color:"#f59e0b" }}>{score}</div>
+        <div style={{ fontSize:13, color:"#6b7280" }}>{qIndex + 1} / {questions.length}</div>
+        <div style={{ fontSize:16, fontWeight:700, color: streak > 0 ? "#ef4444" : "#4b5563" }}>🔥{streak}</div>
       </div>
-      <div style={{ width: "100%", maxWidth: 480, height: 4, background: "#1a1a2e", borderRadius: 2, marginBottom: 24, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: pct + "%", background: "linear-gradient(90deg, #f59e0b, #ef4444)", borderRadius: 2, transition: "width 0.3s" }} />
+      <div style={{ width:"100%", maxWidth:480, height:4, background:"#1a1a2e", borderRadius:2, marginBottom:24, overflow:"hidden" }}>
+        <div style={{ height:"100%", width: pct + "%", background:"linear-gradient(90deg, #f59e0b, #ef4444)", borderRadius:2, transition:"width 0.3s" }} />
       </div>
 
-      {/* Category pill */}
-      <div style={{ fontSize: 11, color: "#4b5563", marginBottom: 16, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+      <div style={{ fontSize:11, color:"#4b5563", marginBottom:16, letterSpacing:"0.08em", textTransform:"uppercase" }}>
         {CATEGORY_MAP[category]?.emoji} {CATEGORY_MAP[category]?.label}
       </div>
 
-      {/* Timer */}
-      {gameStateRef.current.timerDuration !== 0 && <div style={{ position: "relative", width: 80, height: 80, marginBottom: 24 }}>
-        <svg width="80" height="80" style={{ transform: "rotate(-90deg)" }}>
+      {gameStateRef.current.timerDuration !== 0 && <div style={{ position:"relative", width:80, height:80, marginBottom:24 }}>
+        <svg width="80" height="80" style={{ transform:"rotate(-90deg)" }}>
           <circle cx="40" cy="40" r="34" fill="none" stroke="#1a1a2e" strokeWidth="6" />
           <circle cx="40" cy="40" r="34" fill="none"
             stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#f59e0b" : "#10b981"}
             strokeWidth="6" strokeDasharray={213.6} strokeDashoffset={213.6 * (1 - timeLeft / 3)}
-            style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.3s" }} />
+            style={{ transition:"stroke-dashoffset 0.9s linear, stroke 0.3s" }} />
         </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: timeLeft <= 1 ? "#ef4444" : "#fff" }}>
+        <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, fontWeight:900, color: timeLeft <= 1 ? "#ef4444" : "#fff" }}>
           {selected ? "✓" : timeLeft}
         </div>
       </div>}
 
       {showStreak && (
-        <div style={{ position: "fixed", top: "30%", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius: 16, padding: "12px 24px", fontSize: 22, fontWeight: 900, zIndex: 100 }}>
+        <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius:16, padding:"12px 24px", fontSize:22, fontWeight:900, zIndex:100 }}>
           🔥 {streak}x STREAK!
         </div>
       )}
 
-      <div style={{ width: "100%", maxWidth: 480, background: "#1a1a2e", borderRadius: 20, padding: "28px 24px", marginBottom: 20, textAlign: "center" }}>
-        <div style={{ fontSize: "1.3rem", fontWeight: 700, lineHeight: 1.4 }}>{q.q}</div>
+      <div style={{ width:"100%", maxWidth:480, background:"#1a1a2e", borderRadius:20, padding:"28px 24px", marginBottom:20, textAlign:"center" }}>
+        <div style={{ fontSize:"1.3rem", fontWeight:700, lineHeight:1.4 }}>{q.q}</div>
       </div>
 
-      <div style={{ width: "100%", maxWidth: 480, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ width:"100%", maxWidth:480, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         {options.map((opt, i) => {
           const isCorrect = opt === q.a;
           const isWrong = selected === opt && !isCorrect;
@@ -622,8 +797,8 @@ export default function Home() {
               style={{
                 background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1a1a2e",
                 border: `2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#2d2d44"}`,
-                borderRadius: 14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb",
-                fontSize: "1rem", fontWeight: 700, padding: "20px 16px", cursor: selected ? "default" : "pointer", transition: "all 0.2s", lineHeight: 1.3,
+                borderRadius:14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb",
+                fontSize:"1rem", fontWeight:700, padding:"20px 16px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3,
               }}>
               {opt}
             </button>
@@ -632,12 +807,10 @@ export default function Home() {
       </div>
 
       {selected === "__timeout__" && (
-        <div style={{ marginTop: 20, color: "#ef4444", fontWeight: 700, fontSize: "1.1rem" }}>
-          ⏰ Too slow! Answer: <span style={{ color: "#10b981" }}>{q.a}</span>
+        <div style={{ marginTop:20, color:"#ef4444", fontWeight:700, fontSize:"1.1rem" }}>
+          ⏰ Too slow! Answer: <span style={{ color:"#10b981" }}>{q.a}</span>
         </div>
       )}
     </div>
   );
 }
-
-
