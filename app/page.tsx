@@ -94,9 +94,11 @@ async function saveUserStats(uid: string, username: string, displayName: string,
   } catch {}
 }
 
-async function saveToGlobalLB(uid: string, displayName: string, username: string, score: number, streak: number, category: string) {
+async function saveToGlobalLB(uid: string, displayName: string, username: string, score: number, streak: number, category: string, roundSize: number, timerDuration: number) {
   try {
-    const lbRef = ref(db, `leaderboard/${uid}`);
+    // Key per user+category+rounds+timer so each combo has its own personal best
+    const entryKey = `${uid}_${category}_${roundSize}_${timerDuration}`;
+    const lbRef = ref(db, `leaderboard/${entryKey}`);
     const snap = await get(lbRef);
     const lbName = displayName.toLowerCase() !== username.toLowerCase()
       ? `${displayName}(${username})`
@@ -105,7 +107,13 @@ async function saveToGlobalLB(uid: string, displayName: string, username: string
       await update(lbRef, { name: lbName });
       return;
     }
-    await set(lbRef, { name: lbName, username, score, streak, category, date: new Date().toLocaleDateString() });
+    const now = new Date();
+    await set(lbRef, {
+      uid, name: lbName, username, score, streak, category,
+      roundSize, timerDuration,
+      date: now.toLocaleDateString("en-US", { weekday:"short", year:"numeric", month:"short", day:"numeric" }),
+      ts: now.getTime(),
+    });
   } catch {}
 }
 
@@ -769,7 +777,7 @@ export default function Home() {
   }, [user?.uid]);
 
   const endGame = useCallback(
-    async (finalScore: number, finalBest: number, finalCorrect: number, finalTotal: number, finalCat: string) => {
+    async (finalScore: number, finalBest: number, finalCorrect: number, finalTotal: number, finalCat: string, finalRounds: number, finalTimer: number) => {
       if (timerRef.current) clearInterval(timerRef.current);
       resultsRef.current = { score: finalScore, correct: finalCorrect, total: finalTotal, bestStreak: finalBest, category: finalCat };
 
@@ -779,19 +787,20 @@ export default function Home() {
           score: finalScore, bestStreak: finalBest,
           correct: finalCorrect, total: finalTotal, category: finalCat,
         });
-        await saveToGlobalLB(user.uid, currentName, userData.username, finalScore, finalBest, finalCat);
+        await saveToGlobalLB(user.uid, currentName, userData.username, finalScore, finalBest, finalCat, finalRounds, finalTimer);
       } else if (!user) {
         const lbName = name || "Anonymous";
         try {
-          const lbRef = ref(db, "leaderboard");
+          const now = new Date();
+          const entryKey = `anon_${lbName.replace(/[.#$[\]]/g, "_")}_${finalCat}_${finalRounds}_${finalTimer}`;
+          const lbRef = ref(db, `leaderboard/${entryKey}`);
           const snap = await get(lbRef);
-          const existing: any[] = snap.exists() ? Object.values(snap.val()) : [];
-          const prev = existing.find((e) => e.name === lbName && !e.uid);
-          if (!prev || prev.score < finalScore) {
-            const key = `anon_${lbName.replace(/[.#$[\]]/g, "_")}`;
-            await set(ref(db, `leaderboard/${key}`), {
+          if (!snap.exists() || snap.val().score < finalScore) {
+            await set(lbRef, {
               name: lbName, score: finalScore, streak: finalBest, category: finalCat,
-              date: new Date().toLocaleDateString(),
+              roundSize: finalRounds, timerDuration: finalTimer,
+              date: now.toLocaleDateString("en-US", { weekday:"short", year:"numeric", month:"short", day:"numeric" }),
+              ts: now.getTime(),
             });
           }
         } catch {}
@@ -828,7 +837,7 @@ export default function Home() {
       }
       setTimeout(() => {
         if (idx + 1 >= qs.length) {
-          endGame(newScore, newBest, newCorrect, newTotal, curCat);
+          endGame(newScore, newBest, newCorrect, newTotal, curCat, qs.length, gameStateRef.current.timerDuration);
         } else {
           const next = qs[idx + 1];
           setQIndex(idx + 1);
@@ -901,12 +910,14 @@ export default function Home() {
         {type === "updates" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
           {[
-            { version:"v1.6", date:"Jun 2026", items:["Username picker on first login — choose wisely (3 changes total)", "Leaderboard shows displayName(username) when name differs", "Friends system — add by username or Friend ID", "Profile picture editing via URL"] },
-            { version:"v1.5", date:"Jun 2026", items:["User profiles with per-category stats", "Leaderboard now UID-keyed — no more duplicate names", "Profile modal accessible from your avatar"] },
-            { version:"v1.4", date:"Jun 2026", items:["Changed layout — solo left, multiplayer right", "Timer speed: type any number (1–900s) or click ∞ for no timer"] },
-            { version:"v1.3", date:"Jun 2025", items:["Google sign-in added", "About & Updates modals"] },
-            { version:"v1.2", date:"Jun 2025", items:["Global Firebase leaderboard (live across all players)"] },
-            { version:"v1.0", date:"Jun 2025", items:["Initial launch: solo mode + real-time multiplayer"] },
+            { version:"v1.7", date:"Wednesday, Jun 4, 2026 · 12:14 AM", items:["Leaderboard filters by category, questions per round, and time limit", "Each leaderboard entry shows exact timer used", "Updates log now shows exact date and time"] },
+            { version:"v1.6", date:"Tuesday, Jun 3, 2026 · 11:02 PM", items:["Username picker on first login — choose wisely (3 changes total)", "Leaderboard shows displayName(username) when name differs", "Two-way friend requests with accept/decline", "Red badge on avatar for pending requests", "Profile picture upload from device / photo library"] },
+            { version:"v1.5", date:"Tuesday, Jun 3, 2026 · 9:45 PM", items:["User profiles with per-category stats", "Leaderboard now UID-keyed — no more duplicate names", "Profile modal accessible from your avatar"] },
+            { version:"v1.4", date:"Tuesday, Jun 3, 2026 · 8:30 PM", items:["Changed layout — solo left, multiplayer right", "Timer input clears on tap for easy mobile entry"] },
+            { version:"v1.3", date:"Monday, Jun 2, 2026", items:["Google sign-in added", "About & Updates modals"] },
+            { version:"v1.2", date:"Sunday, Jun 1, 2026", items:["Global Firebase leaderboard (live across all players)", "Bug fix: result screen showing 0/total"] },
+            { version:"v1.1", date:"Saturday, May 31, 2026", items:["Category picker", "Round size selector: 10 / 20 / 30 questions"] },
+            { version:"v1.0", date:"Friday, May 30, 2026", items:["Initial launch: solo mode + real-time multiplayer", "3-second timer, streak bonuses, leaderboard"] },
           ].map(({ version, date, items }) => (
             <div key={version} style={{ marginBottom:16 }}>
               <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
@@ -975,47 +986,116 @@ export default function Home() {
   );
 
   // ── LEADERBOARD WIDGET ───────────────────────────────────────────────────────
+  const TIMER_BUCKETS = [
+    { label: "All", min: -1, max: Infinity },
+    { label: "1–5s",  min: 1,  max: 5 },
+    { label: "6–15s", min: 6,  max: 15 },
+    { label: "16+s",  min: 16, max: Infinity },
+    { label: "∞",     min: 0,  max: 0 },
+  ];
+
   const LeaderboardView = () => {
     const [expanded, setExpanded] = useState(false);
+    const [catFilter, setCatFilter] = useState("all");
+    const [roundFilter, setRoundFilter] = useState(0);
+    const [timerFilter, setTimerFilter] = useState(0);
     const INITIAL = 5;
-    const visible = expanded ? globalLB : globalLB.slice(0, INITIAL);
+
+    const filtered = globalLB.filter(e => {
+      if (catFilter !== "all" && e.category !== catFilter) return false;
+      if (roundFilter !== 0 && e.roundSize !== roundFilter) return false;
+      const bucket = TIMER_BUCKETS[timerFilter];
+      if (timerFilter !== 0) {
+        const t = e.timerDuration ?? 0;
+        if (bucket.min === 0 && bucket.max === 0) { if (t !== 0) return false; }
+        else { if (t < bucket.min || t > bucket.max) return false; }
+      }
+      return true;
+    }).sort((a, b) => b.score - a.score);
+
+    const visible = expanded ? filtered : filtered.slice(0, INITIAL);
+
+    const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+      <button onClick={onClick} style={{
+        background: active ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
+        border: `1px solid ${active ? "#f59e0b" : "#2d2d44"}`,
+        borderRadius: 99, color: active ? "#f59e0b" : "#6b7280",
+        fontSize: 11, fontWeight: 700, padding: "4px 10px", cursor: "pointer",
+        whiteSpace: "nowrap" as const, flexShrink: 0,
+      }}>{label}</button>
+    );
+
     if (globalLB.length === 0) return null;
     return (
       <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px" }}>
-        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
+        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:12, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
           🏆 Global Leaderboard
+        </div>
 
+        {/* Category filter */}
+        <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Category</div>
+        <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
+          <Pill label="All" active={catFilter === "all"} onClick={() => setCatFilter("all")} />
+          {Object.entries(CATEGORY_MAP).filter(([k]) => k !== "all").map(([k, v]) => (
+            <Pill key={k} label={`${v.emoji} ${v.label}`} active={catFilter === k} onClick={() => setCatFilter(k)} />
+          ))}
         </div>
-        <div style={{ maxHeight: expanded ? 420 : "none", overflowY: expanded ? "auto" : "visible" }}>
-          {visible.map((e, i) => {
-            const rankLabel = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
-            const rankColor = i < 3 ? undefined : "#4b5563";
-            return (
-              <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 6px", borderBottom:"1px solid #2d2d44" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <span style={{ fontSize: i < 3 ? 18 : 12, fontWeight:800, color: rankColor, width:28, textAlign:"right", flexShrink:0 }}>{rankLabel}</span>
-                  <div>
-                    <span style={{ color:"#e5e7eb", fontWeight:600, fontSize:14 }}>{e.name}</span>
-                    <div style={{ fontSize:10, color:"#4b5563" }}>{CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}</div>
+
+        {/* Questions filter */}
+        <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Questions</div>
+        <div style={{ display:"flex", gap:5, marginBottom:10 }}>
+          {[["All", 0], ["10", 10], ["20", 20], ["30", 30]].map(([label, val]) => (
+            <Pill key={val} label={label as string} active={roundFilter === val} onClick={() => setRoundFilter(val as number)} />
+          ))}
+        </div>
+
+        {/* Timer filter */}
+        <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Time limit</div>
+        <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:14 }}>
+          {TIMER_BUCKETS.map((b, i) => (
+            <Pill key={i} label={b.label} active={timerFilter === i} onClick={() => setTimerFilter(i)} />
+          ))}
+        </div>
+
+        {filtered.length === 0 ? (
+          <div style={{ color:"#4b5563", fontSize:13, textAlign:"center", padding:"16px 0" }}>No scores yet for this combination</div>
+        ) : (
+          <>
+            <div style={{ maxHeight: expanded ? 420 : "none", overflowY: expanded ? "auto" : "visible" }}>
+              {visible.map((e, i) => {
+                const rankLabel = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+                const rankColor = i < 3 ? undefined : "#4b5563";
+                const timerLabel = e.timerDuration === 0 ? "∞" : e.timerDuration != null ? `${e.timerDuration}s` : "—";
+                return (
+                  <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 6px", borderBottom:"1px solid #2d2d44" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <span style={{ fontSize: i < 3 ? 18 : 12, fontWeight:800, color: rankColor, width:28, textAlign:"right", flexShrink:0 }}>{rankLabel}</span>
+                      <div>
+                        <span style={{ color:"#e5e7eb", fontWeight:600, fontSize:14 }}>{e.name}</span>
+                        <div style={{ fontSize:10, color:"#4b5563" }}>
+                          {CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}
+                          {e.roundSize != null ? ` · ${e.roundSize}Q` : ""}
+                          {` · ${timerLabel}`}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ color:"#f59e0b", fontWeight:800, fontSize:16 }}>{e.score}</div>
+                      <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
+                    </div>
                   </div>
-                </div>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ color:"#f59e0b", fontWeight:800, fontSize:16 }}>{e.score}</div>
-                  <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {globalLB.length > INITIAL && (
-          <button
-            onClick={() => setExpanded(x => !x)}
-            style={{ width:"100%", background:"transparent", border:"none", color:"#6b7280",
-              fontSize:12, fontWeight:600, padding:"10px 0 0", cursor:"pointer",
-              letterSpacing:"0.05em", textTransform:"uppercase" }}
-          >
-            {expanded ? "Show less ▲" : "Show all ▼"}
-          </button>
+                );
+              })}
+            </div>
+            {filtered.length > INITIAL && (
+              <button onClick={() => setExpanded(x => !x)}
+                style={{ width:"100%", background:"transparent", border:"none", color:"#6b7280",
+                  fontSize:12, fontWeight:600, padding:"10px 0 0", cursor:"pointer",
+                  letterSpacing:"0.05em", textTransform:"uppercase" }}>
+                {expanded ? "Show less ▲" : "Show all ▼"}
+              </button>
+            )}
+          </>
         )}
       </div>
     );
