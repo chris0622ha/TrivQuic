@@ -441,7 +441,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
         <div style={{ display:"flex", borderBottom:"1px solid #2d2d44" }}>
           <TabBtn id="stats" label="Stats" />
           <TabBtn id="edit" label="Edit Profile" />
-          <TabBtn id="friends" label="Friends" badge={incomingRequests.length + unreadChats} />
+          <TabBtn id="friends" label="Friends" badge={incomingRequests.length} />
         </div>
 
         <div style={{ padding:"20px 24px 24px", maxHeight:420, overflowY:"auto" }}>
