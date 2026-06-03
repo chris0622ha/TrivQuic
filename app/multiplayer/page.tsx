@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { db } from "../lib/firebase";
 import { ref, set, get, onValue, update, remove, push, off } from "firebase/database";
 import { geography } from "../data/geography";
@@ -60,7 +61,8 @@ export default function MultiplayerPage() {
   const [view, setView] = useState<"home"|"host-setup"|"lobby"|"game"|"results">("home");
   const [playerName, setPlayerName] = useState("");
   const [gameId, setGameId] = useState("");
-  const [joinCode, setJoinCode] = useState("");
+  const searchParams = useSearchParams();
+  const [joinCode, setJoinCode] = useState(() => searchParams.get("join") || "");
   const [playerId] = useState(() => makePlayerId());
   const [isHost, setIsHost] = useState(false);
   const [game, setGame] = useState<any>(null);
