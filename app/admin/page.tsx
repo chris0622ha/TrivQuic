@@ -477,7 +477,7 @@ function UsersPanel() {
 
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 }}>
               {[["Score",selected.bestScore??0,"#f59e0b"],["Games",selected.gamesPlayed??0,"#e5e7eb"],
-                ["Streak",selected.bestStreak??0,"#ef4444"],["UN Left",selected.usernameChangesLeft??3,"#10b981"]
+                ["Streak",selected.bestStreak??0,"#ef4444"],["@ Left",selected.usernameChangesLeft??3,"#10b981"]
               ].map(([l,v,col])=>(
                 <div key={l as string} style={{ background:"#0f0f1a", borderRadius:10, padding:"10px", textAlign:"center" as const, border:"1px solid #2d2d44" }}>
                   <div style={{ fontSize:18, fontWeight:900, color:col as string }}>{v as number}</div>
