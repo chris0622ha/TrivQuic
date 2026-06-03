@@ -236,7 +236,7 @@ export default function Home() {
         {type === "about" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>⚡ About</div>
           <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
-            <strong style={{ color:"#f59e0b" }}>One-Tap Trivia</strong> is a fast-paced trivia game built for people who hate slow trivia games. 3 seconds. One tap. No mercy.
+            <strong style={{ color:"#f59e0b" }}>QuicTriv</strong> is a fast-paced trivia game built for people who hate slow trivia games. 3 seconds. One tap. No mercy.
           </p>
           <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
             Play solo across 6 categories — Geography, Science, History, Math, Sports, and Entertainment — or go head-to-head with friends in real-time multiplayer.
@@ -345,7 +345,7 @@ export default function Home() {
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ fontSize: 56, marginBottom: 8 }}>⚡</div>
         <h1 style={{ fontSize: "2.8rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0, background: "linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          One-Tap Trivia
+          QuicTriv
         </h1>
         <p style={{ color: "#6b7280", marginTop: 8, fontSize: "1.1rem" }}>3 seconds. One tap. No mercy.</p>
       </div>
