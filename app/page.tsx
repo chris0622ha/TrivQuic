@@ -653,7 +653,7 @@ export default function Home() {
     const unsub = onValue(lbRef, (snap) => {
       if (!snap.exists()) return;
       const entries: any[] = Object.values(snap.val());
-      setGlobalLB(entries.sort((a, b) => b.score - a.score).slice(0, 10));
+      setGlobalLB(entries.sort((a, b) => b.score - a.score));
     });
     return () => off(lbRef);
   }, []);
@@ -772,7 +772,7 @@ export default function Home() {
 
   const q = questions[qIndex];
   const pct = (qIndex / (questions.length || 1)) * 100;
-  const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+
 
   // ── MODALS ───────────────────────────────────────────────────────────────────
   const InfoModal = ({ type }: { type: "about"|"updates" }) => (
@@ -855,27 +855,53 @@ export default function Home() {
   );
 
   // ── LEADERBOARD WIDGET ───────────────────────────────────────────────────────
-  const LeaderboardView = () =>
-    globalLB.length > 0 ? (
+  const LeaderboardView = () => {
+    const [expanded, setExpanded] = useState(false);
+    const INITIAL = 5;
+    const visible = expanded ? globalLB : globalLB.slice(0, INITIAL);
+    if (globalLB.length === 0) return null;
+    return (
       <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px" }}>
-        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>🏆 Global Leaderboard</div>
-        {globalLB.slice(0, 5).map((e, i) => (
-          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 6px", borderBottom: i < 4 ? "1px solid #2d2d44" : "none" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <span style={{ fontSize:18, width:24 }}>{medals[i]}</span>
-              <div>
-                <span style={{ color:"#e5e7eb", fontWeight:600 }}>{e.name}</span>
-                <div style={{ fontSize:10, color:"#4b5563" }}>{CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}</div>
+        <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
+          🏆 Global Leaderboard
+          <span style={{ color:"#4b5563", fontWeight:400, marginLeft:8, textTransform:"none", letterSpacing:0 }}>
+            {globalLB.length} players
+          </span>
+        </div>
+        <div style={{ maxHeight: expanded ? 420 : "none", overflowY: expanded ? "auto" : "visible" }}>
+          {visible.map((e, i) => {
+            const rankColor = i === 0 ? "#f59e0b" : i === 1 ? "#9ca3af" : i === 2 ? "#cd7c3a" : "#4b5563";
+            const rankLabel = i === 0 ? "1st" : i === 1 ? "2nd" : i === 2 ? "3rd" : `${i + 1}`;
+            return (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 6px", borderBottom:"1px solid #2d2d44" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <span style={{ fontSize:12, fontWeight:800, color: rankColor, width:28, textAlign:"right", flexShrink:0 }}>{rankLabel}</span>
+                  <div>
+                    <span style={{ color:"#e5e7eb", fontWeight:600, fontSize:14 }}>{e.name}</span>
+                    <div style={{ fontSize:10, color:"#4b5563" }}>{CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ color:"#f59e0b", fontWeight:800, fontSize:16 }}>{e.score}</div>
+                  <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
+                </div>
               </div>
-            </div>
-            <div style={{ textAlign:"right" }}>
-              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:18 }}>{e.score}</div>
-              <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
+        {globalLB.length > INITIAL && (
+          <button
+            onClick={() => setExpanded(x => !x)}
+            style={{ width:"100%", background:"transparent", border:"none", color:"#6b7280",
+              fontSize:12, fontWeight:600, padding:"10px 0 0", cursor:"pointer",
+              letterSpacing:"0.05em", textTransform:"uppercase" }}
+          >
+            {expanded ? "Show less ▲" : `Show all ${globalLB.length} ▼`}
+          </button>
+        )}
       </div>
-    ) : null;
+    );
+  };
 
   // ── HOME ──────────────────────────────────────────────────────────────────────
   if (screen === "home") return (
