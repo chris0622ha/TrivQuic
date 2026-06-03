@@ -255,6 +255,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [chatFriend, setChatFriend] = useState<any>(null);
 
   const changesLeft = userData?.usernameChangesLeft ?? 3;
   const displayName = userData?.username || user.displayName?.split(" ")[0] || "Player";
@@ -439,7 +440,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
         <div style={{ display:"flex", borderBottom:"1px solid #2d2d44" }}>
           <TabBtn id="stats" label="Stats" />
           <TabBtn id="edit" label="Edit Profile" />
-          <TabBtn id="friends" label="Friends" badge={incomingRequests.length} />
+          <TabBtn id="friends" label="Friends" badge={incomingRequests.length + unreadChats} />
         </div>
 
         <div style={{ padding:"20px 24px 24px", maxHeight:420, overflowY:"auto" }}>
@@ -674,19 +675,124 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontWeight:700, fontSize:14, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                     {fp.username}
+                    {fp.badge === "star"  && <span style={{ fontSize:12, marginLeft:3 }}>⭐</span>}
+                    {fp.badge === "check" && <span style={{ fontSize:11, color:"#3b82f6", fontWeight:900, marginLeft:3 }}>✓</span>}
+                    {fp.badge === "crown" && <span style={{ fontSize:12, marginLeft:3 }}>👑</span>}
                   </div>
                   <div style={{ fontSize:11, color:"#6b7280" }}>
                     Best: {fp.bestScore ?? 0} · {fp.gamesPlayed ?? 0} games
                   </div>
                 </div>
-                <button onClick={() => removeFriend(fp.uid)} style={{
-                  background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
-                  borderRadius:8, color:"#ef4444", fontSize:11, padding:"5px 10px",
-                  cursor:"pointer", flexShrink:0,
-                }}>Remove</button>
+                <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                  <button onClick={() => setChatFriend(fp)} style={{
+                    background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.4)",
+                    borderRadius:8, color:"#a5b4fc", fontSize:11, fontWeight:700, padding:"5px 10px",
+                    cursor:"pointer",
+                  }}>💬 Chat</button>
+                  <button onClick={() => removeFriend(fp.uid)} style={{
+                    background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
+                    borderRadius:8, color:"#ef4444", fontSize:11, padding:"5px 10px",
+                    cursor:"pointer",
+                  }}>Remove</button>
+                </div>
               </div>
             ))}
           </>)}
+        </div>
+      </div>
+    </div>
+    {chatFriend && user && (
+      <ChatModal
+        myUid={user.uid}
+        myName={userData?.username || user.displayName?.split(" ")[0] || "Me"}
+        friend={chatFriend}
+        onClose={() => setChatFriend(null)}
+      />
+    )}
+  );
+}
+
+// ── Chat Modal ────────────────────────────────────────────────────────────────
+function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:string; friend:any; onClose:()=>void }) {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [text, setText] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const chatKey = [myUid, friend.uid].sort().join("_");
+
+  useEffect(() => {
+    const msgRef = ref(db, `chats/${chatKey}/messages`);
+    const unsub = onValue(msgRef, snap => {
+      if (!snap.exists()) { setMessages([]); return; }
+      const list = Object.values(snap.val() as any).sort((a:any,b:any) => a.ts-b.ts);
+      setMessages(list as any[]);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior:"smooth" }), 50);
+    });
+    // Mark as read
+    set(ref(db, `chats/${chatKey}/unread/${myUid}`), 0);
+    return () => off(msgRef);
+  }, [chatKey, myUid]);
+
+  async function send() {
+    const msg = text.trim();
+    if (!msg) return;
+    setText("");
+    const msgKey = Date.now().toString();
+    await set(ref(db, `chats/${chatKey}/messages/${msgKey}`), {
+      senderUid: myUid, senderName: myName, text: msg, ts: Date.now(),
+    });
+    // Bump unread for the other person
+    const theirUnread = (await get(ref(db, `chats/${chatKey}/unread/${friend.uid}`))).val() || 0;
+    await set(ref(db, `chats/${chatKey}/unread/${friend.uid}`), theirUnread + 1);
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, width:"100%", maxWidth:420, height:"min(600px,85vh)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+        {/* Header */}
+        <div style={{ padding:"14px 18px", borderBottom:"1px solid #2d2d44", display:"flex", alignItems:"center", gap:10 }}>
+          {friend.photoURL ? (
+            <img src={friend.photoURL} alt="" width={36} height={36} style={{ borderRadius:"50%", border:"2px solid #6366f1" }} />
+          ) : (
+            <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(99,102,241,0.2)", border:"2px solid #6366f1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:900, color:"#a5b4fc" }}>
+              {(friend.username||"?")[0].toUpperCase()}
+            </div>
+          )}
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:700, color:"#fff" }}>{friend.username}</div>
+          </div>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
+        </div>
+        {/* Messages */}
+        <div style={{ flex:1, overflowY:"auto", padding:"12px 16px", display:"flex", flexDirection:"column", gap:8 }}>
+          {messages.length === 0 && (
+            <div style={{ color:"#4b5563", fontSize:13, textAlign:"center", marginTop:40 }}>No messages yet. Say hi!</div>
+          )}
+          {messages.map((m:any, i) => {
+            const isMe = m.senderUid === myUid;
+            return (
+              <div key={i} style={{ display:"flex", justifyContent: isMe?"flex-end":"flex-start" }}>
+                <div style={{ maxWidth:"75%", background: isMe?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.06)", border:`1px solid ${isMe?"rgba(245,158,11,0.4)":"#2d2d44"}`, borderRadius: isMe?"14px 14px 2px 14px":"14px 14px 14px 2px", padding:"8px 12px" }}>
+                  <div style={{ color:"#e5e7eb", fontSize:14, lineHeight:1.5 }}>{m.text}</div>
+                  <div style={{ color:"#4b5563", fontSize:10, marginTop:2, textAlign:"right" }}>
+                    {new Date(m.ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+        {/* Input */}
+        <div style={{ padding:"10px 14px", borderTop:"1px solid #2d2d44", display:"flex", gap:8 }}>
+          <input
+            value={text} onChange={e=>setText(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&send()}
+            placeholder="Message…"
+            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none" }}
+          />
+          <button onClick={send} style={{ background:"linear-gradient(135deg,#6366f1,#a855f7)", border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:14, padding:"10px 16px", cursor:"pointer" }}>
+            Send
+          </button>
         </div>
       </div>
     </div>
@@ -878,13 +984,26 @@ export default function Home() {
 
   // Live incoming friend request count for badge
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadChats, setUnreadChats] = useState(0);
   useEffect(() => {
-    if (!user) { setPendingCount(0); return; }
+    if (!user) { setPendingCount(0); setUnreadChats(0); return; }
     const reqRef = ref(db, `friendRequests/${user.uid}`);
-    const unsub = onValue(reqRef, snap => {
+    const unsub1 = onValue(reqRef, snap => {
       setPendingCount(snap.exists() ? Object.keys(snap.val()).length : 0);
     });
-    return () => off(reqRef);
+    // Listen to all chats for unread counts
+    const chatRef = ref(db, "chats");
+    const unsub2 = onValue(chatRef, snap => {
+      if (!snap.exists()) { setUnreadChats(0); return; }
+      let total = 0;
+      Object.entries(snap.val()).forEach(([key, chat]: [string, any]) => {
+        if (key.includes(user.uid) && chat.unread?.[user.uid]) {
+          total += chat.unread[user.uid];
+        }
+      });
+      setUnreadChats(total);
+    });
+    return () => { off(reqRef); off(chatRef); };
   }, [user?.uid]);
 
   // Announcement + maintenance mode
@@ -1088,12 +1207,12 @@ export default function Home() {
                   {(userData?.username || user.email || "?")[0].toUpperCase()}
                 </div>
               )}
-              {pendingCount > 0 && (
+              {(pendingCount + unreadChats) > 0 && (
                 <div style={{ position:"absolute", top:-3, right:-3, width:16, height:16,
                   borderRadius:"50%", background:"#ef4444", border:"2px solid #0f0f1a",
                   display:"flex", alignItems:"center", justifyContent:"center",
                   fontSize:9, fontWeight:900, color:"#fff", lineHeight:1 }}>
-                  {pendingCount > 9 ? "9+" : pendingCount}
+                  {(pendingCount + unreadChats) > 9 ? "9+" : (pendingCount + unreadChats)}
                 </div>
               )}
             </div>
