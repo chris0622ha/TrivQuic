@@ -985,13 +985,13 @@ export default function Home() {
   // Live incoming friend request count for badge
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadChats, setUnreadChats] = useState(0);
+  const [duelChallenges, setDuelChallenges] = useState<any[]>([]);
   useEffect(() => {
-    if (!user) { setPendingCount(0); setUnreadChats(0); return; }
+    if (!user) { setPendingCount(0); setUnreadChats(0); setDuelChallenges([]); return; }
     const reqRef = ref(db, `friendRequests/${user.uid}`);
     const unsub1 = onValue(reqRef, snap => {
       setPendingCount(snap.exists() ? Object.keys(snap.val()).length : 0);
     });
-    // Listen to all chats for unread counts
     const chatRef = ref(db, "chats");
     const unsub2 = onValue(chatRef, snap => {
       if (!snap.exists()) { setUnreadChats(0); return; }
@@ -1003,7 +1003,13 @@ export default function Home() {
       });
       setUnreadChats(total);
     });
-    return () => { off(reqRef); off(chatRef); };
+    const chalRef = ref(db, `duelChallenges/${user.uid}`);
+    const unsub3 = onValue(chalRef, snap => {
+      if (!snap.exists()) { setDuelChallenges([]); return; }
+      const list = Object.entries(snap.val()).map(([fromUid, d]: [string, any]) => ({ fromUid, ...d }));
+      setDuelChallenges(list.filter((c: any) => Date.now() - c.sentAt < 300000));
+    });
+    return () => { off(reqRef); off(chatRef); off(chalRef); };
   }, [user?.uid]);
 
   // Announcement + maintenance mode
@@ -1401,6 +1407,35 @@ export default function Home() {
             <div style={{ color:"#f59e0b", fontWeight:700, fontSize:14 }}>{announcement.text}</div>
             <div style={{ color:"#4b5563", fontSize:11, marginTop:2 }}>{announcement.postedAt}</div>
           </div>
+        </div>
+      )}
+
+      {duelChallenges.length > 0 && (
+        <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, marginBottom:16, display:"flex", flexDirection:"column", gap:8 }}>
+          {duelChallenges.map(ch => (
+            <div key={ch.fromUid} style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:12, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
+              <span style={{ fontSize:20, flexShrink:0 }}>⚔️</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontWeight:700, fontSize:14, color:"#a5b4fc" }}>
+                  {ch.fromName} challenged you to a duel!
+                </div>
+                <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>
+                  {ch.settings?.rounds}R · {ch.settings?.questionsPerRound}Q · {ch.settings?.breakTime}s break
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+                <a href="/duels" style={{ background:"linear-gradient(135deg,#6366f1,#a855f7)", border:"none", borderRadius:8, color:"#fff", fontWeight:800, fontSize:13, padding:"8px 14px", cursor:"pointer", textDecoration:"none", display:"block" }}>
+                  Accept ⚔️
+                </a>
+                <button onClick={async () => {
+                  await remove(ref(db, `duelChallenges/${user!.uid}/${ch.fromUid}`));
+                  setDuelChallenges(c => c.filter(x => x.fromUid !== ch.fromUid));
+                }} style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.4)", borderRadius:8, color:"#ef4444", fontWeight:700, fontSize:13, padding:"8px 12px", cursor:"pointer" }}>
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
       {showUsernamePicker && user && (
