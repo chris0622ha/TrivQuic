@@ -776,6 +776,27 @@ export default function Home() {
     return () => off(reqRef);
   }, [user?.uid]);
 
+  // Announcement + maintenance mode
+  const [announcement, setAnnouncement] = useState<{text:string;postedAt:string}|null>(null);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  useEffect(() => {
+    get(ref(db, "config/announcement")).then(s => { if(s.exists()) setAnnouncement(s.val()); });
+    get(ref(db, "config/maintenanceMode")).then(s => { if(s.exists()) setMaintenanceMode(s.val()); });
+  }, []);
+
+  // Custom questions from Firebase (admin-added)
+  const [customQuestions, setCustomQuestions] = useState<Record<string,any[]>>({});
+  useEffect(() => {
+    get(ref(db, "customQuestions")).then(snap => {
+      if (!snap.exists()) return;
+      const data: Record<string,any[]> = {};
+      Object.entries(snap.val()).forEach(([cat, qs]: [string, any]) => {
+        data[cat] = Object.values(qs);
+      });
+      setCustomQuestions(data);
+    });
+  }, []);
+
   const endGame = useCallback(
     async (finalScore: number, finalBest: number, finalCorrect: number, finalTotal: number, finalCat: string, finalRounds: number, finalTimer: number) => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -870,7 +891,11 @@ export default function Home() {
   }, [screen, qIndex, selected, questions, handleAnswer]);
 
   function startGame(cat = category, size = roundSize, timer = timerDuration) {
-    const pool = toQ(CATEGORY_MAP[cat]?.questions ?? CATEGORY_MAP.all.questions);
+    const base = toQ(CATEGORY_MAP[cat]?.questions ?? []);
+    const custom = cat === "all"
+      ? Object.values(customQuestions).flat()
+      : toQ(customQuestions[cat] || []);
+    const pool = [...base, ...custom];
     const qs = shuffle(pool).slice(0, size);
     const firstOpts = shuffle([qs[0].a, ...qs[0].w]);
     gameStateRef.current = { streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: cat, timerDuration: timer };
@@ -1115,9 +1140,28 @@ export default function Home() {
   };
 
   // ── HOME ──────────────────────────────────────────────────────────────────────
-  if (screen === "home") return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
+  // Maintenance mode — block non-admins
+  if (maintenanceMode && !userData?.isAdmin) return (
+    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff", textAlign:"center" }}>
       <AuthHeader />
+      <div style={{ fontSize:56, marginBottom:16 }}>🔧</div>
+      <h1 style={{ fontSize:"2rem", fontWeight:900, margin:"0 0 12px" }}>Down for Maintenance</h1>
+      <p style={{ color:"#6b7280", maxWidth:360, lineHeight:1.7 }}>TrivQuic is currently undergoing maintenance. Check back soon!</p>
+    </div>
+  );
+
+  if (screen === "home") return (
+    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 16px", color:"#fff" }}>
+      <AuthHeader />
+      {announcement && (
+        <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:12, padding:"12px 16px", marginBottom:16, display:"flex", alignItems:"flex-start", gap:10 }}>
+          <span style={{ fontSize:18, flexShrink:0 }}>📢</span>
+          <div>
+            <div style={{ color:"#f59e0b", fontWeight:700, fontSize:14 }}>{announcement.text}</div>
+            <div style={{ color:"#4b5563", fontSize:11, marginTop:2 }}>{announcement.postedAt}</div>
+          </div>
+        </div>
+      )}
       {showUsernamePicker && user && (
         <UsernamePickerModal user={user} onDone={(username, ud) => {
           setUserData(ud);
