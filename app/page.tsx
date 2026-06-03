@@ -1232,6 +1232,8 @@ export default function Home() {
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>About</button>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"updates" }))}
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
+        <a href="/admin"
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Admin</a>
       </div>
     </div>
   );
