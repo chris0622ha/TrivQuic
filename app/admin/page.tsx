@@ -543,7 +543,7 @@ export default function AdminPage() {
         <div style={{ fontSize:"1.2rem", fontWeight:900, marginBottom:8 }}>Access Denied</div>
         <div style={{ color:"#6b7280", fontSize:14, marginBottom:6 }}>Signed in as {user.email}</div>
         <div style={{ color:"#4b5563", fontSize:13 }}>Your account doesn't have admin privileges.</div>
-        <a href="/" style={{ display:"inline-block", marginTop:20, color:"#f59e0b", fontSize:13 }}>← Back to QuicTriv</a>
+        <a href="/" style={{ display:"inline-block", marginTop:20, color:"#f59e0b", fontSize:13 }}>← Back to TrivQuic</a>
       </div>
     </div>
   );
@@ -554,7 +554,7 @@ export default function AdminPage() {
       <div style={s.sidebar}>
         <div style={{ padding:"0 16px 20px", borderBottom:"1px solid #1e1e30", marginBottom:8 }}>
           <div style={{ fontSize:"1rem", fontWeight:900, color:"#f59e0b" }}>⚡ Admin</div>
-          <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>QuicTriv</div>
+          <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>TrivQuic</div>
         </div>
         {NAV_ITEMS.map(item => (
           <button key={item.id} onClick={() => setTab(item.id)} style={{
