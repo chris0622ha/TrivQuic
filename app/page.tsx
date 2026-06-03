@@ -220,7 +220,7 @@ function UsernamePickerModal({ user, onDone }: { user: User; onDone: (username: 
 function ProfileModal({ user, userData, onClose, onUserDataChange }: {
   user: User; userData: any; onClose: () => void; onUserDataChange: (d: any) => void;
 }) {
-  const [tab, setTab] = useState<"stats"|"edit"|"friends">("stats");
+  const [tab, setTab] = useState<"stats"|"edit"|"status"|"friends">("stats");
 
   // Edit tab state
   const [newUsername, setNewUsername] = useState(userData?.username || "");
@@ -256,6 +256,39 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [chatFriend, setChatFriend] = useState<any>(null);
+
+  // Status tab state
+  const [statusPreset, setStatusPreset] = useState(userData?.status?.preset || "online");
+  const [customStatus, setCustomStatus] = useState(userData?.status?.custom || "");
+  const [mutedUids, setMutedUids] = useState<string[]>(userData?.mutedUids || []);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const STATUS_PRESETS = [
+    { id:"online",    label:"🟢 Online",           notif: true  },
+    { id:"dnd",       label:"⛔ Do Not Disturb",    notif: false },
+    { id:"sleeping",  label:"😴 Sleeping",          notif: false },
+    { id:"focused",   label:"🎯 Focused",           notif: false },
+    { id:"custom",    label:"✏️ Custom",            notif: true  },
+  ];
+
+  async function saveStatus() {
+    setStatusSaving(true);
+    await update(ref(db, `users/${user.uid}`), {
+      status: { preset: statusPreset, custom: customStatus.trim(), notif: STATUS_PRESETS.find(s=>s.id===statusPreset)?.notif ?? true },
+      mutedUids,
+    });
+    onUserDataChange({ ...userData, status: { preset: statusPreset, custom: customStatus.trim() }, mutedUids });
+    setStatusMsg("Saved!"); setStatusSaving(false);
+    setTimeout(() => setStatusMsg(""), 2000);
+  }
+
+  async function unmuteUser(uid: string) {
+    const newMuted = mutedUids.filter(id => id !== uid);
+    setMutedUids(newMuted);
+    await update(ref(db, `users/${user.uid}`), { mutedUids: newMuted });
+    onUserDataChange({ ...userData, mutedUids: newMuted });
+  }
 
   const changesLeft = userData?.usernameChangesLeft ?? 3;
   const displayName = userData?.username || user.displayName?.split(" ")[0] || "Player";
@@ -443,6 +476,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
         <div style={{ display:"flex", borderBottom:"1px solid #2d2d44" }}>
           <TabBtn id="stats" label="Stats" />
           <TabBtn id="edit" label="Edit Profile" />
+          <TabBtn id="status" label="Status" />
           <TabBtn id="friends" label="Friends" badge={incomingRequests.length} />
         </div>
 
@@ -580,6 +614,65 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
             {saveMsg && <div style={{ color:"#10b981", textAlign:"center", marginTop:8, fontWeight:700 }}>{saveMsg}</div>}
           </>)}
 
+          {/* STATUS TAB */}
+          {tab === "status" && (<>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Status</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {STATUS_PRESETS.map(s => (
+                  <button key={s.id} onClick={() => setStatusPreset(s.id)} style={{
+                    background: statusPreset===s.id ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${statusPreset===s.id ? "#f59e0b" : "#2d2d44"}`,
+                    borderRadius:10, color: statusPreset===s.id ? "#f59e0b" : "#9ca3af",
+                    fontSize:14, fontWeight:600, padding:"11px 16px", cursor:"pointer",
+                    textAlign:"left" as const, display:"flex", justifyContent:"space-between", alignItems:"center",
+                  }}>
+                    <span>{s.label}</span>
+                    <span style={{ fontSize:11, color: s.notif ? "#10b981" : "#ef4444" }}>
+                      {s.notif ? "notifications on" : "notifications off"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {statusPreset === "custom" && (
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Custom status text</div>
+                <input value={customStatus} onChange={e => setCustomStatus(e.target.value.slice(0,40))}
+                  placeholder="e.g. In a duel, brb" maxLength={40}
+                  style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none", boxSizing:"border-box" as const }} />
+                <div style={{ fontSize:11, color:"#4b5563", marginTop:4, textAlign:"right" as const }}>{customStatus.length}/40</div>
+              </div>
+            )}
+
+            <button onClick={saveStatus} disabled={statusSaving} style={{
+              width:"100%", background:"linear-gradient(135deg,#f59e0b,#ef4444)", border:"none",
+              borderRadius:10, color:"#fff", fontWeight:800, padding:"12px", cursor:"pointer", marginBottom:16,
+            }}>{statusSaving ? "Saving…" : "Save Status"}</button>
+            {statusMsg && <div style={{ color:"#10b981", textAlign:"center", marginBottom:12, fontWeight:700 }}>{statusMsg}</div>}
+
+            {/* Muted users */}
+            <div style={{ borderTop:"1px solid #2d2d44", paddingTop:14 }}>
+              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>
+                Muted users ({mutedUids.length})
+              </div>
+              {mutedUids.length === 0 ? (
+                <div style={{ color:"#4b5563", fontSize:13 }}>No muted users</div>
+              ) : mutedUids.map(uid => {
+                const friend = friendProfiles.find(f => f.uid === uid);
+                return (
+                  <div key={uid} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #2d2d44" }}>
+                    <span style={{ color:"#d1d5db", fontSize:13 }}>{friend?.username || uid.slice(0,12)+"…"}</span>
+                    <button onClick={() => unmuteUser(uid)} style={{ background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:8, color:"#10b981", fontSize:12, fontWeight:700, padding:"4px 10px", cursor:"pointer" }}>
+                      Unmute
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>)}
+
           {/* FRIENDS TAB */}
           {tab === "friends" && (<>
 
@@ -683,7 +776,11 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
                     {fp.badge === "crown" && <span style={{ fontSize:12, marginLeft:3 }}>👑</span>}
                   </div>
                   <div style={{ fontSize:11, color:"#6b7280" }}>
-                    Best: {fp.bestScore ?? 0} · {fp.gamesPlayed ?? 0} games
+                    {fp.status?.preset === "dnd"      && <span style={{ color:"#ef4444" }}>⛔ Do Not Disturb · </span>}
+                    {fp.status?.preset === "sleeping"  && <span style={{ color:"#6366f1" }}>😴 Sleeping · </span>}
+                    {fp.status?.preset === "focused"   && <span style={{ color:"#f59e0b" }}>🎯 Focused · </span>}
+                    {fp.status?.preset === "custom" && fp.status?.custom && <span style={{ color:"#10b981" }}>✏️ {fp.status.custom} · </span>}
+                    Best: {fp.bestScore ?? 0}
                   </div>
                 </div>
                 <div style={{ display:"flex", gap:6, flexShrink:0 }}>
@@ -691,12 +788,24 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
                     background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.4)",
                     borderRadius:8, color:"#a5b4fc", fontSize:11, fontWeight:700, padding:"5px 10px",
                     cursor:"pointer",
-                  }}>💬 Chat</button>
-                  <button onClick={() => removeFriend(fp.uid)} style={{
+                  }}>💬</button>
+                  <button onClick={async () => {
+                    const isMuted = mutedUids.includes(fp.uid);
+                    const newMuted = isMuted ? mutedUids.filter(id=>id!==fp.uid) : [...mutedUids, fp.uid];
+                    setMutedUids(newMuted);
+                    await update(ref(db, `users/${user.uid}`), { mutedUids: newMuted });
+                    onUserDataChange({ ...userData, mutedUids: newMuted });
+                  }} style={{
+                    background: mutedUids.includes(fp.uid) ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
+                    border:`1px solid ${mutedUids.includes(fp.uid) ? "rgba(245,158,11,0.4)" : "#2d2d44"}`,
+                    borderRadius:8, color: mutedUids.includes(fp.uid) ? "#f59e0b" : "#6b7280", fontSize:11, padding:"5px 10px",
+                    cursor:"pointer",
+                  }}>{mutedUids.includes(fp.uid) ? "🔕" : "🔔"}</button>
+                  <button onClick={e => { e.stopPropagation(); removeFriend(fp.uid); }} style={{
                     background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
                     borderRadius:8, color:"#ef4444", fontSize:11, padding:"5px 10px",
                     cursor:"pointer",
-                  }}>Remove</button>
+                  }}>✕</button>
                 </div>
               </div>
             ))}
@@ -744,10 +853,19 @@ function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:st
 
   useEffect(() => {
     const msgRef = ref(db, `chats/${chatKey}/messages`);
+    let prevCount = 0;
     const unsub = onValue(msgRef, snap => {
-      if (!snap.exists()) { setMessages([]); return; }
-      const list = Object.values(snap.val() as any).sort((a:any,b:any) => a.ts-b.ts);
-      setMessages(list as any[]);
+      if (!snap.exists()) { setMessages([]); prevCount = 0; return; }
+      const list = (Object.values(snap.val() as any) as any[]).sort((a,b) => a.ts-b.ts);
+      // Fire browser notif if new message from other person arrived while modal open
+      if (list.length > prevCount && prevCount > 0) {
+        const newest = list[list.length - 1];
+        if (newest.senderUid !== myUid && "Notification" in window && Notification.permission === "granted") {
+          try { new Notification(`💬 ${newest.senderName}`, { body: newest.text, icon: "/favicon.ico" }); } catch {}
+        }
+      }
+      prevCount = list.length;
+      setMessages(list);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior:"smooth" }), 50);
     });
     // Mark as read
@@ -782,6 +900,14 @@ function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:st
           )}
           <div style={{ flex:1 }}>
             <div style={{ fontWeight:700, color:"#fff" }}>{friend.username}</div>
+            {friend.status?.preset && friend.status.preset !== "online" && (
+              <div style={{ fontSize:11, color:"#6b7280", marginTop:1 }}>
+                {friend.status.preset === "dnd"     && "⛔ Do Not Disturb"}
+                {friend.status.preset === "sleeping" && "😴 Sleeping"}
+                {friend.status.preset === "focused"  && "🎯 Focused"}
+                {friend.status.preset === "custom"   && friend.status.custom && `✏️ ${friend.status.custom}`}
+              </div>
+            )}
           </div>
           <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
         </div>
@@ -960,6 +1086,12 @@ export default function Home() {
           setName(data.username);
           try { localStorage.setItem("onetap_name", data.username); } catch {}
         }
+        // Request push notification permission
+        try {
+          if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+          }
+        } catch {}
         // Log login
         const loginKey = Date.now().toString();
         try {
@@ -1042,6 +1174,21 @@ export default function Home() {
     });
     return () => { off(reqRef); off(chatRef); off(chalRef); };
   }, [user?.uid]);
+
+  // Register service worker
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
+  // Browser notification helper
+  function sendBrowserNotif(title: string, body: string, url = "/") {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+      new Notification(title, { body, icon: "/favicon.ico", data: { url } });
+    } catch {}
+  }
 
   // Announcement + maintenance mode
   const [announcement, setAnnouncement] = useState<{text:string;postedAt:string}|null>(null);
@@ -1188,10 +1335,13 @@ export default function Home() {
   // ── MODALS ───────────────────────────────────────────────────────────────────
   const InfoModal = ({ type }: { type: "about"|"updates" }) => (
     <div onClick={() => setModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:400, position:"relative", color:"#fff" }}>
-        <button onClick={() => setModal(null)} style={{ position:"absolute", top:14, right:16, background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}>×</button>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, width:"100%", maxWidth:400, maxHeight:"85vh", display:"flex", flexDirection:"column", position:"relative", color:"#fff" }}>
+        <div style={{ padding:"20px 24px 12px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #2d2d44", flexShrink:0 }}>
+          <div style={{ fontSize:"1.2rem", fontWeight:900 }}>{type === "about" ? "⚡ About" : "🆕 Updates"}</div>
+          <button onClick={() => setModal(null)} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}>×</button>
+        </div>
+        <div style={{ overflowY:"auto", padding:"16px 24px 24px", flex:1 }}>
         {type === "about" && (<>
-          <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>⚡ About</div>
           <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}><strong style={{ color:"#f59e0b" }}>TrivQuic</strong> is a fast-paced trivia game. Fast trivia. No mercy.</p>
           <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>Play solo across 6 categories or go head-to-head in real-time multiplayer.</p>
           <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563", lineHeight:1.8 }}>
@@ -1200,8 +1350,8 @@ export default function Home() {
           </div>
         </>)}
         {type === "updates" && (<>
-          <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
           {[
+            { version:"v1.9", date:"Wednesday, Jun 4, 2026 · 6:00 AM", items:["Status system — set Online, DND, Sleeping, Focused, or custom status from your profile", "Status shown on friend rows and in chat header", "Mute specific friends — toggle 🔔/🔕 on any friend row", "Scrollable About and Updates modals", "Push notification permission requested on login", "Chat message reporting — 🚩 button on each message", "Admin: Chat Reports panel"] },
             { version:"v1.8", date:"Wednesday, Jun 4, 2026 · 4:30 AM", items:["Chat reporting — flag messages directly from chat, goes to admin Chat Reports panel", "Duels overhauled — 3–10 rounds, custom questions per round, break time between rounds", "Random matchmaking mode in duels", "Challenge a friend to a duel from your friends list", "Duel challenge notifications on home screen", "Friends chat with real-time messages and unread badge", "Build fixes — app now deploys reliably"] },
             { version:"v1.7", date:"Wednesday, Jun 4, 2026 · 12:14 AM", items:["Leaderboard filters by category, questions per round, and time limit", "Each leaderboard entry shows exact timer used", "Updates log now shows exact date and time"] },
             { version:"v1.6", date:"Tuesday, Jun 3, 2026 · 11:02 PM", items:["Username picker on first login — choose wisely (3 changes total)", "Leaderboard shows displayName(username) when name differs", "Two-way friend requests with accept/decline", "Red badge on avatar for pending requests", "Profile picture upload from device / photo library"] },
@@ -1223,6 +1373,7 @@ export default function Home() {
             </div>
           ))}
         </>)}
+        </div>
       </div>
     </div>
   );
