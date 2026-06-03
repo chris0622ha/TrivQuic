@@ -28,6 +28,13 @@ const CATEGORY_MAP: Record<string, { label: string; emoji: string; questions: an
 };
 
 const ROUND_SIZES = [10, 20, 30];
+const TIMER_OPTIONS = [
+  { label: "3s",  value: 3 },
+  { label: "5s",  value: 5 },
+  { label: "10s", value: 10 },
+  { label: "15s", value: 15 },
+  { label: "∞",   value: 0 },
+];
 
 function shuffle(arr: any[]): any[] {
   const a = [...arr];
@@ -75,13 +82,14 @@ export default function Home() {
   // Settings
   const [category, setCategory] = useState("all");
   const [roundSize, setRoundSize] = useState(20);
+  const [timerDuration, setTimerDuration] = useState(3);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerRef = useRef(false);
   const resultsRef = useRef({ score: 0, correct: 0, total: 0, bestStreak: 0, category: "all" });
 
   // Live refs so timer closure always reads latest values
-  const gameStateRef = useRef({ streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: "all" });
+  const gameStateRef = useRef({ streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: "all", timerDuration: 3 });
 
   // Load name from localStorage
   useEffect(() => {
@@ -91,6 +99,8 @@ export default function Home() {
       if (savedCat && CATEGORY_MAP[savedCat]) setCategory(savedCat);
       const savedSize = localStorage.getItem("onetap_round");
       if (savedSize) setRoundSize(Number(savedSize));
+      const savedTimer = localStorage.getItem("onetap_timer");
+      if (savedTimer !== null) setTimerDuration(Number(savedTimer));
     } catch {}
   }, []);
 
@@ -170,7 +180,7 @@ export default function Home() {
           setQIndex(idx + 1);
           setOptions(shuffle([next.a, ...next.w]));
           setSelected(null);
-          setTimeLeft(3);
+          setTimeLeft(timer === 0 ? 99 : timer);
           setAnim("");
           answerRef.current = false;
         }
@@ -181,6 +191,7 @@ export default function Home() {
 
   useEffect(() => {
     if (screen !== "game" || selected !== null) return;
+    if (gameStateRef.current.timerDuration === 0) return; // no timer mode
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -194,11 +205,11 @@ export default function Home() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [screen, qIndex, selected, questions, handleAnswer]);
 
-  function startGame(cat = category, size = roundSize) {
+  function startGame(cat = category, size = roundSize, timer = timerDuration) {
     const pool = toQ(CATEGORY_MAP[cat]?.questions ?? CATEGORY_MAP.all.questions);
     const qs = shuffle(pool).slice(0, size);
     const firstOpts = shuffle([qs[0].a, ...qs[0].w]);
-    gameStateRef.current = { streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: cat };
+    gameStateRef.current = { streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: cat, timerDuration: timer };
     setQuestions(qs);
     setQIndex(0);
     setOptions(firstOpts);
@@ -411,8 +422,29 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Timer speed */}
+          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>Timer speed</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {TIMER_OPTIONS.map(({ label, value }) => (
+                <button
+                  key={value}
+                  onClick={() => { setTimerDuration(value); try { localStorage.setItem("onetap_timer", String(value)); } catch {} }}
+                  style={{
+                    flex: 1, background: timerDuration === value ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${timerDuration === value ? "#f59e0b" : "#2d2d44"}`,
+                    borderRadius: 10, color: timerDuration === value ? "#f59e0b" : "#9ca3af",
+                    fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer", transition: "all 0.15s",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
-            onClick={() => startGame(category, roundSize)}
+            onClick={() => startGame(category, roundSize, timerDuration)}
             style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 14, color: "#fff", fontSize: "1.1rem", fontWeight: 800, padding: "16px", cursor: "pointer", width: "100%" }}
           >
             START GAME ⚡
@@ -483,7 +515,7 @@ export default function Home() {
           ))}
         </div>
         <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
-          <button onClick={() => startGame(r.category, roundSize)} style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 12, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "14px 28px", cursor: "pointer" }}>
+          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 12, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "14px 28px", cursor: "pointer" }}>
             PLAY AGAIN ⚡
           </button>
           <button onClick={() => setScreen("home")} style={{ background: "#1a1a2e", border: "1px solid #2d2d44", borderRadius: 12, color: "#9ca3af", fontSize: "1rem", fontWeight: 600, padding: "14px 28px", cursor: "pointer" }}>
@@ -516,7 +548,7 @@ export default function Home() {
       </div>
 
       {/* Timer */}
-      <div style={{ position: "relative", width: 80, height: 80, marginBottom: 24 }}>
+      {gameStateRef.current.timerDuration !== 0 && <div style={{ position: "relative", width: 80, height: 80, marginBottom: 24 }}>
         <svg width="80" height="80" style={{ transform: "rotate(-90deg)" }}>
           <circle cx="40" cy="40" r="34" fill="none" stroke="#1a1a2e" strokeWidth="6" />
           <circle cx="40" cy="40" r="34" fill="none"
@@ -527,7 +559,7 @@ export default function Home() {
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: timeLeft <= 1 ? "#ef4444" : "#fff" }}>
           {selected ? "✓" : timeLeft}
         </div>
-      </div>
+      </div>}
 
       {showStreak && (
         <div style={{ position: "fixed", top: "30%", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius: 16, padding: "12px 24px", fontSize: 22, fontWeight: 900, zIndex: 100 }}>
