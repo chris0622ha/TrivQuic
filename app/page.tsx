@@ -864,9 +864,7 @@ export default function Home() {
       <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px" }}>
         <div style={{ fontSize:13, color:"#f59e0b", marginBottom:14, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
           🏆 Global Leaderboard
-          <span style={{ color:"#4b5563", fontWeight:400, marginLeft:8, textTransform:"none", letterSpacing:0 }}>
-            {globalLB.length} players
-          </span>
+
         </div>
         <div style={{ maxHeight: expanded ? 420 : "none", overflowY: expanded ? "auto" : "visible" }}>
           {visible.map((e, i) => {
