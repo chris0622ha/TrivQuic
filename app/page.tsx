@@ -307,9 +307,20 @@ export default function Home() {
       <button onClick={startGame} style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:14, color:"#fff", fontSize:"1.2rem", fontWeight:800, padding:"18px 48px", cursor:"pointer", marginBottom:32 }}>
         START GAME ⚡
       </button>
-      <a href="/multiplayer" style={{ display:"block", width:"100%", maxWidth:400, background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:14, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"14px", cursor:"pointer", marginBottom:12, textAlign:"center", textDecoration:"none" }}>
-        🎮 Multiplayer Mode
-      </a>
+      <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px", marginBottom:12 }}>
+        <div style={{ fontSize:12, color:"#6b7280", marginBottom:12, letterSpacing:"0.05em", textTransform:"uppercase" }}>Multiplayer</div>
+        <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"12px", cursor:"pointer", marginBottom:10, textAlign:"center", textDecoration:"none" }}>
+          🎮 Host a Game
+        </a>
+        <div style={{ display:"flex", gap:8 }}>
+          <input id="jc" maxLength={6} placeholder="GAME CODE"
+            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:16, fontWeight:700, letterSpacing:"0.2em", padding:"11px 14px", outline:"none", textTransform:"uppercase" }} />
+          <button onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); if (c) window.location.href = `/multiplayer?join=${c}`; else window.location.href = "/multiplayer"; }}
+            style={{ background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"0.9rem", fontWeight:800, padding:"11px 18px", cursor:"pointer", whiteSpace:"nowrap" }}>
+            Join →
+          </button>
+        </div>
+      </div>
       <LeaderboardView />
     </div>
   );
