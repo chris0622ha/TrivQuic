@@ -70,6 +70,7 @@ export default function Home() {
   const [globalLB, setGlobalLB] = useState<any[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [modal, setModal] = useState<"about"|"updates"|null>(null);
 
   // Settings
   const [category, setCategory] = useState("all");
@@ -105,6 +106,13 @@ export default function Home() {
       }
     });
     return () => unsub();
+  }, []);
+
+  // Footer modal event listener
+  useEffect(() => {
+    const handler = (e: Event) => setModal((e as CustomEvent).detail);
+    window.addEventListener("onetap-modal", handler);
+    return () => window.removeEventListener("onetap-modal", handler);
   }, []);
 
   // Subscribe to global leaderboard
@@ -210,6 +218,62 @@ export default function Home() {
   const pct = (qIndex / (questions.length || 1)) * 100;
   const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
+  // ── MODALS ──────────────────────────────────────────────────────────────
+  const Modal = ({ type }: { type: "about"|"updates" }) => (
+    <div
+      onClick={() => setModal(null)}
+      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:400, position:"relative", color:"#fff" }}
+      >
+        <button
+          onClick={() => setModal(null)}
+          style={{ position:"absolute", top:14, right:16, background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}
+        >×</button>
+
+        {type === "about" && (<>
+          <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>⚡ About</div>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
+            <strong style={{ color:"#f59e0b" }}>One-Tap Trivia</strong> is a fast-paced trivia game built for people who hate slow trivia games. 3 seconds. One tap. No mercy.
+          </p>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
+            Play solo across 6 categories — Geography, Science, History, Math, Sports, and Entertainment — or go head-to-head with friends in real-time multiplayer.
+          </p>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>
+            Built with Next.js, Firebase, and a lot of caffeine. Free to play, no ads, no nonsense.
+          </p>
+          <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563" }}>
+            Made by chris0622ha · 2025
+          </div>
+        </>)}
+
+        {type === "updates" && (<>
+          <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
+          {[
+            { version:"v1.3", date:"Jun 2025", items:["Google sign-in added", "About & Updates modals"] },
+            { version:"v1.2", date:"Jun 2025", items:["Global Firebase leaderboard (live across all players)", "Bug fix: result screen showing 0/total"] },
+            { version:"v1.1", date:"Jun 2025", items:["Category picker (Geography, Science, History, Math, Sports, Entertainment)", "Round size selector: 10 / 20 / 30 questions", "Play Again now replays same category & round size"] },
+            { version:"v1.0", date:"Jun 2025", items:["Initial launch: solo mode + real-time multiplayer", "3-second timer, streak bonuses, leaderboard"] },
+          ].map(({ version, date, items }) => (
+            <div key={version} style={{ marginBottom:16 }}>
+              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
+                <span style={{ color:"#f59e0b", fontWeight:800, fontSize:14 }}>{version}</span>
+                <span style={{ color:"#4b5563", fontSize:12 }}>{date}</span>
+              </div>
+              {items.map(item => (
+                <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid #2d2d44", marginBottom:3 }}>
+                  {item}
+                </div>
+              ))}
+            </div>
+          ))}
+        </>)}
+      </div>
+    </div>
+  );
+
   // ── AUTH HEADER ─────────────────────────────────────────────────────────
   const AuthHeader = () => (
     <div style={{ position: "fixed", top: 0, right: 0, padding: "12px 16px", zIndex: 200, display: "flex", alignItems: "center", gap: 10 }}>
@@ -277,6 +341,7 @@ export default function Home() {
   if (screen === "home") return (
     <div style={{ minHeight: "100vh", background: "#0f0f1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", color: "#fff" }}>
       <AuthHeader />
+      {modal && <Modal type={modal} />}
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ fontSize: 56, marginBottom: 8 }}>⚡</div>
         <h1 style={{ fontSize: "2.8rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0, background: "linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
