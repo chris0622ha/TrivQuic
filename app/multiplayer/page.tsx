@@ -18,6 +18,14 @@ const CATEGORY_MAP: Record<string, any[]> = {
 
 const FUNNY_NAMES = ["QuizWizard","TriviaKing","BrainBlast","SmartCookie","FactMachine","QuizNinja","BrainBox","TriviaBot","WisdomSeeker","FactChecker","QuizMaster","BrainStorm","TriviaTitan","KnowledgeBomb","QuizChamp"];
 
+const TIMER_OPTIONS = [
+  { label: "3s",  value: 3 },
+  { label: "5s",  value: 5 },
+  { label: "10s", value: 10 },
+  { label: "15s", value: 15 },
+  { label: "∞",   value: 0 },
+];
+
 function shuffle(arr: any[]) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -75,7 +83,7 @@ export default function MultiplayerPage() {
   // Host settings
   const [category, setCategory] = useState("all");
   const [maxPlayers, setMaxPlayers] = useState(10);
-  const [timerEnabled, setTimerEnabled] = useState(true);
+  const [timerDuration, setTimerDuration] = useState(3);
   const [autoName, setAutoName] = useState(false);
 
   // Game state
@@ -122,7 +130,7 @@ export default function MultiplayerPage() {
         setCurrentQ(q);
         setOptions(shuffle([q.a, ...q.w]));
         setSelected(null);
-        setTimeLeft(game.timerEnabled ? 3 : 99);
+        setTimeLeft(game.timerDuration > 0 ? game.timerDuration : 99);
         answeredRef.current = false;
       }
     }
@@ -130,7 +138,7 @@ export default function MultiplayerPage() {
 
   // Timer for current question
   useEffect(() => {
-    if (view !== "game" || selected !== null || !game?.timerEnabled) return;
+    if (view !== "game" || selected !== null || !game?.timerEnabled || game?.timerDuration === 0) return;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
@@ -164,7 +172,7 @@ export default function MultiplayerPage() {
     const qs = shuffle(CATEGORY_MAP[category]).slice(0, 20).map(q => ({ q: q.q, a: q.a, w: q.w }));
     await set(ref(db, `games/${id}`), {
       id, hostId: playerId, phase: "lobby",
-      category, maxPlayers, timerEnabled,
+      category, maxPlayers, timerDuration, timerEnabled: timerDuration > 0,
       currentQuestion: 0, questions: qs,
       players: { [playerId]: { name, score: 0, streak: 0, answered: false, isHost: true } },
       bannedNames: [],
@@ -311,9 +319,17 @@ export default function MultiplayerPage() {
         <input type="number" min={2} max={50} value={maxPlayers} onChange={e => setMaxPlayers(Number(e.target.value))}
           style={s.input} />
 
+        <div style={s.label}>Timer Speed</div>
+        <div style={{ display:"flex", gap:6, marginBottom:18 }}>
+          {TIMER_OPTIONS.map(({ label, value }) => (
+            <button key={value} style={s.toggle(timerDuration === value)} onClick={() => setTimerDuration(value)}>
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div style={s.label}>Options</div>
         <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const, marginBottom:18 }}>
-          <button style={s.toggle(timerEnabled)} onClick={() => setTimerEnabled(!timerEnabled)}>⏱ {timerEnabled ? "Timer ON" : "Timer OFF"}</button>
           <button style={s.toggle(autoName)} onClick={() => setAutoName(!autoName)}>🎲 {autoName ? "Auto Name ON" : "Auto Name OFF"}</button>
         </div>
 
@@ -352,7 +368,7 @@ export default function MultiplayerPage() {
           {isHost ? (
             <>
               <div style={{ fontSize:12, color:"#4b5563", marginTop:12, marginBottom:14 }}>
-                Category: {game?.category} · Timer: {game?.timerEnabled ? "ON" : "OFF"} · 20 questions
+                Category: {game?.category} · Timer: {game?.timerDuration > 0 ? `${game.timerDuration}s` : "∞"} · 20 questions
               </div>
               <button style={s.btn()} onClick={startGame}>▶ Start Game</button>
             </>
