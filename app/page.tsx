@@ -610,12 +610,19 @@ export default function Home() {
                 value={timerDuration === 0 ? "" : String(timerDuration)}
                 placeholder="e.g. 3"
                 disabled={timerDuration === 0}
+                onFocus={(e) => e.target.select()}
+                onBlur={(e) => {
+                  if (e.target.value === "" && timerDuration !== 0) {
+                    setTimerDuration(3);
+                    try { localStorage.setItem("onetap_timer", "3"); } catch {}
+                  }
+                }}
                 onChange={(e) => {
                   const raw = e.target.value;
                   if (raw === "∞") { setTimerDuration(0); try { localStorage.setItem("onetap_timer", "0"); } catch {}; return; }
                   const cleaned = raw.replace(/[^0-9]/g, "");
+                  if (cleaned === "") { setTimerDuration(0); return; }
                   const num = Math.min(900, Math.max(1, Number(cleaned) || 1));
-                  if (cleaned === "") return;
                   setTimerDuration(num);
                   try { localStorage.setItem("onetap_timer", String(num)); } catch {}
                 }}
