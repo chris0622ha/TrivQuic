@@ -103,6 +103,7 @@ async function saveToGlobalLB(uid: string, displayName: string, username: string
     const lbName = displayName.toLowerCase() !== username.toLowerCase()
       ? `${displayName}(${username})`
       : displayName;
+    score = Math.max(0, Math.min(999999, Math.floor(score)));
     if (snap.exists() && snap.val().score >= score) {
       await update(lbRef, { name: lbName });
       return;
