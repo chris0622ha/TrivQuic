@@ -1,5 +1,4 @@
 "use client";
-export const dynamic = "force-dynamic";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { db, auth, googleProvider } from "../lib/firebase";
@@ -858,9 +857,72 @@ const NAV = [
   { id:"users",         icon:"👥", label:"Users" },
   { id:"leaderboard",   icon:"🏆", label:"Leaderboard" },
   { id:"reports",       icon:"🚩", label:"Reports" },
+  { id:"chatreports",   icon:"💬", label:"Chat Reports" },
   { id:"duels",         icon:"⚔️", label:"Duels" },
   { id:"bans",          icon:"🔨", label:"Bans" },
 ];
+
+// ── CHAT REPORTS PANEL ───────────────────────────────────────────────────────
+function ChatReportsPanel() {
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { msg, flash } = useFlash();
+
+  useEffect(() => {
+    const r = ref(db, "chatReports");
+    const unsub = onValue(r, snap => {
+      if (!snap.exists()) { setReports([]); setLoading(false); return; }
+      const list = Object.entries(snap.val() as any).map(([key, d]: any) => ({ key, ...d }));
+      setReports(list.sort((a: any, b: any) => b.reportedAt - a.reportedAt));
+      setLoading(false);
+    });
+    return () => off(r);
+  }, []);
+
+  async function dismiss(key: string) {
+    await remove(ref(db, `chatReports/${key}`));
+    setReports(r => r.filter((x: any) => x.key !== key));
+    flash("Dismissed");
+  }
+
+  async function deleteMessage(report: any) {
+    // Delete the actual message from the chat
+    await remove(ref(db, `chats/${report.chatKey}/messages/${report.msgKey}`));
+    await remove(ref(db, `chatReports/${report.key}`));
+    setReports(r => r.filter((x: any) => x.key !== report.key));
+    flash("Message deleted from chat");
+  }
+
+  return (
+    <div>
+      <h1 style={c.h1}>💬 Chat Reports ({reports.length})</h1>
+      <Flash msg={msg} />
+      <div style={c.card}>
+        {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
+          reports.length === 0 ? <div style={{ color:"#4b5563" }}>No chat reports — all clear!</div> :
+          reports.map((r: any) => (
+            <div key={r.key} style={{ ...c.row, alignItems:"flex-start" }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                  <span style={{ fontWeight:700, color:"#ef4444" }}>{r.senderName}</span>
+                  <span style={{ fontSize:11, color:"#4b5563" }}>reported by {r.reporterName}</span>
+                </div>
+                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, padding:"8px 12px", fontSize:13, color:"#e5e7eb", marginBottom:4 }}>
+                  "{r.text}"
+                </div>
+                <div style={{ fontSize:11, color:"#4b5563" }}>{r.reportedAtStr}</div>
+              </div>
+              <div style={{ display:"flex", gap:6, flexShrink:0, marginLeft:10 }}>
+                <button onClick={() => deleteMessage(r)} style={btn("r")}>Delete msg</button>
+                <button onClick={() => dismiss(r.key)} style={btn()}>Dismiss</button>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
 
 // ── DUELS ADMIN PANEL ────────────────────────────────────────────────────────
 function DuelsAdminPanel() {
@@ -1003,6 +1065,7 @@ export default function AdminPage() {
         {tab==="users"         && <UsersPanel />}
         {tab==="leaderboard"   && <LeaderboardPanel />}
         {tab==="reports"       && <ReportsPanel />}
+        {tab==="chatreports"   && <ChatReportsPanel />}
         {tab==="duels"         && <DuelsAdminPanel />}
         {tab==="bans"          && <BansPanel initUid={initBanUid} />}
       </div>
