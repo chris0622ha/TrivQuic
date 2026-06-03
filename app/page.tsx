@@ -987,11 +987,21 @@ export default function Home() {
 
   // ── LEADERBOARD WIDGET ───────────────────────────────────────────────────────
   const TIMER_BUCKETS = [
-    { label: "All", min: -1, max: Infinity },
-    { label: "1–5s",  min: 1,  max: 5 },
-    { label: "6–15s", min: 6,  max: 15 },
-    { label: "16+s",  min: 16, max: Infinity },
-    { label: "∞",     min: 0,  max: 0 },
+    { label: "All",    min: -1, max: Infinity },
+    { label: "1s",     min: 1,  max: 1 },
+    { label: "2s",     min: 2,  max: 2 },
+    { label: "3s",     min: 3,  max: 3 },
+    { label: "4s",     min: 4,  max: 4 },
+    { label: "5s",     min: 5,  max: 5 },
+    { label: "6–8s",   min: 6,  max: 8 },
+    { label: "9–10s",  min: 9,  max: 10 },
+    { label: "11–15s", min: 11, max: 15 },
+    { label: "16–20s", min: 16, max: 20 },
+    { label: "21–30s", min: 21, max: 30 },
+    { label: "31–60s", min: 31, max: 60 },
+    { label: "61–120s",min: 61, max: 120 },
+    { label: "2m+",    min: 121,max: Infinity },
+    { label: "∞",      min: 0,  max: 0 },
   ];
 
   const LeaderboardView = () => {
