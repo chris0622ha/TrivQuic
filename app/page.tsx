@@ -350,8 +350,8 @@ export default function Home() {
         <p style={{ color: "#6b7280", marginTop: 8, fontSize: "1.1rem" }}>3 seconds. One tap. No mercy.</p>
       </div>
 
-      {/* Name */}
-      <div style={{ width: "100%", maxWidth: 400, background: "#1a1a2e", borderRadius: 16, padding: "20px 24px", marginBottom: 16 }}>
+      {/* Name field — full width above columns */}
+      <div style={{ width: "100%", maxWidth: 860, background: "#1a1a2e", borderRadius: 16, padding: "16px 24px", marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, letterSpacing: "0.05em", textTransform: "uppercase" }}>Your name</div>
         <input
           value={name}
@@ -361,73 +361,87 @@ export default function Home() {
         />
       </div>
 
-      {/* Category picker */}
-      <div style={{ width: "100%", maxWidth: 400, background: "#1a1a2e", borderRadius: 16, padding: "20px 24px", marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, letterSpacing: "0.05em", textTransform: "uppercase" }}>Category</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {Object.entries(CATEGORY_MAP).map(([key, cat]) => (
+      {/* Two-column layout */}
+      <div style={{ width: "100%", maxWidth: 860, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
+
+        {/* LEFT — Solo */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", paddingLeft: 4 }}>⚡ Solo</div>
+
+          {/* Category picker */}
+          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>Category</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {Object.entries(CATEGORY_MAP).map(([key, cat]) => (
+                <button
+                  key={key}
+                  onClick={() => { setCategory(key); try { localStorage.setItem("onetap_category", key); } catch {} }}
+                  style={{
+                    background: category === key ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${category === key ? "#f59e0b" : "#2d2d44"}`,
+                    borderRadius: 10, color: category === key ? "#f59e0b" : "#9ca3af",
+                    fontSize: 12, fontWeight: 600, padding: "9px 6px", cursor: "pointer", transition: "all 0.15s",
+                    gridColumn: key === "all" ? "span 2" : "span 1",
+                  }}
+                >
+                  {cat.emoji} {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Round size */}
+          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>Questions per round</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {ROUND_SIZES.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => { setRoundSize(n); try { localStorage.setItem("onetap_round", String(n)); } catch {} }}
+                  style={{
+                    flex: 1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${roundSize === n ? "#f59e0b" : "#2d2d44"}`,
+                    borderRadius: 10, color: roundSize === n ? "#f59e0b" : "#9ca3af",
+                    fontSize: 15, fontWeight: 700, padding: "10px 0", cursor: "pointer", transition: "all 0.15s",
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => startGame(category, roundSize)}
+            style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 14, color: "#fff", fontSize: "1.1rem", fontWeight: 800, padding: "16px", cursor: "pointer", width: "100%" }}
+          >
+            START GAME ⚡
+          </button>
+        </div>
+
+        {/* RIGHT — Multiplayer */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 11, color: "#10b981", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", paddingLeft: 4 }}>🎮 Multiplayer</div>
+
+          <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <a href="/multiplayer" style={{ display: "block", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", borderRadius: 10, color: "#10b981", fontSize: "1rem", fontWeight: 800, padding: "13px", cursor: "pointer", textAlign: "center", textDecoration: "none" }}>
+              🎮 Host a Game
+            </a>
+            <div style={{ fontSize: 11, color: "#4b5563", textAlign: "center", letterSpacing: "0.05em" }}>— or join with a code —</div>
+            <input id="jc" maxLength={6} placeholder="GAME CODE"
+              style={{ width: "100%", background: "#0f0f1a", border: "1px solid #2d2d44", borderRadius: 10, color: "#fff", fontSize: 18, fontWeight: 700, letterSpacing: "0.3em", padding: "11px 14px", outline: "none", textTransform: "uppercase", boxSizing: "border-box", textAlign: "center" }} />
             <button
-              key={key}
-              onClick={() => { setCategory(key); try { localStorage.setItem("onetap_category", key); } catch {} }}
-              style={{
-                background: category === key ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${category === key ? "#f59e0b" : "#2d2d44"}`,
-                borderRadius: 10, color: category === key ? "#f59e0b" : "#9ca3af",
-                fontSize: 13, fontWeight: 600, padding: "10px 8px", cursor: "pointer", transition: "all 0.15s",
-                gridColumn: key === "all" ? "span 2" : "span 1",
-              }}
+              onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); window.location.href = c ? `/multiplayer?join=${c}` : "/multiplayer"; }}
+              style={{ width: "100%", background: "linear-gradient(135deg,#10b981,#059669)", border: "none", borderRadius: 10, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "13px", cursor: "pointer" }}
             >
-              {cat.emoji} {cat.label}
+              Join Game →
             </button>
-          ))}
+          </div>
+
+          {/* Leaderboard on the right below multiplayer */}
+          <LeaderboardView />
         </div>
       </div>
-
-      {/* Round size */}
-      <div style={{ width: "100%", maxWidth: 400, background: "#1a1a2e", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, letterSpacing: "0.05em", textTransform: "uppercase" }}>Questions per round</div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {ROUND_SIZES.map((n) => (
-            <button
-              key={n}
-              onClick={() => { setRoundSize(n); try { localStorage.setItem("onetap_round", String(n)); } catch {} }}
-              style={{
-                flex: 1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${roundSize === n ? "#f59e0b" : "#2d2d44"}`,
-                borderRadius: 10, color: roundSize === n ? "#f59e0b" : "#9ca3af",
-                fontSize: 15, fontWeight: 700, padding: "10px 0", cursor: "pointer", transition: "all 0.15s",
-              }}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button
-        onClick={() => startGame(category, roundSize)}
-        style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", borderRadius: 14, color: "#fff", fontSize: "1.2rem", fontWeight: 800, padding: "18px 48px", cursor: "pointer", marginBottom: 32 }}
-      >
-        START GAME ⚡
-      </button>
-
-      {/* Multiplayer */}
-      <div style={{ width: "100%", maxWidth: 400, background: "#1a1a2e", borderRadius: 16, padding: "20px", marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, letterSpacing: "0.05em", textTransform: "uppercase" }}>Multiplayer</div>
-        <a href="/multiplayer" style={{ display: "block", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", borderRadius: 10, color: "#10b981", fontSize: "1rem", fontWeight: 800, padding: "12px", cursor: "pointer", marginBottom: 10, textAlign: "center", textDecoration: "none" }}>
-          🎮 Host a Game
-        </a>
-        <input id="jc" maxLength={6} placeholder="GAME CODE"
-          style={{ width: "100%", background: "#0f0f1a", border: "1px solid #2d2d44", borderRadius: 10, color: "#fff", fontSize: 18, fontWeight: 700, letterSpacing: "0.3em", padding: "11px 14px", outline: "none", textTransform: "uppercase", marginBottom: 8, boxSizing: "border-box" }} />
-        <button
-          onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); window.location.href = c ? `/multiplayer?join=${c}` : "/multiplayer"; }}
-          style={{ width: "100%", background: "linear-gradient(135deg,#10b981,#059669)", border: "none", borderRadius: 10, color: "#fff", fontSize: "1rem", fontWeight: 800, padding: "12px", cursor: "pointer" }}
-        >
-          Join Game →
-        </button>
-      </div>
-
-      <LeaderboardView />
 
       {/* Footer */}
       <div style={{ display: "flex", gap: 8, marginTop: 24, marginBottom: 8 }}>
