@@ -363,6 +363,22 @@ export default function Home() {
       </div>
 
       <LeaderboardView />
+
+      {/* Footer */}
+      <div style={{ display: "flex", gap: 8, marginTop: 24, marginBottom: 8 }}>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail: "about" }))}
+          style={{ background: "transparent", border: "1px solid #2d2d44", borderRadius: 8, color: "#4b5563", fontSize: 12, fontWeight: 600, padding: "6px 14px", cursor: "pointer", letterSpacing: "0.04em" }}
+        >
+          About
+        </button>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail: "updates" }))}
+          style={{ background: "transparent", border: "1px solid #2d2d44", borderRadius: 8, color: "#4b5563", fontSize: 12, fontWeight: 600, padding: "6px 14px", cursor: "pointer", letterSpacing: "0.04em" }}
+        >
+          Updates
+        </button>
+      </div>
     </div>
   );
 
