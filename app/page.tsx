@@ -207,6 +207,7 @@ export default function Home() {
   }, []);
 
   const resultsRef = useRef({ score: 0, correct: 0, total: 0, bestStreak: 0 });
+  const [results, setResults] = useState({ score: 0, correct: 0, total: 0, bestStreak: 0 });
 
   const endGame = useCallback((finalScore: number, finalBest: number, finalCorrect: number, finalTotal: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -312,14 +313,12 @@ export default function Home() {
         <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"12px", cursor:"pointer", marginBottom:10, textAlign:"center", textDecoration:"none" }}>
           🎮 Host a Game
         </a>
-        <div style={{ display:"flex", gap:8 }}>
-          <input id="jc" maxLength={6} placeholder="GAME CODE"
-            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:16, fontWeight:700, letterSpacing:"0.2em", padding:"11px 14px", outline:"none", textTransform:"uppercase" }} />
-          <button onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); if (c) window.location.href = `/multiplayer?join=${c}`; else window.location.href = "/multiplayer"; }}
-            style={{ background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"0.9rem", fontWeight:800, padding:"11px 18px", cursor:"pointer", whiteSpace:"nowrap" }}>
-            Join →
-          </button>
-        </div>
+        <input id="jc" maxLength={6} placeholder="GAME CODE"
+          style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, letterSpacing:"0.3em", padding:"11px 14px", outline:"none", textTransform:"uppercase", marginBottom:8 }} />
+        <button onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); if (c) window.location.href = `/multiplayer?join=${c}`; else window.location.href = "/multiplayer"; }}
+          style={{ width:"100%", background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"12px", cursor:"pointer" }}>
+          Join Game →
+        </button>
       </div>
       <LeaderboardView />
     </div>
@@ -330,12 +329,12 @@ export default function Home() {
     return (
     <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
       <div style={{ textAlign:"center", marginBottom:32 }}>
-        <div style={{ fontSize:64, marginBottom:8 }}>{r.correct >= 17 ? "🏆" : r.correct >= 12 ? "🔥" : r.correct >= 7 ? "👍" : "💀"}</div>
-        <h2 style={{ fontSize:"2rem", fontWeight:900, margin:0 }}>{r.correct >= 17 ? "Legendary!" : r.correct >= 12 ? "On Fire!" : r.correct >= 7 ? "Not Bad!" : "Keep Practicing!"}</h2>
-        <p style={{ color:"#6b7280", marginTop:6 }}>{r.correct}/{r.total} correct</p>
+        <div style={{ fontSize:64, marginBottom:8 }}>{results.correct >= 17 ? "🏆" : r.correct >= 12 ? "🔥" : r.correct >= 7 ? "👍" : "💀"}</div>
+        <h2 style={{ fontSize:"2rem", fontWeight:900, margin:0 }}>{results.correct >= 17 ? "Legendary!" : r.correct >= 12 ? "On Fire!" : r.correct >= 7 ? "Not Bad!" : "Keep Practicing!"}</h2>
+        <p style={{ color:"#6b7280", marginTop:6 }}>{results.correct}/{results.total} correct</p>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:32, width:"100%", maxWidth:400 }}>
-        {[["Score", r.score, "#f59e0b"], ["Best Streak", r.bestStreak + "🔥", "#ef4444"], ["Accuracy", Math.round((r.correct/(r.total||1))*100) + "%", "#10b981"]].map(([label, val, color]) => (
+        {[["Score", results.score, "#f59e0b"], ["Best Streak", results.bestStreak + "🔥", "#ef4444"], ["Accuracy", Math.round((results.correct/(results.total||1))*100) + "%", "#10b981"]].map(([label, val, color]) => (
           <div key={label as string} style={{ background:"#1a1a2e", borderRadius:12, padding:"16px 12px", textAlign:"center" }}>
             <div style={{ fontSize:22, fontWeight:900, color:color as string }}>{val}</div>
             <div style={{ fontSize:11, color:"#6b7280", marginTop:4, textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
