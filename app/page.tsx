@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, auth, googleProvider } from "./lib/firebase";
-import { ref, get, set, update, onValue, off, query, orderByChild, equalTo } from "firebase/database";
+import { ref, get, set, update, remove, onValue, off, query, orderByChild, equalTo } from "firebase/database";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 
