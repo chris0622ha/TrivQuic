@@ -1,5 +1,4 @@
 "use client";
-export const dynamic = "force-dynamic";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { db, auth, googleProvider } from "./lib/firebase";
@@ -721,8 +720,27 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
 function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:string; friend:any; onClose:()=>void }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
+  const [reportedKey, setReportedKey] = useState<string|null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatKey = [myUid, friend.uid].sort().join("_");
+
+  async function reportMessage(m: any, msgKey: string) {
+    if (reportedKey === msgKey) return;
+    await set(ref(db, `chatReports/${Date.now()}_${myUid.slice(0,6)}`), {
+      chatKey,
+      msgKey,
+      senderUid: m.senderUid,
+      senderName: m.senderName,
+      reporterUid: myUid,
+      reporterName: myName,
+      text: m.text,
+      ts: m.ts,
+      reportedAt: Date.now(),
+      reportedAtStr: new Date().toLocaleString(),
+    });
+    setReportedKey(msgKey);
+    setTimeout(() => setReportedKey(null), 3000);
+  }
 
   useEffect(() => {
     const msgRef = ref(db, `chats/${chatKey}/messages`);
@@ -774,8 +792,16 @@ function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:st
           )}
           {messages.map((m:any, i) => {
             const isMe = m.senderUid === myUid;
+            const msgKey = String(m.ts) + "_" + i;
+            const justReported = reportedKey === msgKey;
             return (
-              <div key={i} style={{ display:"flex", justifyContent: isMe?"flex-end":"flex-start" }}>
+              <div key={i} style={{ display:"flex", justifyContent: isMe?"flex-end":"flex-start", alignItems:"flex-end", gap:4 }}>
+                {!isMe && (
+                  <button onClick={() => reportMessage(m, msgKey)} title="Report message"
+                    style={{ background:"transparent", border:"none", color: justReported?"#10b981":"#2d2d44", fontSize:11, cursor:"pointer", padding:"0 2px", flexShrink:0, lineHeight:1, alignSelf:"center" }}>
+                    {justReported ? "✓" : "🚩"}
+                  </button>
+                )}
                 <div style={{ maxWidth:"75%", background: isMe?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.06)", border:`1px solid ${isMe?"rgba(245,158,11,0.4)":"#2d2d44"}`, borderRadius: isMe?"14px 14px 2px 14px":"14px 14px 14px 2px", padding:"8px 12px" }}>
                   <div style={{ color:"#e5e7eb", fontSize:14, lineHeight:1.5 }}>{m.text}</div>
                   <div style={{ color:"#4b5563", fontSize:10, marginTop:2, textAlign:"right" }}>
@@ -1176,6 +1202,7 @@ export default function Home() {
         {type === "updates" && (<>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:16 }}>🆕 Updates</div>
           {[
+            { version:"v1.8", date:"Wednesday, Jun 4, 2026 · 4:30 AM", items:["Chat reporting — flag messages directly from chat, goes to admin Chat Reports panel", "Duels overhauled — 3–10 rounds, custom questions per round, break time between rounds", "Random matchmaking mode in duels", "Challenge a friend to a duel from your friends list", "Duel challenge notifications on home screen", "Friends chat with real-time messages and unread badge", "Build fixes — app now deploys reliably"] },
             { version:"v1.7", date:"Wednesday, Jun 4, 2026 · 12:14 AM", items:["Leaderboard filters by category, questions per round, and time limit", "Each leaderboard entry shows exact timer used", "Updates log now shows exact date and time"] },
             { version:"v1.6", date:"Tuesday, Jun 3, 2026 · 11:02 PM", items:["Username picker on first login — choose wisely (3 changes total)", "Leaderboard shows displayName(username) when name differs", "Two-way friend requests with accept/decline", "Red badge on avatar for pending requests", "Profile picture upload from device / photo library"] },
             { version:"v1.5", date:"Tuesday, Jun 3, 2026 · 9:45 PM", items:["User profiles with per-category stats", "Leaderboard now UID-keyed — no more duplicate names", "Profile modal accessible from your avatar"] },
