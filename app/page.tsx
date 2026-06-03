@@ -37,6 +37,18 @@ function shuffle(arr: any[]): any[] {
   return a;
 }
 
+// ── Badge component ──────────────────────────────────────────────────────────
+function Badges({ userData }: { userData: any }) {
+  if (!userData) return null;
+  return (
+    <span style={{ display:"inline-flex", alignItems:"center", gap:3, marginLeft:4 }}>
+      {userData.badge === "star"  && <span title="Loyal Player" style={{ fontSize:14 }}>⭐</span>}
+      {userData.badge === "check" && <span title="Verified"     style={{ fontSize:13, color:"#3b82f6", fontWeight:900 }}>✓</span>}
+      {userData.badge === "crown" && <span title="Champion"     style={{ fontSize:14 }}>👑</span>}
+    </span>
+  );
+}
+
 // ── User helpers ──────────────────────────────────────────────────────────────
 
 async function loadUserData(uid: string) {
@@ -409,7 +421,12 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
             )}
           </div>
           <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:"1.1rem", fontWeight:900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{displayName}</div>
+            <div style={{ fontSize:"1.1rem", fontWeight:900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:4 }}>
+              {displayName}
+              {userData?.badge === "star"  && <span title="Loyal Player" style={{ fontSize:16 }}>⭐</span>}
+              {userData?.badge === "check" && <span title="Verified"     style={{ fontSize:14, color:"#3b82f6", fontWeight:900 }}>✓</span>}
+              {userData?.badge === "crown" && <span title="Champion"     style={{ fontSize:16 }}>👑</span>}
+            </div>
             <div style={{ fontSize:11, color:"#6b7280", marginTop:2 }}>
               Friend ID: <span style={{ color:"#9ca3af", fontFamily:"monospace", fontSize:11 }}>{user.uid.slice(0,12)}…</span>
             </div>
@@ -676,6 +693,76 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
   );
 }
 
+// ── Report Modal ─────────────────────────────────────────────────────────────
+
+function ReportModal({ target, reporter, onClose }: { target: any; reporter: { uid: string; name: string }; onClose: () => void }) {
+  const [reason, setReason] = useState("");
+  const [note, setNote] = useState("");
+  const [sent, setSent] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const REASONS = ["Suspicious/impossible score", "Cheating", "Inappropriate name", "Other"];
+
+  async function submit() {
+    if (!reason) return;
+    setSaving(true);
+    try {
+      const reportKey = `${Date.now()}_${reporter.uid.slice(0,6)}`;
+      await set(ref(db, `reports/${reportKey}`), {
+        reportedName: target.name,
+        reportedUid: target.uid || null,
+        score: target.score,
+        category: target.category,
+        roundSize: target.roundSize,
+        timerDuration: target.timerDuration,
+        reason,
+        note: note.trim() || null,
+        reporterUid: reporter.uid,
+        reporterName: reporter.name,
+        date: new Date().toLocaleString(),
+        ts: Date.now(),
+      });
+      setSent(true);
+    } catch {}
+    setSaving(false);
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:380, color:"#fff" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+          <div style={{ fontSize:"1.1rem", fontWeight:900 }}>🚩 Report Score</div>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
+        </div>
+        {sent ? (
+          <div style={{ textAlign:"center", padding:"20px 0" }}>
+            <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
+            <div style={{ fontWeight:700, marginBottom:6 }}>Report submitted</div>
+            <div style={{ color:"#6b7280", fontSize:13 }}>An admin will review this.</div>
+            <button onClick={onClose} style={{ marginTop:16, background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)", borderRadius:10, color:"#f59e0b", fontWeight:700, padding:"10px 24px", cursor:"pointer" }}>Close</button>
+          </div>
+        ) : (<>
+          <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13 }}>
+            <span style={{ color:"#e5e7eb", fontWeight:700 }}>{target.name}</span>
+            <span style={{ color:"#f59e0b", fontWeight:800, marginLeft:10 }}>{target.score} pts</span>
+            <div style={{ color:"#4b5563", fontSize:11, marginTop:2 }}>{target.category} · {target.roundSize}Q · {target.timerDuration === 0 ? "∞" : `${target.timerDuration}s`}</div>
+          </div>
+          <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Reason</div>
+          {REASONS.map(r => (
+            <button key={r} onClick={() => setReason(r)} style={{ display:"block", width:"100%", background: reason===r ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${reason===r?"#ef4444":"#2d2d44"}`, borderRadius:8, color: reason===r ? "#ef4444" : "#9ca3af", fontWeight:600, fontSize:13, padding:"9px 14px", cursor:"pointer", marginBottom:6, textAlign:"left" }}>
+              {r}
+            </button>
+          ))}
+          <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Additional notes (optional)" style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:13, padding:"9px 12px", outline:"none", boxSizing:"border-box", resize:"vertical", minHeight:60, marginTop:4, marginBottom:12 }} />
+          <button onClick={submit} disabled={!reason||saving} style={{ width:"100%", background: reason ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "#1a1a2e", border:"none", borderRadius:10, color: reason ? "#fff" : "#4b5563", fontWeight:800, fontSize:"0.95rem", padding:"12px", cursor: reason ? "pointer" : "default" }}>
+            {saving ? "Submitting…" : "Submit Report"}
+          </button>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -699,6 +786,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|null>(null);
+  const [reportTarget, setReportTarget] = useState<any>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   const [category, setCategory] = useState("all");
@@ -735,7 +823,30 @@ export default function Home() {
           setName(data.username);
           try { localStorage.setItem("onetap_name", data.username); } catch {}
         }
+        // Log login
+        const loginKey = Date.now().toString();
+        try {
+          await set(ref(db, `users/${u.uid}/loginHistory/${loginKey}`), {
+            loginAt: new Date().toLocaleString(),
+            ts: Date.now(),
+          });
+          // Store session start in sessionStorage to calc duration on logout
+          sessionStorage.setItem("loginKey", loginKey);
+          sessionStorage.setItem("loginUid", u.uid);
+          sessionStorage.setItem("loginTs", Date.now().toString());
+        } catch {}
       } else {
+        // Log session duration on sign out
+        try {
+          const loginKey = sessionStorage.getItem("loginKey");
+          const loginUid = sessionStorage.getItem("loginUid");
+          const loginTs = sessionStorage.getItem("loginTs");
+          if (loginKey && loginUid && loginTs) {
+            const duration = Math.round((Date.now() - parseInt(loginTs)) / 60000);
+            await update(ref(db, `users/${loginUid}/loginHistory/${loginKey}`), { durationMin: duration });
+            sessionStorage.clear();
+          }
+        } catch {}
         setUserData(null);
       }
     });
@@ -986,8 +1097,11 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <span style={{ color:"#e5e7eb", fontSize:13, fontWeight:600, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            <span style={{ color:"#e5e7eb", fontSize:13, fontWeight:600, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:3 }}>
               {userData?.username || user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
+              {userData?.badge === "star"  && <span style={{ fontSize:12 }}>⭐</span>}
+              {userData?.badge === "check" && <span style={{ fontSize:11, color:"#3b82f6", fontWeight:900 }}>✓</span>}
+              {userData?.badge === "crown" && <span style={{ fontSize:12 }}>👑</span>}
             </span>
           </button>
           <button onClick={() => signOut(auth)}
@@ -1110,6 +1224,9 @@ export default function Home() {
                       <span style={{ fontSize: i < 3 ? 18 : 12, fontWeight:800, color: rankColor, width:28, textAlign:"right", flexShrink:0 }}>{rankLabel}</span>
                       <div>
                         <span style={{ color:"#e5e7eb", fontWeight:600, fontSize:14 }}>{e.name}</span>
+                        {e.badge === "star"  && <span title="Loyal Player" style={{ fontSize:13 }}>⭐</span>}
+                        {e.badge === "check" && <span title="Verified"     style={{ fontSize:12, color:"#3b82f6", fontWeight:900 }}>✓</span>}
+                        {e.badge === "crown" && <span title="Champion"     style={{ fontSize:13 }}>👑</span>}
                         <div style={{ fontSize:10, color:"#4b5563" }}>
                           {CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}
                           {e.roundSize != null ? ` · ${e.roundSize}Q` : ""}
@@ -1117,9 +1234,14 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                    <div style={{ textAlign:"right" }}>
+                    <div style={{ textAlign:"right", display:"flex", flexDirection:"column", alignItems:"flex-end", gap:2 }}>
                       <div style={{ color:"#f59e0b", fontWeight:800, fontSize:16 }}>{e.score}</div>
                       <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
+                      {user && (
+                        <button onClick={() => setReportTarget(e)} style={{ background:"transparent", border:"none", color:"#4b5563", fontSize:10, cursor:"pointer", padding:0, marginTop:1 }}>
+                          🚩 report
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1175,6 +1297,13 @@ export default function Home() {
           onUserDataChange={(d) => { setUserData(d); setName(d.username); try { localStorage.setItem("onetap_name", d.username); } catch {} }} />
       )}
       {(modal === "about" || modal === "updates") && <InfoModal type={modal} />}
+      {reportTarget && user && (
+        <ReportModal
+          target={reportTarget}
+          reporter={{ uid: user.uid, name: userData?.username || user.displayName?.split(" ")[0] || "Anonymous" }}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
 
       <div style={{ textAlign:"center", marginBottom:28 }}>
         <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
@@ -1259,6 +1388,7 @@ export default function Home() {
           <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 Multiplayer</div>
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
             <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>🎮 Host a Game</a>
+            <a href="/duels" style={{ display:"block", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:10, color:"#a5b4fc", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>⚔️ Duels — 1v1 Matchmaking</a>
             <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", letterSpacing:"0.05em" }}>— or join with a code —</div>
             <input id="jc" maxLength={6} placeholder="GAME CODE"
               style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, letterSpacing:"0.3em", padding:"11px 14px", outline:"none", textTransform:"uppercase", boxSizing:"border-box", textAlign:"center" }} />
@@ -1338,8 +1468,8 @@ export default function Home() {
         <svg width="80" height="80" style={{ transform:"rotate(-90deg)" }}>
           <circle cx="40" cy="40" r="34" fill="none" stroke="#1a1a2e" strokeWidth="6" />
           <circle cx="40" cy="40" r="34" fill="none" stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#f59e0b" : "#10b981"}
-            strokeWidth="6" strokeDasharray={213.6} strokeDashoffset={213.6 * (1 - timeLeft / 3)}
-            style={{ transition:"stroke-dashoffset 0.9s linear, stroke 0.3s" }} />
+            strokeWidth="6" strokeDasharray={213.6} strokeDashoffset={213.6 * (1 - timeLeft / gameStateRef.current.timerDuration)}
+            style={{ transition:`stroke-dashoffset ${Math.min(timeLeft, 1)}s linear, stroke 0.3s` }} />
         </svg>
         <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, fontWeight:900, color: timeLeft <= 1 ? "#ef4444" : "#fff" }}>
           {selected ? "✓" : timeLeft}
