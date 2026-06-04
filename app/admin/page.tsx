@@ -1178,45 +1178,161 @@ function AnalyticsPanel() {
 function MassPushPanel() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [mode, setMode] = useState<"all"|"individual"|"badge">("all");
+  const [targetInput, setTargetInput] = useState(""); // username or uid
+  const [badgeTarget, setBadgeTarget] = useState("star");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState("");
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
-  async function sendAll() {
+  useEffect(() => {
+    get(ref(db, "users")).then(snap => {
+      if (!snap.exists()) return;
+      const list = Object.entries(snap.val() as any).map(([uid, u]: any) => ({ uid, ...u }));
+      setAllUsers(list);
+    });
+  }, []);
+
+  async function sendPush(tokens: string[]) {
+    let sent = 0;
+    await Promise.all(tokens.map(async token => {
+      if (!token) return;
+      try {
+        const res = await fetch("/api/send-notification", {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({ token, title, body, url:"/" }),
+        });
+        if (res.ok) sent++;
+      } catch {}
+    }));
+    return sent;
+  }
+
+  async function handleSend() {
     if (!title || !body) return;
     setSending(true); setResult("");
     try {
-      const snap = await get(ref(db, "users"));
-      if (!snap.exists()) { setResult("No users found"); setSending(false); return; }
-      const tokens: string[] = [];
-      Object.values(snap.val() as any).forEach((u: any) => {
-        if (u.fcmToken && u.status?.notif !== false) tokens.push(u.fcmToken);
-      });
-      let sent = 0;
-      await Promise.all(tokens.map(async token => {
-        try {
-          await fetch("/api/send-notification", {
-            method:"POST", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ token, title, body, url:"/" }),
-          });
-          sent++;
-        } catch {}
-      }));
-      setResult(`Sent to ${sent} of ${tokens.length} users`);
-      setTitle(""); setBody("");
-    } catch (e: any) { setResult("Error: " + e.message); }
+      let tokens: string[] = [];
+
+      if (mode === "all") {
+        tokens = allUsers.filter(u => u.fcmToken && u.status?.notif !== false).map(u => u.fcmToken);
+      } else if (mode === "individual") {
+        const targets = selectedUsers.size > 0
+          ? allUsers.filter(u => selectedUsers.has(u.uid))
+          : allUsers.filter(u => {
+              const q = targetInput.trim().toLowerCase();
+              return q && (u.username?.toLowerCase() === q || u.uid === targetInput.trim());
+            });
+        tokens = targets.filter(u => u.fcmToken).map(u => u.fcmToken);
+        if (tokens.length === 0) { setResult("User not found or no FCM token"); setSending(false); return; }
+      } else if (mode === "badge") {
+        tokens = allUsers.filter(u => u.badge === badgeTarget && u.fcmToken && u.status?.notif !== false).map(u => u.fcmToken);
+        if (tokens.length === 0) { setResult(`No ${badgeTarget} badge users with notifications enabled`); setSending(false); return; }
+      }
+
+      const sent = await sendPush(tokens);
+      setResult(`✅ Sent to ${sent}/${tokens.length} recipients`);
+      if (mode !== "individual" || selectedUsers.size === 0) { setTitle(""); setBody(""); }
+    } catch (e: any) { setResult("❌ Error: " + e.message); }
     setSending(false);
   }
 
+  const BADGE_OPTIONS = ["star","bronze","silver","gold","tester","crown","check"];
+  const filteredUsers = allUsers.filter(u => {
+    const q = userSearch.toLowerCase();
+    return !q || u.username?.toLowerCase().includes(q) || u.uid?.includes(q);
+  }).slice(0, 20);
+
+  const ModePill = ({ id, label }: { id: typeof mode; label: string }) => (
+    <button onClick={() => { setMode(id); setSelectedUsers(new Set()); }} style={{
+      flex:1, background: mode===id?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.04)",
+      border:`1px solid ${mode===id?"#f59e0b":"#2d2d44"}`,
+      borderRadius:8, color:mode===id?"#f59e0b":"#6b7280",
+      fontSize:12, fontWeight:700, padding:"8px 4px", cursor:"pointer",
+    }}>{label}</button>
+  );
+
   return (
     <>
-      <label style={c.label}>Title</label>
-      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Notification title" style={c.input} />
+      {/* Mode selector */}
+      <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+        <ModePill id="all" label="📣 All Users" />
+        <ModePill id="individual" label="👤 Individual" />
+        <ModePill id="badge" label="🏅 By Badge" />
+      </div>
+
+      {/* Individual mode — search + multi-select */}
+      {mode === "individual" && (
+        <div style={{ marginBottom:14 }}>
+          <input value={userSearch} onChange={e => setUserSearch(e.target.value)}
+            placeholder="Search username…" style={c.input} />
+          <div style={{ maxHeight:160, overflowY:"auto" as const, border:"1px solid #2d2d44", borderRadius:8, marginTop:6 }}>
+            {filteredUsers.length === 0
+              ? <div style={{ padding:"10px 14px", color:"#4b5563", fontSize:13 }}>No users found</div>
+              : filteredUsers.map(u => (
+                <div key={u.uid} onClick={() => setSelectedUsers(prev => {
+                  const next = new Set(prev);
+                  next.has(u.uid) ? next.delete(u.uid) : next.add(u.uid);
+                  return next;
+                })} style={{
+                  display:"flex", alignItems:"center", gap:10, padding:"8px 14px",
+                  borderBottom:"1px solid #1e1e30", cursor:"pointer",
+                  background: selectedUsers.has(u.uid) ? "rgba(245,158,11,0.1)" : "transparent",
+                }}>
+                  <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${selectedUsers.has(u.uid)?"#f59e0b":"#4b5563"}`, background: selectedUsers.has(u.uid)?"#f59e0b":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    {selectedUsers.has(u.uid) && <span style={{ color:"#000", fontSize:10, fontWeight:900 }}>✓</span>}
+                  </div>
+                  <Avatar src={u.photoURL} name={u.username||"?"} size={24} />
+                  <span style={{ fontWeight:700, fontSize:13, color: selectedUsers.has(u.uid)?"#f59e0b":"#e5e7eb" }}>{u.username}</span>
+                  <BadgeIcon badge={u.badge} size={12} />
+                  {!u.fcmToken && <span style={{ fontSize:11, color:"#ef4444", marginLeft:"auto" }}>no token</span>}
+                </div>
+              ))
+            }
+          </div>
+          {selectedUsers.size > 0 && (
+            <div style={{ fontSize:12, color:"#f59e0b", marginTop:6 }}>
+              {selectedUsers.size} user{selectedUsers.size > 1 ? "s" : ""} selected
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Badge mode */}
+      {mode === "badge" && (
+        <div style={{ marginBottom:14 }}>
+          <div style={{ fontSize:11, color:"#6b7280", marginBottom:8 }}>Send to all users with this badge:</div>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap" as const }}>
+            {BADGE_OPTIONS.map(b => (
+              <button key={b} onClick={() => setBadgeTarget(b)} style={{
+                background: badgeTarget===b?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.04)",
+                border:`1px solid ${badgeTarget===b?"#f59e0b":"#2d2d44"}`,
+                borderRadius:8, color:badgeTarget===b?"#f59e0b":"#6b7280",
+                fontSize:12, fontWeight:700, padding:"6px 12px", cursor:"pointer",
+                display:"flex", alignItems:"center", gap:4,
+              }}>
+                <BadgeIcon badge={b} size={12} /> {b}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize:12, color:"#4b5563", marginTop:8 }}>
+            {allUsers.filter(u => u.badge === badgeTarget && u.fcmToken).length} eligible recipients
+          </div>
+        </div>
+      )}
+
+      {/* Title + Body */}
+      <label style={c.label}>Notification Title</label>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. New update!" style={c.input} />
       <label style={c.label}>Message</label>
-      <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="Notification body" style={c.textarea} />
-      <button onClick={sendAll} disabled={!title||!body||sending} style={{ ...btn("y"), width:"100%", opacity:(!title||!body||sending)?0.5:1 }}>
-        {sending ? "Sending…" : "📣 Send to All Users"}
+      <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="What do you want to say?" style={c.textarea} />
+
+      <button onClick={handleSend} disabled={!title||!body||sending} style={{ ...btn("y"), width:"100%", opacity:(!title||!body||sending)?0.5:1 }}>
+        {sending ? "Sending…" : mode==="all" ? "📣 Send to All Users" : mode==="badge" ? `🏅 Send to ${badgeTarget} badge users` : `📩 Send to ${selectedUsers.size || 1} user${selectedUsers.size > 1?"s":""}`}
       </button>
-      {result && <div style={{ marginTop:8, fontSize:13, color:"#10b981" }}>{result}</div>}
+      {result && <div style={{ marginTop:8, fontSize:13, color: result.startsWith("✅")?"#10b981":"#ef4444" }}>{result}</div>}
     </>
   );
 }
