@@ -1973,7 +1973,7 @@ export default function Home() {
   // ── HOME ──────────────────────────────────────────────────────────────────────
   // Maintenance mode — block non-admins
   if (maintenanceMode && !userData?.isAdmin) return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff", textAlign:"center" }}>
+    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"72px 20px 20px", color:"#fff", textAlign:"center" }}>
       <AuthHeader />
       <div style={{ fontSize:56, marginBottom:16 }}>🔧</div>
       <h1 style={{ fontSize:"2rem", fontWeight:900, margin:"0 0 12px" }}>Down for Maintenance</h1>
@@ -2200,10 +2200,10 @@ export default function Home() {
     const emoji = r.correct >= Math.round(r.total * 0.85) ? "🏆" : r.correct >= Math.round(r.total * 0.6) ? "🔥" : r.correct >= Math.round(r.total * 0.35) ? "👍" : "💀";
     const msg = r.correct >= Math.round(r.total * 0.85) ? "Legendary!" : r.correct >= Math.round(r.total * 0.6) ? "On Fire!" : r.correct >= Math.round(r.total * 0.35) ? "Not Bad!" : "Keep Practicing!";
     return (
-      <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px", color:"#fff" }}>
-        {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
+      <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"72px 16px 20px", color:"#fff" }}>
         <AuthHeader />
-        <div style={{ textAlign:"center", marginBottom:28 }}>
+        {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
+          <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontSize:64, marginBottom:8 }}>{emoji}</div>
           <h2 style={{ fontSize:"2rem", fontWeight:900, margin:0 }}>{msg}</h2>
           <p style={{ color:"#6b7280", marginTop:6 }}>{r.correct}/{r.total} correct · {CATEGORY_MAP[r.category]?.emoji} {CATEGORY_MAP[r.category]?.label}</p>
@@ -2229,7 +2229,7 @@ export default function Home() {
   // ── GAME ──────────────────────────────────────────────────────────────────────
   if (!q) return null;
   return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:"20px", color:"#fff" }}>
+    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:"72px 16px 20px", color:"#fff" }}>
       <AuthHeader />
       {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
       <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
@@ -2277,7 +2277,7 @@ export default function Home() {
           return (
             <button key={i} onClick={() => handleAnswer(opt, questions, qIndex)} disabled={!!selected}
               className={selected === opt ? anim : ""}
-              style={{ background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1a1a2e", border:`2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#2d2d44"}`, borderRadius:14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb", fontSize:"1rem", fontWeight:700, padding:"72px 16px 20px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3 }}>
+              style={{ background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1a1a2e", border:`2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#2d2d44"}`, borderRadius:14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb", fontSize:"1rem", fontWeight:700, padding:"18px 14px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3 }}>
               {opt}
             </button>
           );
