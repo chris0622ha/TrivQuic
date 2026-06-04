@@ -98,7 +98,7 @@ export const sports = [
   { q: "What is the pommel horse?", a: "A gymnastics apparatus", w: ["An equestrian obstacle", "A yoga prop", "A ballet bar"] },
   { q: "What are the events in modern pentathlon?", a: "Fencing, swimming, shooting, running, equestrian", w: ["5 track events", "Swimming, cycling, running, shooting, fencing", "Archery, swimming, running, cycling, climbing"] },
   { q: "What is the biathlon?", a: "Cross-country skiing and rifle shooting", w: ["Cycling and running", "Swimming and cycling", "Skiing and jumping"] },
-  { q: "What sport uses a cue?", a: "Billiards/Snooker/Pool", w: ["Shuffleboard", "Curling", "Bocce"] },,
+  { q: "What sport uses a cue?", a: "Billiards/Snooker/Pool", w: ["Shuffleboard", "Curling", "Bocce"] },
   { q: "How many players are on a basketball team on the court?", a: "5", w: ["6","4","7"], d: 1 },
   { q: "How many innings are in a standard MLB game?", a: "9", w: ["7","8","10"], d: 1 },
   { q: "What sport is played at Wimbledon?", a: "Tennis", w: ["Cricket","Badminton","Squash"], d: 1 },
