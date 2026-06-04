@@ -1610,6 +1610,26 @@ export default function Home() {
               {userData?.badge === "crown" && <span style={{ fontSize:12 }}>👑</span>}
             </span>
           </button>
+          {(pendingCount + unreadChats) > 0 && (
+            <button onClick={async () => {
+              // Clear all unread chat counts
+              if (!user) return;
+              try {
+                const { ref: r, get: g, update: u, off: o } = await import("firebase/database");
+                const snap = await g(r(db, "chats"));
+                if (snap.exists()) {
+                  const updates: any = {};
+                  Object.keys(snap.val()).forEach(key => {
+                    if (key.includes(user.uid)) updates[`chats/${key}/unread/${user.uid}`] = 0;
+                  });
+                  if (Object.keys(updates).length) await u(r(db), updates);
+                }
+              } catch {}
+            }} title="Clear all notifications"
+              style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#ef4444", fontSize:12, fontWeight:700, padding:"5px 10px", cursor:"pointer" }}>
+              🔔 Clear
+            </button>
+          )}
           <button onClick={() => signOut(auth)}
             style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
             Sign out
