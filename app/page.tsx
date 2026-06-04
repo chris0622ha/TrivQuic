@@ -14,7 +14,7 @@ import { sports } from "./data/sports";
 import { entertainment } from "./data/entertainment";
 
 const toQ = (arr: any[]) =>
-  arr.map((x) => ({ q: x.q, a: x.a, w: x.w ?? x.wrong ?? [] }));
+  arr.map((x) => ({ q: x.q, a: x.a, w: x.w ?? x.wrong ?? [], d: x.d ?? 2 }));
 
 const CATEGORY_MAP: Record<string, { label: string; emoji: string; questions: any[] }> = {
   all:           { label: "All Categories",  emoji: "🌎", questions: [...geography, ...science, ...history, ...math, ...sports, ...entertainment] },
@@ -1308,6 +1308,7 @@ export default function Home() {
   const [category, setCategory] = useState("all");
   const [roundSize, setRoundSize] = useState(20);
   const [timerDuration, setTimerDuration] = useState(3);
+  const [difficulty, setDifficulty] = useState<"easy"|"medium"|"hard"|"mixed">("mixed");
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerRef = useRef(false);
@@ -1625,12 +1626,16 @@ export default function Home() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [screen, qIndex, selected, questions, handleAnswer]);
 
-  function startGame(cat = category, size = roundSize, timer = timerDuration) {
+  function startGame(cat = category, size = roundSize, timer = timerDuration, diff = difficulty) {
     const base = toQ(CATEGORY_MAP[cat]?.questions ?? []);
     const custom = cat === "all"
       ? Object.values(customQuestions).flat()
       : toQ(customQuestions[cat] || []);
-    const pool = [...base, ...custom];
+    let pool = [...base, ...custom];
+    // Filter by difficulty
+    const diffMap: Record<string, number> = { easy: 1, medium: 2, hard: 3 };
+    if (diff !== "mixed") pool = pool.filter(q => q.d === diffMap[diff]);
+    if (pool.length < size) pool = [...base, ...custom]; // fallback if not enough
     const qs = shuffle(pool).slice(0, size);
     const firstOpts = shuffle([qs[0].a, ...qs[0].w]);
     gameStateRef.current = { streak: 0, bestStreak: 0, score: 0, correct: 0, total: 0, category: cat, timerDuration: timer };
@@ -2128,7 +2133,23 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <button onClick={() => startGame(category, roundSize, timerDuration)}
+          {/* Difficulty picker */}
+          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" as const }}>Difficulty</div>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const }}>
+              {([["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#f59e0b"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col]) => (
+                <button key={d} onClick={() => setDifficulty(d)} style={{
+                  flex:1, background: difficulty===d ? `rgba(${d==="easy"?"16,185,129":d==="medium"?"245,158,11":d==="hard"?"239,68,68":"168,85,247"},0.2)` : "rgba(255,255,255,0.04)",
+                  border:`1px solid ${difficulty===d ? col : "#2d2d44"}`,
+                  borderRadius:10, color: difficulty===d ? col : "#6b7280",
+                  fontSize:13, fontWeight:700, padding:"9px 4px", cursor:"pointer", whiteSpace:"nowrap" as const,
+                }}>{label}</button>
+              ))}
+            </div>
+            {difficulty === "mixed" && <div style={{ fontSize:11, color:"#6b7280", marginTop:8 }}>Shows difficulty label on each question as it appears</div>}
+          </div>
+
+          <button onClick={() => startGame(category, roundSize, timerDuration, difficulty)}
             style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:14, color:"#fff", fontSize:"1.1rem", fontWeight:800, padding:"16px", cursor:"pointer", width:"100%" }}>
             START GAME ⚡
           </button>
@@ -2242,6 +2263,17 @@ export default function Home() {
       </div>}
       {showStreak && <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius:16, padding:"12px 24px", fontSize:22, fontWeight:900, zIndex:100 }}>🔥 {streak}x STREAK!</div>}
       <div style={{ width:"100%", maxWidth:480, background:"#1a1a2e", borderRadius:20, padding:"28px 24px", marginBottom:20, textAlign:"center" }}>
+        {difficulty === "mixed" && q.d && (
+          <div style={{ marginBottom:10 }}>
+            <span style={{ fontSize:11, fontWeight:700, borderRadius:99, padding:"3px 10px",
+              background: q.d===1?"rgba(16,185,129,0.15)":q.d===3?"rgba(239,68,68,0.15)":"rgba(245,158,11,0.15)",
+              color: q.d===1?"#10b981":q.d===3?"#ef4444":"#f59e0b",
+              border: `1px solid ${q.d===1?"rgba(16,185,129,0.3)":q.d===3?"rgba(239,68,68,0.3)":"rgba(245,158,11,0.3)"}`,
+            }}>
+              {q.d===1?"🟢 Easy":q.d===3?"🔴 Hard":"🟡 Medium"}
+            </span>
+          </div>
+        )}
         <div style={{ fontSize:"1.3rem", fontWeight:700, lineHeight:1.4 }}>{q.q}</div>
       </div>
       <div style={{ width:"100%", maxWidth:480, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
