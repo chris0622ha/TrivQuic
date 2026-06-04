@@ -94,7 +94,7 @@ export const entertainment = [
   { q: "What year did Thriller album release?", a: "1982", w: ["1979", "1985", "1987"] },
   { q: "Who directed The Godfather?", a: "Francis Ford Coppola", w: ["Martin Scorsese", "Brian De Palma", "Sidney Lumet"] },
   { q: "Who directed Schindler's List?", a: "Steven Spielberg", w: ["Stanley Kubrick", "Martin Scorsese", "Oliver Stone"] },
-  { q: "Who directed Pulp Fiction?", a: "Quentin Tarantino", w: ["Ridley Scott", "Joel Coen", "Robert Rodriguez"] },,
+  { q: "Who directed Pulp Fiction?", a: "Quentin Tarantino", w: ["Ridley Scott", "Joel Coen", "Robert Rodriguez"] },
   { q: "Who played Iron Man in the MCU?", a: "Robert Downey Jr.", w: ["Chris Evans","Chris Hemsworth","Mark Ruffalo"], d: 1 },
   { q: "What is the highest-grossing film of all time?", a: "Avatar (2009)", w: ["Avengers: Endgame","Titanic","Star Wars: The Force Awakens"], d: 1 },
   { q: "Who sang Shape of You?", a: "Ed Sheeran", w: ["Justin Bieber","Harry Styles","Sam Smith"], d: 1 },
