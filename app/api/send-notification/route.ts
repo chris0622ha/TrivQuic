@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PROJECT_ID = "onetap-trivia";
 const FCM_URL = `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`;
+const DB = "https://onetap-trivia-default-rtdb.firebaseio.com";
 
 function toBase64Url(str: string): string {
   return btoa(str).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -17,55 +18,41 @@ async function getAccessToken(): Promise<string> {
     aud: "https://oauth2.googleapis.com/token",
     iat: now, exp: now + 3600,
   }));
-  const signingInput = `${header}.${payload}`;
-  const pemKey = key.private_key.replace(/\\n/g, "\n");
-  const keyData = pemKey.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, "");
-  const binaryKey = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
-  const cryptoKey = await crypto.subtle.importKey("pkcs8", binaryKey.buffer,
+  const sigInput = `${header}.${payload}`;
+  const pem = key.private_key.replace(/\\n/g, "\n");
+  const keyData = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, "");
+  const bin = Uint8Array.from(atob(keyData), c => c.charCodeAt(0));
+  const ck = await crypto.subtle.importKey("pkcs8", bin.buffer,
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey,
-    new TextEncoder().encode(signingInput));
-  const sig = toBase64Url(String.fromCharCode(...new Uint8Array(signature)));
-  const jwt = `${signingInput}.${sig}`;
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", ck, new TextEncoder().encode(sigInput));
+  const jwt = `${sigInput}.${toBase64Url(String.fromCharCode(...new Uint8Array(sig)))}`;
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
   });
-  const tokenData = await tokenRes.json();
-  if (tokenData.error) throw new Error(`OAuth: ${tokenData.error} - ${tokenData.error_description}`);
-  return tokenData.access_token;
+  const data = await tokenRes.json();
+  if (data.error) throw new Error(`OAuth: ${data.error} - ${data.error_description}`);
+  return data.access_token;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, title, body, url, sender } = await req.json();
+    const { token, title, body, url, sender, recipientUid, adminUid } = await req.json();
     if (!token || !title) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) return NextResponse.json({ error: "No service account" }, { status: 500 });
 
     const accessToken = await getAccessToken();
-
-    // Append sender username to body if provided
     const finalBody = sender ? `${body} -${sender}` : body;
 
     const res = await fetch(FCM_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
         message: {
           token,
-          // Only webpush notification — no top-level notification to avoid duplicates
           webpush: {
-            notification: {
-              title,
-              body: finalBody,
-              icon: "/favicon.ico",
-              badge: "/favicon.ico",
-              vibrate: [100, 50, 100],
-            },
+            notification: { title, body: finalBody, icon: "/favicon.ico", badge: "/favicon.ico", vibrate: [100, 50, 100] },
             fcm_options: { link: url || "/" },
           },
         },
@@ -73,6 +60,24 @@ export async function POST(req: NextRequest) {
     });
 
     const result = await res.json();
+    const success = !result.error;
+
+    // Log notification history
+    const logEntry = {
+      title, body: finalBody, url: url || "/",
+      sender: sender || "system",
+      recipientUid: recipientUid || null,
+      adminUid: adminUid || null,
+      success,
+      error: result.error?.message || null,
+      ts: Date.now(),
+      sentAt: new Date().toLocaleString(),
+    };
+    await fetch(`${DB}/notifHistory/${Date.now()}_${Math.random().toString(36).slice(2,6)}.json`, {
+      method: "PUT", body: JSON.stringify(logEntry),
+      headers: { "Content-Type": "application/json" },
+    });
+
     return NextResponse.json(result);
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
