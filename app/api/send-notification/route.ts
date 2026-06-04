@@ -44,23 +44,33 @@ export async function POST(req: NextRequest) {
     const accessToken = await getAccessToken();
     const finalBody = sender ? `${body} -${sender}` : body;
 
-    // Send FCM push
+    // Send as webpush.notification ONLY — no top-level notification field
+    // This ensures FCM shows exactly one notification via the webpush channel
     const res = await fetch(FCM_URL, {
       method:"POST",
       headers:{"Content-Type":"application/json", Authorization:`Bearer ${accessToken}`},
       body: JSON.stringify({
         message: {
           token,
+          // NO top-level "notification" key — webpush only
           webpush: {
-            notification: { title, body: finalBody, icon:"/favicon.ico", badge:"/favicon.ico", vibrate:[100,50,100] },
+            notification: {
+              title,
+              body: finalBody,
+              icon: "/favicon.ico",
+              badge: "/favicon.ico",
+              vibrate: [100, 50, 100],
+              requireInteraction: false,
+            },
             fcm_options: { link: url || "/" },
           },
         },
       }),
     });
+
     const result = await res.json();
 
-    // Log to Firebase using access token (has firebase scope)
+    // Log to Firebase
     const logKey = `${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
     await fetch(`${DB}/notifHistory/${logKey}.json?access_token=${accessToken}`, {
       method:"PUT",
