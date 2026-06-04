@@ -1663,10 +1663,38 @@ export default function Home() {
         </div>
         <div style={{ overflowY:"auto", padding:"16px 24px 24px", flex:1 }}>
         {type === "about" && (<>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}><strong style={{ color:"#f59e0b" }}>TrivQuic</strong> is a fast-paced trivia game. Fast trivia. No mercy.</p>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>Play solo across 6 categories or go head-to-head in real-time multiplayer.</p>
-          <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563", lineHeight:1.8 }}>
-            <div>By: Chris</div><div>Made in: 2026</div>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
+            <strong style={{ color:"#f59e0b" }}>TrivQuic</strong> is a fast-paced trivia game — 6 categories, real-time duels, global leaderboards, and a full social layer. Fast trivia. No mercy.
+          </p>
+          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>
+            Play solo, go head-to-head in multiplayer rooms, or jump into skill-matched 1v1 duels with custom rounds and break time.
+          </p>
+
+          <div style={{ marginBottom:20 }}>
+            <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>Built with</div>
+            {[
+              { icon:"⚛️", name:"Next.js 16", desc:"React framework, App Router, API routes" },
+              { icon:"🔥", name:"Firebase", desc:"Realtime Database, Authentication, Cloud Messaging (FCM)" },
+              { icon:"▲",  name:"Vercel", desc:"Hosting, deployment, edge functions" },
+              { icon:"🐙", name:"GitHub", desc:"Version control, source code" },
+              { icon:"🔷", name:"TypeScript", desc:"Type-safe frontend + API code" },
+              { icon:"🎨", name:"Tailwind CSS", desc:"Utility styling" },
+              { icon:"🌐", name:"Google Translate API", desc:"14-language support" },
+              { icon:"🤖", name:"Claude (Anthropic)", desc:"AI pair programmer — built this entire app" },
+            ].map(t => (
+              <div key={t.name} style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 0", borderBottom:"1px solid #2d2d44" }}>
+                <span style={{ fontSize:20, flexShrink:0, width:28, textAlign:"center" as const }}>{t.icon}</span>
+                <div>
+                  <div style={{ fontWeight:700, fontSize:13, color:"#e5e7eb" }}>{t.name}</div>
+                  <div style={{ fontSize:11, color:"#6b7280" }}>{t.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563", lineHeight:1.9 }}>
+            <div>By: <span style={{ color:"#e5e7eb" }}>Chris</span></div>
+            <div>Made in: <span style={{ color:"#e5e7eb" }}>2026</span></div>
             <div>Email: <a href="mailto:chris0622ha@gmail.com" style={{ color:"#f59e0b", textDecoration:"none" }}>chris0622ha@gmail.com</a></div>
           </div>
         </>)}
