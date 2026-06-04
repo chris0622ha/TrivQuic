@@ -1283,6 +1283,7 @@ export default function Home() {
   const [total, setTotal] = useState(0);
   const [showStreak, setShowStreak] = useState(false);
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState("");
   const [anim, setAnim] = useState("");
   const [globalLB, setGlobalLB] = useState<any[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -1993,16 +1994,20 @@ export default function Home() {
           value={name}
           onChange={(e) => {
             const val = e.target.value;
-            // Block emoji characters (faces, hands, symbols, crown, checkmark etc.)
             const emojiRegex = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/u;
-            if (emojiRegex.test(val)) return;
+            if (emojiRegex.test(val)) {
+              setNameError("That character is not allowed. Try a different name.");
+              return;
+            }
+            setNameError("");
             setName(val);
             try { localStorage.setItem("onetap_name", val); } catch {}
           }}
           placeholder={userData?.username || "Enter your name..."}
           style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box" }}
         />
-        {user && userData?.username && name && name.toLowerCase() !== userData.username.toLowerCase() && (
+        {nameError && <div style={{ fontSize:12, color:"#ef4444", marginTop:6 }}>{nameError}</div>}
+        {!nameError && user && userData?.username && name && name.toLowerCase() !== userData.username.toLowerCase() && (
           <div style={{ fontSize:11, color:"#6b7280", marginTop:6 }}>
             Will show as <span style={{ color:"#f59e0b" }}>{name}({userData.username})</span> on the leaderboard
           </div>
