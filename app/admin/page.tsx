@@ -1324,6 +1324,14 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tab, setTab] = useState("dashboard");
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [initBanUid, setInitBanUid] = useState<string|undefined>();
 
   useEffect(() => {
@@ -1372,6 +1380,72 @@ export default function AdminPage() {
     </div>
   );
 
+  const PANELS = (
+    <>
+      {tab==="dashboard"     && <StatsPanel />}
+      {tab==="announcements" && <AnnouncementPanel />}
+      {tab==="questions"     && <QuestionsPanel />}
+      {tab==="users"         && <UsersPanel />}
+      {tab==="leaderboard"   && <LeaderboardPanel />}
+      {tab==="analytics"     && <AnalyticsPanel />}
+      {tab==="reports"       && <ReportsPanel />}
+      {tab==="chatreports"   && <ChatReportsPanel />}
+      {tab==="duels"         && <DuelsAdminPanel />}
+      {tab==="bans"          && <BansPanel initUid={initBanUid} />}
+      {tab==="links"         && <LinksPanel />}
+    </>
+  );
+
+  const currentNav = NAV.find(n => n.id === tab);
+
+  if (isMobile) return (
+    <div style={{ background:"#0f0f1a", minHeight:"100vh", color:"#fff", paddingBottom:70 }}>
+      {/* Mobile header */}
+      <div style={{ background:"#0f0f1a", borderBottom:"1px solid #1e1e30", padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky" as const, top:0, zIndex:100 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:20 }}>{currentNav?.icon}</span>
+          <div style={{ fontSize:"1rem", fontWeight:900, color:"#f59e0b" }}>{currentNav?.label}</div>
+        </div>
+        <button onClick={() => setMobileNavOpen(o => !o)} style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:8, color:"#f59e0b", fontSize:12, fontWeight:700, padding:"6px 12px", cursor:"pointer" }}>
+          {mobileNavOpen ? "✕ Close" : "☰ Menu"}
+        </button>
+      </div>
+
+      {/* Mobile nav drawer */}
+      {mobileNavOpen && (
+        <div style={{ position:"fixed" as const, inset:0, zIndex:200, background:"rgba(0,0,0,0.7)" }} onClick={() => setMobileNavOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position:"absolute" as const, top:0, right:0, width:260, height:"100%", background:"#0f0f1a", borderLeft:"1px solid #1e1e30", display:"flex", flexDirection:"column" as const }}>
+            <div style={{ padding:"20px 16px 16px", borderBottom:"1px solid #1e1e30" }}>
+              <div style={{ fontSize:"1rem", fontWeight:900, color:"#f59e0b" }}>⚡ TrivQuic Admin</div>
+              <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{user.email}</div>
+            </div>
+            <div style={{ flex:1, overflowY:"auto" as const }}>
+              {NAV.map(item => (
+                <button key={item.id} onClick={() => { setTab(item.id); setMobileNavOpen(false); }} style={{
+                  width:"100%", background:tab===item.id?"rgba(245,158,11,0.1)":"transparent",
+                  border:"none", borderLeft:`3px solid ${tab===item.id?"#f59e0b":"transparent"}`,
+                  color:tab===item.id?"#f59e0b":"#9ca3af",
+                  fontSize:15, fontWeight:700, padding:"13px 16px", cursor:"pointer",
+                  textAlign:"left" as const, display:"flex", alignItems:"center", gap:12,
+                }}>
+                  <span style={{ fontSize:18 }}>{item.icon}</span>{item.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ padding:"16px", borderTop:"1px solid #1e1e30" }}>
+              <a href="/" style={{ color:"#4b5563", fontSize:13, textDecoration:"none" }}>← Back to game</a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile content */}
+      <div style={{ padding:"16px" }}>
+        {PANELS}
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ ...c.page, display:"flex" }}>
       <div style={c.sidebar}>
@@ -1398,17 +1472,7 @@ export default function AdminPage() {
       </div>
 
       <div style={c.main}>
-        {tab==="dashboard"     && <StatsPanel />}
-        {tab==="announcements" && <AnnouncementPanel />}
-        {tab==="questions"     && <QuestionsPanel />}
-        {tab==="users"         && <UsersPanel />}
-        {tab==="leaderboard"   && <LeaderboardPanel />}
-        {tab==="analytics"     && <AnalyticsPanel />}
-        {tab==="reports"       && <ReportsPanel />}
-        {tab==="chatreports"   && <ChatReportsPanel />}
-        {tab==="duels"         && <DuelsAdminPanel />}
-        {tab==="bans"          && <BansPanel initUid={initBanUid} />}
-        {tab==="links"         && <LinksPanel />}
+        {PANELS}
       </div>
     </div>
   );
