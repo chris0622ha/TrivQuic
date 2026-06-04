@@ -210,6 +210,13 @@ function AnnouncementPanel() {
         <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Type your announcement…" style={c.textarea} />
         <button onClick={saveAnnouncement} style={{ ...btn("y"), width:"100%" }}>Post Announcement</button>
       </div>
+
+      {/* Mass Push Notification */}
+      <div style={c.card}>
+        <div style={c.h2}>📣 Mass Push Notification</div>
+        <p style={{ color:"#9ca3af", fontSize:13, marginBottom:12 }}>Sends a real push notification to ALL users who have notifications enabled.</p>
+        <MassPushPanel />
+      </div>
     </div>
   );
 }
@@ -329,6 +336,59 @@ function QuestionsPanel() {
           ))
         }
       </div>
+    </div>
+  );
+}
+
+// ── USER DUEL HISTORY ────────────────────────────────────────────────────────
+function UserDuelHistory({ uid }: { uid: string }) {
+  const [duels, setDuels] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    get(ref(db, "duels")).then(snap => {
+      if (!snap.exists()) { setDuels([]); setLoading(false); return; }
+      const list = Object.values(snap.val() as any).filter((d: any) =>
+        d.p1?.uid === uid || d.p2?.uid === uid
+      ).sort((a: any, b: any) => b.createdAt - a.createdAt).slice(0, 20) as any[];
+      setDuels(list);
+      setLoading(false);
+    });
+  }, [uid, open]);
+
+  return (
+    <div style={{ marginTop:8 }}>
+      <button onClick={() => setOpen(o => !o)} style={{ ...btn(), width:"100%", display:"flex", justifyContent:"space-between" }}>
+        <span>⚔️ Duel History</span><span>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div style={{ background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, marginTop:6, maxHeight:220, overflowY:"auto" as const }}>
+          {loading ? <div style={{ padding:12, color:"#6b7280", fontSize:13 }}>Loading…</div> :
+            duels.length === 0 ? <div style={{ padding:12, color:"#4b5563", fontSize:13 }}>No duels found</div> :
+            duels.map((d: any, i) => {
+              const isP1 = d.p1?.uid === uid;
+              const mySlot = isP1 ? "p1" : "p2";
+              const theirSlot = isP1 ? "p2" : "p1";
+              const myScore = d[`${mySlot}TotalScore`] ?? 0;
+              const theirScore = d[`${theirSlot}TotalScore`] ?? 0;
+              const result = myScore > theirScore ? "W" : myScore < theirScore ? "L" : "D";
+              const col = result === "W" ? "#10b981" : result === "L" ? "#ef4444" : "#6b7280";
+              return (
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderBottom:"1px solid #1e1e30", fontSize:12 }}>
+                  <div>
+                    <span style={{ color:col, fontWeight:900, marginRight:8 }}>{result}</span>
+                    <span style={{ color:"#d1d5db" }}>vs {d[theirSlot]?.name || "?"}</span>
+                  </div>
+                  <div style={{ color:"#6b7280" }}>{myScore} – {theirScore} · {new Date(d.createdAt).toLocaleDateString()}</div>
+                </div>
+              );
+            })
+          }
+        </div>
+      )}
     </div>
   );
 }
@@ -591,6 +651,7 @@ function UsersPanel() {
               <a href={`/admin?tab=bans&uid=${selected.uid}`} style={{ ...btn("r",true), textAlign:"center" as const, textDecoration:"none", display:"block" }}>
                 Ban this user →
               </a>
+              <UserDuelHistory uid={selected.uid} />
             </div>
           </div>
         )}
@@ -651,7 +712,17 @@ function LeaderboardPanel() {
 
   return (
     <div>
-      <h1 style={c.h1}>🏆 Leaderboard ({entries.length} entries)</h1>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <h1 style={{ fontSize:"1.4rem", fontWeight:900, margin:0 }}>🏆 Leaderboard ({entries.length} entries)</h1>
+        <button onClick={() => {
+          const rows = [["Name","Username","Score","Streak","Category","Questions","Timer","Date"]];
+          entries.forEach(e => rows.push([e.name,e.username||"",e.score,e.streak,e.category,e.roundSize||"",e.timerDuration===0?"∞":`${e.timerDuration}s`,e.date||""]));
+          const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+          const blob = new Blob([csv], { type:"text/csv" });
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+          a.download = `trivquic-leaderboard-${new Date().toISOString().split("T")[0]}.csv`; a.click();
+        }} style={btn("g")}>⬇ Export CSV</button>
+      </div>
       <Flash msg={msg} />
       <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const, marginBottom:12 }}>
         {["all",...CATEGORIES].map(cat=>(
@@ -829,6 +900,39 @@ function BansPanel({ initUid }: { initUid?:string }) {
         </button>
       </div>
 
+      {/* Global chat mute */}
+      <div style={c.card}>
+        <div style={c.h2}>🔇 Global Chat Mute</div>
+        <p style={{ color:"#9ca3af", fontSize:13, marginBottom:12 }}>Prevents a user from sending chat messages to anyone site-wide.</p>
+        <div style={{ display:"flex", gap:8 }}>
+          <input placeholder="Username or UID" id="muteInput" style={{ ...c.input, marginBottom:0, flex:1 }} />
+          <button onClick={async () => {
+            const input = (document.getElementById("muteInput") as HTMLInputElement).value.trim();
+            if (!input) return;
+            const uSnap = await get(ref(db, "users"));
+            if (!uSnap.exists()) return;
+            const found = Object.entries(uSnap.val() as any).find(([uid, u]: any) =>
+              uid === input || u.username?.toLowerCase() === input.toLowerCase()
+            );
+            if (!found) { alert("User not found"); return; }
+            await update(ref(db, `users/${found[0]}`), { globalMuted: true });
+            alert(`${(found[1] as any).username} is now globally muted from chat`);
+          }} style={btn("r")}>Mute</button>
+          <button onClick={async () => {
+            const input = (document.getElementById("muteInput") as HTMLInputElement).value.trim();
+            if (!input) return;
+            const uSnap = await get(ref(db, "users"));
+            if (!uSnap.exists()) return;
+            const found = Object.entries(uSnap.val() as any).find(([uid, u]: any) =>
+              uid === input || u.username?.toLowerCase() === input.toLowerCase()
+            );
+            if (!found) { alert("User not found"); return; }
+            await update(ref(db, `users/${found[0]}`), { globalMuted: false });
+            alert(`${(found[1] as any).username} unmuted`);
+          }} style={btn("g")}>Unmute</button>
+        </div>
+      </div>
+
       <div style={c.card}>
         <div style={c.h2}>Active Bans</div>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={c.input} />
@@ -862,6 +966,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
 // ── NAV ───────────────────────────────────────────────────────────────────────
 const NAV = [
   { id:"dashboard",     icon:"📊", label:"Dashboard" },
+  { id:"analytics",     icon:"📈", label:"Analytics" },
   { id:"announcements", icon:"📢", label:"Announcements" },
   { id:"questions",     icon:"❓", label:"Questions" },
   { id:"users",         icon:"👥", label:"Users" },
@@ -870,6 +975,7 @@ const NAV = [
   { id:"chatreports",   icon:"💬", label:"Chat Reports" },
   { id:"duels",         icon:"⚔️", label:"Duels" },
   { id:"bans",          icon:"🔨", label:"Bans" },
+  { id:"links",         icon:"🔗", label:"Quick Links" },
 ];
 
 // ── CHAT REPORTS PANEL ───────────────────────────────────────────────────────
@@ -933,6 +1039,220 @@ function ChatReportsPanel() {
     </div>
   );
 }
+
+// ── ANALYTICS PANEL ──────────────────────────────────────────────────────────
+function AnalyticsPanel() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      get(ref(db, "users")),
+      get(ref(db, "leaderboard")),
+      get(ref(db, "duels")),
+    ]).then(([uSnap, lbSnap, dSnap]) => {
+      const users: any[] = uSnap.exists() ? Object.values(uSnap.val()) : [];
+      const lb: any[] = lbSnap.exists() ? Object.values(lbSnap.val()) : [];
+      const duels: any[] = dSnap.exists() ? Object.values(dSnap.val()) : [];
+
+      // Daily active users (by lastPlayed)
+      const dauMap: Record<string, number> = {};
+      users.forEach(u => { if (u.lastPlayed) dauMap[u.lastPlayed] = (dauMap[u.lastPlayed] || 0) + 1; });
+      const dauSorted = Object.entries(dauMap).sort(([a],[b]) => new Date(a).getTime() - new Date(b).getTime()).slice(-14);
+
+      // Category popularity from leaderboard
+      const catMap: Record<string, number> = {};
+      lb.forEach(e => { if (e.category) catMap[e.category] = (catMap[e.category] || 0) + 1; });
+      const topCat = Object.entries(catMap).sort(([,a],[,b]) => b - a);
+
+      // Avg games per user
+      const totalGames = users.reduce((s, u) => s + (u.gamesPlayed || 0), 0);
+      const avgGames = users.length ? (totalGames / users.length).toFixed(1) : 0;
+
+      // Duels this week
+      const weekAgo = Date.now() - 7 * 86400000;
+      const duelsThisWeek = duels.filter(d => d.createdAt > weekAgo).length;
+
+      // Top duel players
+      const duelPlayers = users.filter(u => (u.duelsPlayed || 0) > 0)
+        .sort((a, b) => (b.duelWins || 0) - (a.duelWins || 0)).slice(0, 5);
+
+      // New users per day
+      const newMap: Record<string, number> = {};
+      lb.forEach(e => { if (e.date) newMap[e.date] = (newMap[e.date] || 0) + 1; });
+
+      setData({ dauSorted, topCat, avgGames, duelsThisWeek, duelPlayers, totalUsers: users.length, totalGames });
+      setLoading(false);
+    });
+  }, []);
+
+  const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", history:"📜", math:"🔢", sports:"⚽", entertainment:"🎬" };
+
+  if (loading) return <div style={{ color:"#6b7280" }}>Loading…</div>;
+
+  return (
+    <div>
+      <h1 style={c.h1}>📈 Analytics</h1>
+
+      {/* DAU Chart */}
+      <div style={c.card}>
+        <div style={c.h2}>Daily Active Users (last 14 days)</div>
+        {data.dauSorted.length === 0 ? (
+          <div style={{ color:"#4b5563" }}>No data yet</div>
+        ) : (
+          <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:120, marginBottom:8 }}>
+            {data.dauSorted.map(([date, count]: [string, number]) => {
+              const max = Math.max(...data.dauSorted.map(([,c]: any) => c));
+              const h = Math.max(8, Math.round((count / max) * 100));
+              return (
+                <div key={date} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                  <div style={{ fontSize:10, color:"#f59e0b", fontWeight:700 }}>{count}</div>
+                  <div style={{ width:"100%", background:"linear-gradient(180deg,#f59e0b,#ef4444)", borderRadius:"4px 4px 0 0", height:`${h}%` }} />
+                  <div style={{ fontSize:9, color:"#4b5563", whiteSpace:"nowrap" as const, transform:"rotate(-45deg)", transformOrigin:"top center", marginTop:4 }}>
+                    {date.split("/").slice(0,2).join("/")}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Stats grid */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12, marginBottom:20 }}>
+        {[
+          ["Avg Games/User", data.avgGames, "#f59e0b"],
+          ["Duels This Week", data.duelsThisWeek, "#6366f1"],
+          ["Total Games", data.totalGames.toLocaleString(), "#10b981"],
+          ["Total Users", data.totalUsers, "#e5e7eb"],
+        ].map(([l,v,col]) => (
+          <div key={l as string} style={{ ...c.card, marginBottom:0, textAlign:"center" as const }}>
+            <div style={{ fontSize:24, fontWeight:900, color:col as string }}>{v as any}</div>
+            <div style={{ fontSize:11, color:"#6b7280", marginTop:4 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Category popularity */}
+      <div style={c.card}>
+        <div style={c.h2}>Most Played Categories</div>
+        {data.topCat.map(([cat, count]: [string, number], i: number) => (
+          <div key={cat} style={{ ...c.row, borderBottom: i < data.topCat.length-1 ? "1px solid #1e1e30" : "none" }}>
+            <span style={{ fontSize:18 }}>{CAT_EMOJI[cat] || "❓"}</span>
+            <span style={{ flex:1, fontWeight:600 }}>{cat}</span>
+            <span style={{ color:"#f59e0b", fontWeight:800 }}>{count} entries</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Top duel players */}
+      <div style={c.card}>
+        <div style={c.h2}>Top Duel Players</div>
+        {data.duelPlayers.length === 0 ? <div style={{ color:"#4b5563" }}>No duels played yet</div> :
+          data.duelPlayers.map((u: any, i: number) => (
+            <div key={u.uid||i} style={{ ...c.row }}>
+              <span style={{ color:"#4b5563", fontWeight:800, width:20 }}>{i+1}</span>
+              <Avatar src={u.photoURL} name={u.username||"?"} size={32} />
+              <span style={{ flex:1, fontWeight:700 }}>{u.username}</span>
+              <span style={{ color:"#10b981", fontWeight:700 }}>{u.duelWins||0}W</span>
+              <span style={{ color:"#ef4444", fontWeight:700, marginLeft:8 }}>{u.duelLosses||0}L</span>
+              <span style={{ color:"#6b7280", fontSize:12, marginLeft:8 }}>{u.duelsPlayed||0} played</span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+// ── MASS PUSH PANEL ──────────────────────────────────────────────────────────
+function MassPushPanel() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState("");
+
+  async function sendAll() {
+    if (!title || !body) return;
+    setSending(true); setResult("");
+    try {
+      const snap = await get(ref(db, "users"));
+      if (!snap.exists()) { setResult("No users found"); setSending(false); return; }
+      const tokens: string[] = [];
+      Object.values(snap.val() as any).forEach((u: any) => {
+        if (u.fcmToken && u.status?.notif !== false) tokens.push(u.fcmToken);
+      });
+      let sent = 0;
+      await Promise.all(tokens.map(async token => {
+        try {
+          await fetch("/api/send-notification", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ token, title, body, url:"/" }),
+          });
+          sent++;
+        } catch {}
+      }));
+      setResult(`Sent to ${sent} of ${tokens.length} users`);
+      setTitle(""); setBody("");
+    } catch (e: any) { setResult("Error: " + e.message); }
+    setSending(false);
+  }
+
+  return (
+    <>
+      <label style={c.label}>Title</label>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Notification title" style={c.input} />
+      <label style={c.label}>Message</label>
+      <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="Notification body" style={c.textarea} />
+      <button onClick={sendAll} disabled={!title||!body||sending} style={{ ...btn("y"), width:"100%", opacity:(!title||!body||sending)?0.5:1 }}>
+        {sending ? "Sending…" : "📣 Send to All Users"}
+      </button>
+      {result && <div style={{ marginTop:8, fontSize:13, color:"#10b981" }}>{result}</div>}
+    </>
+  );
+}
+
+// ── QUICK LINKS PANEL ─────────────────────────────────────────────────────────
+function LinksPanel() {
+  const links = [
+    { label:"Firebase Console", desc:"Realtime Database, Auth, Storage", icon:"🔥", color:"#f97316", url:"https://console.firebase.google.com/project/onetap-trivia" },
+    { label:"Firebase Database", desc:"Browse and edit data directly", icon:"🗄️", color:"#f59e0b", url:"https://console.firebase.google.com/project/onetap-trivia/database/onetap-trivia-default-rtdb/data" },
+    { label:"Firebase Auth", desc:"View and manage users", icon:"🔐", color:"#6366f1", url:"https://console.firebase.google.com/project/onetap-trivia/authentication/users" },
+    { label:"Firebase Cloud Messaging", desc:"Push notification settings, VAPID keys", icon:"🔔", color:"#10b981", url:"https://console.firebase.google.com/project/onetap-trivia/settings/cloudmessaging" },
+    { label:"Vercel Dashboard", desc:"Deployments, env vars, domains", icon:"▲", color:"#fff", url:"https://vercel.com/chris0622has-projects/quictriv" },
+    { label:"Vercel Environment Variables", desc:"FIREBASE_API_KEY, VAPID_KEY, etc.", icon:"⚙️", color:"#9ca3af", url:"https://vercel.com/chris0622has-projects/quictriv/settings/environment-variables" },
+    { label:"GitHub Repository", desc:"Source code, commits, branches", icon:"🐙", color:"#a5b4fc", url:"https://github.com/chris0622ha/onetap-trivia" },
+    { label:"TrivQuic Live Site", desc:"trivquic.vercel.app", icon:"⚡", color:"#f59e0b", url:"https://trivquic.vercel.app" },
+    { label:"Google Cloud Console", desc:"Service accounts, IAM, APIs", icon:"☁️", color:"#60a5fa", url:"https://console.cloud.google.com/iam-admin/serviceaccounts?project=onetap-trivia" },
+  ];
+
+  return (
+    <div>
+      <h1 style={c.h1}>🔗 Quick Links</h1>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:12 }}>
+        {links.map(link => (
+          <a key={link.url} href={link.url} target="_blank" rel="noreferrer" style={{
+            background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:14,
+            padding:"16px 20px", textDecoration:"none", display:"flex", alignItems:"center", gap:14,
+            transition:"border-color 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = link.color + "88")}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = "#2d2d44")}>
+            <span style={{ fontSize:28, flexShrink:0 }}>{link.icon}</span>
+            <div>
+              <div style={{ fontWeight:700, fontSize:14, color:link.color }}>{link.label}</div>
+              <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>{link.desc}</div>
+            </div>
+            <span style={{ marginLeft:"auto", color:"#4b5563", fontSize:16 }}>↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── EXPORT / TOOLS ────────────────────────────────────────────────────────────
+// (Export CSV is wired into the Leaderboard panel via button)
 
 // ── DUELS ADMIN PANEL ────────────────────────────────────────────────────────
 function DuelsAdminPanel() {
@@ -1074,10 +1394,12 @@ export default function AdminPage() {
         {tab==="questions"     && <QuestionsPanel />}
         {tab==="users"         && <UsersPanel />}
         {tab==="leaderboard"   && <LeaderboardPanel />}
+        {tab==="analytics"     && <AnalyticsPanel />}
         {tab==="reports"       && <ReportsPanel />}
         {tab==="chatreports"   && <ChatReportsPanel />}
         {tab==="duels"         && <DuelsAdminPanel />}
         {tab==="bans"          && <BansPanel initUid={initBanUid} />}
+        {tab==="links"         && <LinksPanel />}
       </div>
     </div>
   );
