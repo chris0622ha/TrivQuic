@@ -668,6 +668,13 @@ function UsersPanel() {
               <button onClick={()=>handleToggleAdmin(selected.uid,selected.isAdmin)} style={btn(selected.isAdmin?"r":"y",true)}>
                 {selected.isAdmin?"Revoke admin":"Grant admin"}
               </button>
+              <button onClick={() => {
+                sessionStorage.setItem("impersonateUid", selected.uid);
+                window.dispatchEvent(new CustomEvent("admin-impersonate", { detail: { uid: selected.uid } }));
+                window.dispatchEvent(new CustomEvent("admin-tab", { detail: { tab: "system" } }));
+              }} style={{ ...btn("g"), width:"100%", marginBottom:8 }}>
+                👁️ View As This User
+              </button>
               <a href={`/admin?tab=bans&uid=${selected.uid}`} style={{ ...btn("r",true), textAlign:"center" as const, textDecoration:"none", display:"block" }}>
                 Ban this user →
               </a>
@@ -1371,7 +1378,13 @@ function NotifHistoryPanel() {
       <h1 style={c.h1}>📨 Notification History</h1>
       <div style={c.card}>
         {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
-         logs.length===0 ? <div style={{color:"#4b5563"}}>No notifications sent yet</div> :
+         logs.length===0 ? (
+           <div style={{textAlign:"center" as const,padding:"30px 0"}}>
+             <div style={{fontSize:36,marginBottom:8}}>📭</div>
+             <div style={{color:"#4b5563",fontSize:14,fontWeight:700}}>No notifications sent yet</div>
+             <div style={{color:"#374151",fontSize:12,marginTop:6}}>Notifications sent via Admin → Announcements will appear here.</div>
+           </div>
+         ) :
          logs.map((l,i) => (
           <div key={i} style={{...c.row, alignItems:"flex-start"}}>
             <div style={{flex:1,minWidth:0}}>
@@ -1412,7 +1425,14 @@ function ActivityLogPanel() {
       <h1 style={c.h1}>📋 Admin Activity Log</h1>
       <div style={c.card}>
         {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
-         logs.length===0 ? <div style={{color:"#4b5563"}}>No admin actions logged yet</div> :
+         logs.length===0 ? (
+           <div style={{textAlign:"center" as const,padding:"30px 0"}}>
+             <div style={{fontSize:36,marginBottom:8}}>📋</div>
+             <div style={{color:"#4b5563",fontSize:14,fontWeight:700}}>No admin actions logged yet</div>
+             <div style={{color:"#374151",fontSize:12,marginTop:6}}>Actions like banning, changing usernames, wiping stats, and setting badges will be logged here automatically.</div>
+             <div style={{color:"#374151",fontSize:12,marginTop:4}}>Try banning someone or changing a username — it'll show up here.</div>
+           </div>
+         ) :
          logs.map((l,i) => (
           <div key={i} style={{...c.row}}>
             <div style={{flex:1,minWidth:0}}>
@@ -1566,6 +1586,23 @@ function SystemPanel() {
   const [suspScores, setSuspScores] = useState<any[]>([]);
   const [impersonateUid, setImpersonateUid] = useState("");
   const [impersonateUser, setImpersonateUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Listen for cross-panel impersonate event from Users panel
+    const handler = (e: any) => {
+      setImpersonateUid(e.detail.uid);
+      // Auto-trigger load after state update
+      setTimeout(() => {
+        const btn = document.getElementById("impersonate-load-btn");
+        if (btn) btn.click();
+      }, 100);
+    };
+    window.addEventListener("admin-impersonate", handler);
+    // Also check sessionStorage on mount
+    const stored = sessionStorage.getItem("impersonateUid");
+    if (stored) { setImpersonateUid(stored); sessionStorage.removeItem("impersonateUid"); }
+    return () => window.removeEventListener("admin-impersonate", handler);
+  }, []);
   const [cronResult, setCronResult] = useState("");
   const [loading, setLoading] = useState(true);
   const { msg, flash } = useFlash();
@@ -1700,7 +1737,13 @@ function SystemPanel() {
       {/* Suspicious Scores */}
       <div style={c.card}>
         <div style={c.h2}>🚨 Suspicious Scores ({suspScores.length})</div>
-        {suspScores.length===0 ? <div style={{color:"#4b5563"}}>No suspicious activity detected</div> :
+        {suspScores.length===0 ? (
+          <div style={{textAlign:"center" as const,padding:"20px 0"}}>
+            <div style={{fontSize:32,marginBottom:6}}>✅</div>
+            <div style={{color:"#10b981",fontSize:14,fontWeight:700}}>No suspicious scores detected</div>
+            <div style={{color:"#374151",fontSize:12,marginTop:4}}>Flags users with impossible scores (e.g. score exceeds 300, perfect score on 20+ questions).</div>
+          </div>
+        ) :
           suspScores.map((s,i) => (
             <div key={i} style={c.row}>
               <div style={{flex:1}}>
@@ -1720,7 +1763,7 @@ function SystemPanel() {
           <input value={impersonateUid} onChange={e=>setImpersonateUid(e.target.value)}
             placeholder="UID or username" style={{...c.input,marginBottom:0,flex:1}}
             onKeyDown={e=>e.key==="Enter"&&loadImpersonate()} />
-          <button onClick={loadImpersonate} style={btn("g")}>Load</button>
+          <button id="impersonate-load-btn" onClick={loadImpersonate} style={btn("g")}>Load</button>
         </div>
         {impersonateUser && (
           impersonateUser.error
@@ -1836,6 +1879,12 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tab, setTab] = useState("dashboard");
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => setTab(e.detail.tab);
+    window.addEventListener("admin-tab", handler);
+    return () => window.removeEventListener("admin-tab", handler);
+  }, []);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
