@@ -1323,7 +1323,7 @@ export default function Home() {
           setName(data.username);
           try { localStorage.setItem("onetap_name", data.username); } catch {}
         }
-        // Warn/Ban popup listener
+        // Warn/Ban popup listener + ban expiry checker
   useEffect(() => {
     if (!user) return;
     const warnRef = ref(db, `users/${user.uid}/pendingWarn`);
@@ -1338,8 +1338,27 @@ export default function Home() {
       setWarnModal({ ...snap.val(), type: "ban" });
       remove(banNotifRef).catch(() => {});
     });
-    return () => { off(warnRef); off(banNotifRef); };
-  }, [user?.uid]);
+    // Check if current ban has expired every 15 seconds
+    const banCheckInterval = setInterval(async () => {
+      if (!warnModal || warnModal.type !== "ban") return;
+      if (warnModal.duration === "permanent") return;
+      if (warnModal.expiresAt && Date.now() > warnModal.expiresAt) {
+        // Ban expired — check Firebase to confirm
+        const banSnap = await get(ref(db, `bans/${user.uid}`));
+        if (!banSnap.exists()) {
+          setWarnModal({ type: "unbanned" });
+        } else {
+          const ban = banSnap.val();
+          if (ban.expiresAt && Date.now() > ban.expiresAt) {
+            await remove(ref(db, `bans/${user.uid}`));
+            await update(ref(db, `users/${user.uid}`), { banned: false, banExpiresAt: null });
+            setWarnModal({ type: "unbanned" });
+          }
+        }
+      }
+    }, 15000);
+    return () => { off(warnRef); off(banNotifRef); clearInterval(banCheckInterval); };
+  }, [user?.uid, warnModal?.expiresAt]);
 
   // Request push notification permission + get FCM token
         try {
@@ -2121,6 +2140,24 @@ export default function Home() {
           </div>
           <div style={{ fontSize:12, color:"#4b5563" }}>— TrivQuic Admin</div>
           <div style={{ fontSize:11, color:"#2d2d44", marginTop:40 }}>If you believe this is a mistake, contact support.</div>
+        </div>
+      )}
+
+      {/* UNBANNED screen */}
+      {warnModal && warnModal.type === "unbanned" && (
+        <div style={{ position:"fixed" as const, inset:0, background:"#0a0a0a", zIndex:9999, display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:24, color:"#fff" }}>
+          <div style={{ fontSize:80, marginBottom:20 }}>🎉</div>
+          <h1 style={{ fontSize:"2rem", fontWeight:900, color:"#10b981", margin:"0 0 12px", textAlign:"center" as const }}>Your ban has expired</h1>
+          <p style={{ color:"#9ca3af", fontSize:15, textAlign:"center" as const, marginBottom:32, maxWidth:320 }}>
+            You're free to continue playing. Please follow the community rules going forward.
+          </p>
+          <button onClick={() => setWarnModal(null)} style={{
+            background:"linear-gradient(135deg,#10b981,#059669)", border:"none",
+            borderRadius:14, color:"#fff", fontWeight:900, fontSize:"1.1rem",
+            padding:"16px 48px", cursor:"pointer",
+          }}>
+            Continue →
+          </button>
         </div>
       )}
 
