@@ -119,7 +119,7 @@ export const math = [
   { q: "What is integration in calculus?", a: "Finding area under a curve", w: ["Finding rate of change", "Solving differential equations", "Finding limits"] },
   { q: "What does 'infinity' mean mathematically?", a: "A concept, not a number, representing unbounded quantity", w: ["The largest number", "1 divided by 0", "A very large number like 10^100"] },
   { q: "What is 0.999... (repeating) equal to?", a: "1", w: ["Less than 1", "Approximately 1", "0.9"] },
-  { q: "What is PEMDAS?", a: "Parentheses, Exponents, Multiply, Divide, Add, Subtract", w: ["A type of fraction", "A set theorem", "A coordinate system"] },,
+  { q: "What is PEMDAS?", a: "Parentheses, Exponents, Multiply, Divide, Add, Subtract", w: ["A type of fraction", "A set theorem", "A coordinate system"] },
   { q: "What is 15% of 200?", a: "30", w: ["25","35","40"], d: 1 },
   { q: "What is the square root of 144?", a: "12", w: ["11","13","14"], d: 1 },
   { q: "What is 7 × 8?", a: "56", w: ["54","58","63"], d: 1 },
