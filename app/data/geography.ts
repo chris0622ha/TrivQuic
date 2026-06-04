@@ -122,7 +122,7 @@ export const geography = [
   { q: "What is the capital of Ethiopia?", a: "Addis Ababa", w: ["Dire Dawa", "Mekelle", "Gondar"] },
   { q: "What is the longest wall in the world?", a: "Great Wall of China", w: ["Hadrian's Wall", "Berlin Wall", "Wall of Babylon"] },
   { q: "What country is the Grand Canyon in?", a: "USA", w: ["Canada", "Mexico", "Australia"] },
-  { q: "What is the most spoken language in South America?", a: "Portuguese", w: ["Spanish", "English", "French"] },,
+  { q: "What is the most spoken language in South America?", a: "Portuguese", w: ["Spanish", "English", "French"] },
   { q: "What is the capital of Mexico?", a: "Mexico City", w: ["Guadalajara","Monterrey","Tijuana"], d: 1 },
   { q: "What is the largest ocean on Earth?", a: "Pacific Ocean", w: ["Atlantic Ocean","Indian Ocean","Arctic Ocean"], d: 1 },
   { q: "Which continent is the Sahara Desert on?", a: "Africa", w: ["Asia","Australia","South America"], d: 1 },
