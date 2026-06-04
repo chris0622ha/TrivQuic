@@ -7,3 +7,10 @@ body { margin: 0; font-family: 'Inter', system-ui, sans-serif; }
 @keyframes pulse-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
 .pop { animation: pop 0.2s ease both; }
 .shake { animation: shake 0.4s ease both; }
+
+/* Hide Google Translate bar */
+.goog-te-banner-frame, .skiptranslate { display: none !important; }
+body { top: 0 !important; position: static !important; }
+.goog-te-gadget { display: none !important; }
+#google_translate_element { display: none !important; }
+
