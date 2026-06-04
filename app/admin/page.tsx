@@ -38,6 +38,14 @@ const tag = (col: string) => ({
 const CATEGORIES = ["geography","science","history","math","sports","entertainment"];
 const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", history:"📜", math:"🔢", sports:"⚽", entertainment:"🎬" };
 
+async function logAdminAction(adminUid: string, adminUsername: string, action: string, target?: string, details?: string) {
+  try {
+    await fetch(`https://onetap-trivia-default-rtdb.firebaseio.com/adminLog/${Date.now()}_${Math.random().toString(36).slice(2,6)}.json`, {
+      method: "PUT", body: JSON.stringify({ adminUid, adminUsername, action, target: target||null, details: details||null, ts: Date.now(), time: new Date().toLocaleString() }), headers: { "Content-Type": "application/json" },
+    });
+  } catch {}
+}
+
 function BadgeIcon({ badge, size=13 }: { badge?:string|null; size?:number }) {
   if (!badge) return null;
   if (badge==="star")   return <span title="Loyal Player" style={{fontSize:size}}>⭐</span>;
@@ -484,6 +492,7 @@ function UsersPanel() {
     updates[`usernames/${val.toLowerCase()}`] = uid;
     await update(ref(db), updates);
     patchUser(uid, { username:val });
+    logAdminAction("admin", "admin", "CHANGE_USERNAME", uid, val);
     flash(`Username → ${val}`); setEditUsername("");
   }
 
@@ -537,6 +546,7 @@ function UsersPanel() {
     if (!confirm(`Wipe all stats for ${selected?.username}? This cannot be undone.`)) return;
     await update(ref(db, `users/${uid}`), { bestScore:0, bestStreak:0, gamesPlayed:0, totalScore:0, totalCorrect:0, totalQuestions:0, categoryBests:{} });
     patchUser(uid, { bestScore:0, bestStreak:0, gamesPlayed:0 });
+    logAdminAction("admin", "admin", "WIPE_STATS", selected?.username||uid);
     flash("Stats wiped");
   }
 
@@ -640,6 +650,7 @@ function UsersPanel() {
                       if (Object.keys(updates).length) await update(ref(db), updates);
                     }
                     patchUser(selected.uid,{badge:badgeVal});
+                    logAdminAction("admin", "admin", "SET_BADGE", selected?.username||"?", val);
                     flash(`Badge ${val==="none"?"removed":`set to ${label}`}`);
                   }} style={{ ...btn(), borderColor:selected.badge===(val==="none"?null:val)?col+"88":"#2d2d4488", color:selected.badge===(val==="none"?null:val)?col:"#6b7280", background:selected.badge===(val==="none"?null:val)?`${col}22`:"transparent" }}>
                     {label}
@@ -855,6 +866,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
     await set(ref(db,`bans/${target.uid}`), banData);
     await update(ref(db,`users/${target.uid}`), { banned:true, banExpiresAt:expiresAt });
     setBans(b=>[...b.filter(x=>x.uid!==target.uid),{uid:target.uid,...banData}]);
+    logAdminAction("admin", "admin", "BAN", target.username, `${banType} ${banDays}d`);
     flash(`${target.username} ${banType==="temp"?`banned for ${banDays}d`:"permanently banned"}`);
     setBanUid(""); setBanReason(""); setBanDays("1");
   }
@@ -863,6 +875,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
     await remove(ref(db,`bans/${uid}`));
     await update(ref(db,`users/${uid}`),{banned:false,banExpiresAt:null});
     setBans(b=>b.filter(x=>x.uid!==uid));
+    logAdminAction("admin", "admin", "UNBAN", username);
     flash(`${username} unbanned`);
   }
 
@@ -984,6 +997,9 @@ const NAV = [
   { id:"chatreports",   icon:"💬", label:"Chat Reports" },
   { id:"duels",         icon:"⚔️", label:"Duels" },
   { id:"bans",          icon:"🔨", label:"Bans" },
+  { id:"notifhistory",  icon:"📨", label:"Notif History" },
+  { id:"activitylog",   icon:"📋", label:"Activity Log" },
+  { id:"system",        icon:"⚙️", label:"System" },
   { id:"links",         icon:"🔗", label:"Quick Links" },
 ];
 
@@ -1334,6 +1350,253 @@ function MassPushPanel() {
       </button>
       {result && <div style={{ marginTop:8, fontSize:13, color: result.startsWith("✅")?"#10b981":"#ef4444" }}>{result}</div>}
     </>
+  );
+}
+
+
+// ── NOTIFICATION HISTORY PANEL ────────────────────────────────────────────────
+function NotifHistoryPanel() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    get(ref(db, "notifHistory")).then(snap => {
+      if (!snap.exists()) { setLogs([]); setLoading(false); return; }
+      const list = Object.values(snap.val() as any).sort((a:any,b:any) => b.ts-a.ts) as any[];
+      setLogs(list.slice(0,100));
+      setLoading(false);
+    });
+  }, []);
+  return (
+    <div>
+      <h1 style={c.h1}>📨 Notification History</h1>
+      <div style={c.card}>
+        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
+         logs.length===0 ? <div style={{color:"#4b5563"}}>No notifications sent yet</div> :
+         logs.map((l,i) => (
+          <div key={i} style={{...c.row, alignItems:"flex-start"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                <span style={{fontWeight:700,fontSize:14,color:l.success?"#10b981":"#ef4444"}}>{l.success?"✅":"❌"} {l.title}</span>
+                <span style={{fontSize:11,color:"#4b5563"}}>from {l.sender||"system"}</span>
+              </div>
+              <div style={{fontSize:12,color:"#9ca3af"}}>{l.body}</div>
+              {l.error && <div style={{fontSize:11,color:"#ef4444",marginTop:2}}>{l.error}</div>}
+            </div>
+            <div style={{fontSize:11,color:"#4b5563",flexShrink:0,marginLeft:10}}>{l.sentAt}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── ACTIVITY LOG PANEL ────────────────────────────────────────────────────────
+function ActivityLogPanel() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const ACTION_COLORS: Record<string,string> = {
+    BAN:"#ef4444", UNBAN:"#10b981", WIPE_STATS:"#f59e0b",
+    SET_BADGE:"#a855f7", CHANGE_USERNAME:"#6366f1", DELETE_LB:"#ef4444",
+    GRANT_ADMIN:"#f59e0b", REVOKE_ADMIN:"#6b7280",
+  };
+  useEffect(() => {
+    get(ref(db, "adminLog")).then(snap => {
+      if (!snap.exists()) { setLogs([]); setLoading(false); return; }
+      const list = Object.values(snap.val() as any).sort((a:any,b:any) => b.ts-a.ts) as any[];
+      setLogs(list.slice(0,200));
+      setLoading(false);
+    });
+  }, []);
+  return (
+    <div>
+      <h1 style={c.h1}>📋 Admin Activity Log</h1>
+      <div style={c.card}>
+        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
+         logs.length===0 ? <div style={{color:"#4b5563"}}>No admin actions logged yet</div> :
+         logs.map((l,i) => (
+          <div key={i} style={{...c.row}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" as const}}>
+                <span style={{fontWeight:700,fontSize:13,color:ACTION_COLORS[l.action]||"#e5e7eb",background:"rgba(255,255,255,0.06)",borderRadius:4,padding:"1px 6px"}}>{l.action}</span>
+                <span style={{fontSize:13,color:"#9ca3af"}}>by <strong style={{color:"#f59e0b"}}>{l.adminUsername}</strong></span>
+                {l.target && <span style={{fontSize:13,color:"#d1d5db"}}>→ {l.target}</span>}
+                {l.details && <span style={{fontSize:12,color:"#6b7280"}}>({l.details})</span>}
+              </div>
+            </div>
+            <div style={{fontSize:11,color:"#4b5563",flexShrink:0,marginLeft:10,whiteSpace:"nowrap" as const}}>{l.time}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── SYSTEM PANEL ──────────────────────────────────────────────────────────────
+function SystemPanel() {
+  const [stats, setStats] = useState<any>(null);
+  const [suspScores, setSuspScores] = useState<any[]>([]);
+  const [impersonateUid, setImpersonateUid] = useState("");
+  const [impersonateUser, setImpersonateUser] = useState<any>(null);
+  const [cronResult, setCronResult] = useState("");
+  const [loading, setLoading] = useState(true);
+  const { msg, flash } = useFlash();
+
+  useEffect(() => {
+    Promise.all([
+      get(ref(db,"users")),
+      get(ref(db,"leaderboard")),
+      get(ref(db,"duels")),
+      get(ref(db,"chats")),
+      get(ref(db,"bans")),
+      get(ref(db,"adminLog")),
+      get(ref(db,"notifHistory")),
+    ]).then(([u,lb,d,ch,b,al,nh]) => {
+      const users = u.exists() ? Object.values(u.val() as any) : [];
+      const lbEntries = lb.exists() ? Object.values(lb.val() as any) : [];
+      // Suspicious scores: perfect score (score = roundSize) in very short time, or score > possible
+      const susp: any[] = [];
+      (users as any[]).forEach((usr:any) => {
+        if (usr.bestScore > 30 * 10) susp.push({...usr, reason:`Score ${usr.bestScore} exceeds max possible (300)`});
+      });
+      (lbEntries as any[]).forEach((e:any) => {
+        if (e.score === e.roundSize * 10 && e.roundSize >= 20) {
+          susp.push({...e, reason:`Perfect score ${e.score} on ${e.roundSize}Q`});
+        }
+      });
+      setStats({
+        users: users.length,
+        lbEntries: lbEntries.length,
+        duels: d.exists() ? Object.keys(d.val()).length : 0,
+        chats: ch.exists() ? Object.keys(ch.val()).length : 0,
+        bans: b.exists() ? Object.keys(b.val()).length : 0,
+        adminActions: al.exists() ? Object.keys(al.val()).length : 0,
+        notifsSent: nh.exists() ? Object.keys(nh.val()).length : 0,
+        withNotifs: (users as any[]).filter((u:any) => u.fcmToken).length,
+        catCounts: {
+          geography: 172, science: 199, history: 156,
+          math: 162, sports: 137, entertainment: 136,
+        },
+      });
+      setSuspScores(susp.slice(0,20));
+      setLoading(false);
+    });
+  }, []);
+
+  async function runBadgeCron() {
+    setCronResult("Running…");
+    try {
+      const res = await fetch("/api/badge-cron", {
+        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || "trivquic-cron-2026-secure"}` },
+      });
+      const data = await res.json();
+      setCronResult(data.ok ? `✅ Done — ${data.processed}/${data.total} badges updated` : `❌ ${JSON.stringify(data)}`);
+    } catch (e:any) { setCronResult("❌ " + e.message); }
+  }
+
+  async function loadImpersonate() {
+    if (!impersonateUid.trim()) return;
+    const snap = await get(ref(db, `users/${impersonateUid.trim()}`));
+    if (!snap.exists()) { setImpersonateUser({error:"User not found"}); return; }
+    setImpersonateUser({uid: impersonateUid.trim(), ...snap.val()});
+  }
+
+  const CAT_EMOJI: Record<string,string> = {geography:"🗺️",science:"🔬",history:"📜",math:"🔢",sports:"⚽",entertainment:"🎬"};
+
+  if (loading) return <div style={{color:"#6b7280"}}>Loading…</div>;
+
+  return (
+    <div>
+      <h1 style={c.h1}>⚙️ System</h1>
+      <Flash msg={msg} />
+
+      {/* Database Stats */}
+      <div style={c.card}>
+        <div style={c.h2}>🗄️ Database Stats</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10,marginBottom:16}}>
+          {[
+            ["Users",stats.users,"#e5e7eb"],
+            ["LB Entries",stats.lbEntries,"#f59e0b"],
+            ["Duels",stats.duels,"#6366f1"],
+            ["Chat Threads",stats.chats,"#10b981"],
+            ["Active Bans",stats.bans,"#ef4444"],
+            ["Admin Actions",stats.adminActions,"#a855f7"],
+            ["Notifs Sent",stats.notifsSent,"#60a5fa"],
+            ["Push Enabled",stats.withNotifs,"#10b981"],
+          ].map(([l,v,col]) => (
+            <div key={l as string} style={{background:"#0f0f1a",borderRadius:10,padding:"12px",textAlign:"center" as const}}>
+              <div style={{fontSize:22,fontWeight:900,color:col as string}}>{v}</div>
+              <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={c.h2}>❓ Question Counts by Category</div>
+        {Object.entries(stats.catCounts).map(([cat,count]) => (
+          <div key={cat} style={{...c.row}}>
+            <span style={{fontSize:16}}>{CAT_EMOJI[cat]}</span>
+            <span style={{flex:1,fontWeight:600,textTransform:"capitalize" as const}}>{cat}</span>
+            <span style={{color:"#f59e0b",fontWeight:700}}>{count as number} questions</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Manual Badge Cron */}
+      <div style={c.card}>
+        <div style={c.h2}>🏅 Run Badge Cron Now</div>
+        <p style={{color:"#9ca3af",fontSize:13,marginBottom:12}}>Normally runs at 3am UTC. Trigger it manually to apply badge changes immediately.</p>
+        <button onClick={runBadgeCron} style={{...btn("y"),width:"100%"}} disabled={cronResult==="Running…"}>
+          {cronResult || "▶ Run Badge Cron"}
+        </button>
+        {cronResult && <div style={{marginTop:8,fontSize:13,color:cronResult.startsWith("✅")?"#10b981":"#ef4444"}}>{cronResult}</div>}
+      </div>
+
+      {/* Suspicious Scores */}
+      <div style={c.card}>
+        <div style={c.h2}>🚨 Suspicious Scores ({suspScores.length})</div>
+        {suspScores.length===0 ? <div style={{color:"#4b5563"}}>No suspicious activity detected</div> :
+          suspScores.map((s,i) => (
+            <div key={i} style={c.row}>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>{s.username||s.name||s.uid?.slice(0,10)}</div>
+                <div style={{fontSize:12,color:"#ef4444"}}>{s.reason}</div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      {/* Impersonate / User View */}
+      <div style={c.card}>
+        <div style={c.h2}>👁️ View User Data (Read-Only)</div>
+        <p style={{color:"#9ca3af",fontSize:13,marginBottom:12}}>Enter a UID to inspect a user's full data as stored in Firebase.</p>
+        <div style={{display:"flex",gap:8,marginBottom:12}}>
+          <input value={impersonateUid} onChange={e=>setImpersonateUid(e.target.value)}
+            placeholder="User UID" style={{...c.input,marginBottom:0,flex:1}} />
+          <button onClick={loadImpersonate} style={btn("g")}>Load</button>
+        </div>
+        {impersonateUser && (
+          impersonateUser.error
+            ? <div style={{color:"#ef4444"}}>{impersonateUser.error}</div>
+            : <div style={{background:"#0f0f1a",borderRadius:10,padding:"14px",fontSize:12,fontFamily:"monospace",maxHeight:300,overflowY:"auto" as const,color:"#d1d5db",whiteSpace:"pre-wrap" as const}}>
+                {JSON.stringify({
+                  uid: impersonateUser.uid,
+                  username: impersonateUser.username,
+                  displayName: impersonateUser.displayName,
+                  badge: impersonateUser.badge,
+                  gamesPlayed: impersonateUser.gamesPlayed,
+                  bestScore: impersonateUser.bestScore,
+                  bestStreak: impersonateUser.bestStreak,
+                  duelsPlayed: impersonateUser.duelsPlayed,
+                  duelWins: impersonateUser.duelWins,
+                  status: impersonateUser.status,
+                  fcmToken: impersonateUser.fcmToken ? impersonateUser.fcmToken.slice(0,20)+"…" : null,
+                  usernameChangesLeft: impersonateUser.usernameChangesLeft,
+                  isAdmin: impersonateUser.isAdmin,
+                  mutedUids: impersonateUser.mutedUids,
+                }, null, 2)}
+              </div>
+        )}
+      </div>
+    </div>
   );
 }
 
