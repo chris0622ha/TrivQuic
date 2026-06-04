@@ -660,11 +660,11 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
                   <div style={{ fontSize:12, color:"#9ca3af", marginBottom:10 }}>Type <strong style={{ color:"#fff" }}>Yes</strong> to confirm</div>
                   <input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}
                     placeholder='Type "Yes" to confirm'
-                    style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${deleteConfirmText === "Yes" ? "#ef4444" : "#2d2d44"}`, borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10 }}
+                    style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${deleteConfirmText.toLowerCase() === "yes" ? "#ef4444" : "#2d2d44"}`, borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10 }}
                   />
                   <div style={{ display:"flex", gap:8 }}>
                     <button onClick={async () => {
-                      if (deleteConfirmText !== "Yes") return;
+                      if (deleteConfirmText.toLowerCase() !== "yes") return;
                       setDeleting(true);
                       try {
                         await remove(ref(db, `users/${user.uid}`));
@@ -679,8 +679,8 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
                         if (userData?.username) await remove(ref(db, `usernames/${userData.username.toLowerCase()}`));
                         await signOut(auth);
                       } catch { setDeleting(false); }
-                    }} disabled={deleteConfirmText !== "Yes" || deleting}
-                      style={{ flex:1, background: deleteConfirmText === "Yes" ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "rgba(239,68,68,0.1)", border:"none", borderRadius:8, color: deleteConfirmText === "Yes" ? "#fff" : "#6b7280", fontWeight:800, fontSize:13, padding:"10px", cursor: deleteConfirmText === "Yes" ? "pointer" : "default" }}>
+                    }} disabled={deleteConfirmText.toLowerCase() !== "yes" || deleting}
+                      style={{ flex:1, background: deleteConfirmText.toLowerCase() === "yes" ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "rgba(239,68,68,0.1)", border:"none", borderRadius:8, color: deleteConfirmText.toLowerCase() === "yes" ? "#fff" : "#6b7280", fontWeight:800, fontSize:13, padding:"10px", cursor: deleteConfirmText.toLowerCase() === "yes" ? "pointer" : "default" }}>
                       {deleting ? "Deleting…" : "Delete forever"}
                     </button>
                     <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }} style={{ flex:1, background:"rgba(255,255,255,0.06)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontWeight:600, fontSize:13, padding:"10px", cursor:"pointer" }}>
