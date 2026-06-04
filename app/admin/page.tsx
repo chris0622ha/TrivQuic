@@ -907,10 +907,37 @@ function BansPanel({ initUid }: { initUid?:string }) {
     const banData: any = { username:target.username, photoURL:target.photoURL||null, reason:finalBanReason, bannedAt:now, type:banType, expiresAt, duration:label };
     await set(ref(db,`bans/${target.uid}`), banData);
     await update(ref(db,`users/${target.uid}`), { banned:true, banExpiresAt:expiresAt, lastBannedAt:now });
+    // Count bans for subject and total
+    const allBansSnap = await get(ref(db, `bans`));
+    let subjectCount = 1;
+    let totalBans = 1;
+    if (allBansSnap.exists()) {
+      // total bans for this user (just the current one, since each user has one active ban)
+      totalBans = 1;
+    }
+    if (banSubject.trim()) {
+      // Count historical bans on this subject via adminLog
+      const logSnap = await get(ref(db, "adminLog"));
+      if (logSnap.exists()) {
+        subjectCount = Object.values(logSnap.val() as any).filter((e:any) =>
+          e.action === "BAN" && e.target === target.username && e.details?.includes(`[${banSubject.trim()}]`)
+        ).length + 1;
+      }
+    }
+    // Trigger ban popup for user
+    await set(ref(db, `users/${target.uid}/pendingBanNotif`), {
+      reason: finalBanReason,
+      subject: banSubject.trim() || null,
+      subjectCount,
+      totalBans,
+      duration: label,
+      expiresAt,
+      bannedAt: now,
+    });
     setBans(b=>[...b.filter(x=>x.uid!==target.uid),{uid:target.uid,...banData}]);
-    logAdminAction("BAN", target.username, label + ": " + finalBanReason);
+    logAdminAction("BAN", target.username, (banSubject.trim() ? `[${banSubject.trim()}] ` : "") + label + ": " + finalBanReason);
     flash(`${target.username} banned for ${label}`);
-    setBanUid(""); setBanReason(""); setBanAmount("1");
+    setBanUid(""); setBanReason(""); setBanAmount("1"); setBanSubject("");
   }
 
   async function handleWarn(targetInput: string, reason: string, subject?: string) {
