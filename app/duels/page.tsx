@@ -15,7 +15,7 @@ import { sports } from "../data/sports";
 import { entertainment } from "../data/entertainment";
 
 const ALL_Q = [...geography,...science,...history,...math,...sports,...entertainment]
-  .map((x:any) => ({ q:x.q, a:x.a, w:x.w??x.wrong??[] }));
+  .map((x:any) => ({ q:x.q, a:x.a, w:x.w??x.wrong??[], d:x.d??2 }));
 
 function shuffle<T>(arr:T[]):T[] {
   const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;
@@ -657,7 +657,7 @@ export default function DuelsPage() {
       )}
 
       {/* GAME */}
-      {screen==="game"&&duel&&q&&(
+      {screen==="game"&&duel&&q&&q.q&&(
         <div style={{width:"100%",maxWidth:480}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,fontSize:12,color:"#6b7280"}}>
             <span>Round {currentRound+1}/{totalRounds}</span>
