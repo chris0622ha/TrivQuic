@@ -467,6 +467,8 @@ function LoginHistory({ uid }: { uid: string }) {
 // ── USERS PANEL ───────────────────────────────────────────────────────────────
 function UsersPanel() {
   const [users, setUsers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [userSort, setUserSort] = useState<"score"|"warned"|"banned">("score");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any>(null);
@@ -483,6 +485,7 @@ function UsersPanel() {
       if (!snap.exists()) { setLoading(false); return; }
       const list = Object.entries(snap.val()).map(([uid,d]:any) => ({ uid, ...d }));
       setUsers(list.sort((a,b) => (b.bestScore||0)-(a.bestScore||0)));
+      setAllUsers(list);
       setLoading(false);
     });
   }, []);
@@ -583,6 +586,18 @@ function UsersPanel() {
     <div>
       <h1 style={c.h1}>👥 Users ({users.length})</h1>
       <Flash msg={msg} />
+      <div style={{ display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" as const }}>
+        {(["score","warned","banned"] as const).map(s=>(
+          <button key={s} onClick={()=>{
+            setUserSort(s);
+            if(s==="score") setUsers([...allUsers].sort((a,b)=>(b.bestScore||0)-(a.bestScore||0)));
+            if(s==="warned") setUsers([...allUsers].sort((a,b)=>(b.lastWarnedAt||0)-(a.lastWarnedAt||0)));
+            if(s==="banned") setUsers([...allUsers].sort((a,b)=>(b.lastBannedAt||0)-(a.lastBannedAt||0)));
+          }} style={{ ...btn(userSort===s?"y":""), fontSize:12, opacity:userSort===s?1:0.6 }}>
+            {s==="score"?"🏆 Top Score":s==="warned"?"⚠️ Recently Warned":"🔨 Recently Banned"}
+          </button>
+        ))}
+      </div>
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by username or UID…" style={c.input} />
 
       <div style={{ display:"grid", gridTemplateColumns:selected?"1fr 360px":"1fr", gap:20 }}>
@@ -606,6 +621,8 @@ function UsersPanel() {
                 <div style={{ textAlign:"right" as const, flexShrink:0 }}>
                   <div style={{ color:"#f59e0b", fontWeight:800 }}>{u.bestScore??0}</div>
                   <div style={{ fontSize:11, color:"#6b7280" }}>{u.gamesPlayed??0} games</div>
+                  {u.lastWarnedAt && <div style={{ fontSize:10, color:"#f59e0b" }}>⚠️</div>}
+                  {u.lastBannedAt && <div style={{ fontSize:10, color:"#ef4444" }}>🔨</div>}
                 </div>
               </div>
             ))
@@ -859,8 +876,10 @@ function BansPanel({ initUid }: { initUid?:string }) {
   const [banUid, setBanUid] = useState(initUid||"");
   const [banReason, setBanReason] = useState("");
   const [banType, setBanType] = useState<"permanent"|"temp">("temp");
-  const [banDays, setBanDays] = useState("1");
+  const [banUnit, setBanUnit] = useState<"minutes"|"hours"|"days">("days");
+  const [banAmount, setBanAmount] = useState("1");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"recent"|"warned"|"banned">("recent");
   const { msg, flash } = useFlash();
 
   useEffect(() => {
@@ -874,19 +893,33 @@ function BansPanel({ initUid }: { initUid?:string }) {
 
   const resolveUser = (input: string) => users.find(u=>u.uid===input.trim()) || users.find(u=>u.username?.toLowerCase()===input.trim().toLowerCase());
 
+  const UNIT_MS: Record<string,number> = { minutes:60000, hours:3600000, days:86400000 };
+
   async function handleBan() {
     const target = resolveUser(banUid);
     if (!target) { flash("User not found","error"); return; }
     if (!banReason.trim()) { flash("Enter a reason","error"); return; }
     const now = Date.now();
-    const expiresAt = banType==="temp" ? now+parseInt(banDays)*86400000 : null;
-    const banData: any = { username:target.username, photoURL:target.photoURL||null, reason:banReason.trim(), bannedAt:now, type:banType, expiresAt };
+    const ms = parseInt(banAmount) * UNIT_MS[banUnit];
+    const expiresAt = banType==="temp" ? now + ms : null;
+    const label = banType==="temp" ? `${banAmount} ${banUnit}` : "permanent";
+    const banData: any = { username:target.username, photoURL:target.photoURL||null, reason:banReason.trim(), bannedAt:now, type:banType, expiresAt, duration:label };
     await set(ref(db,`bans/${target.uid}`), banData);
-    await update(ref(db,`users/${target.uid}`), { banned:true, banExpiresAt:expiresAt });
+    await update(ref(db,`users/${target.uid}`), { banned:true, banExpiresAt:expiresAt, lastBannedAt:now });
     setBans(b=>[...b.filter(x=>x.uid!==target.uid),{uid:target.uid,...banData}]);
-    logAdminAction("BAN", target.username, `${banType} ${banDays}d`);
-    flash(`${target.username} ${banType==="temp"?`banned for ${banDays}d`:"permanently banned"}`);
-    setBanUid(""); setBanReason(""); setBanDays("1");
+    logAdminAction("BAN", target.username, label + ": " + banReason.trim());
+    flash(`${target.username} banned for ${label}`);
+    setBanUid(""); setBanReason(""); setBanAmount("1");
+  }
+
+  async function handleWarn(targetInput: string, reason: string) {
+    const target = resolveUser(targetInput);
+    if (!target) return;
+    const key = Date.now().toString();
+    await set(ref(db, `warns/${target.uid}/${key}`), { reason, warnedAt: Date.now(), time: new Date().toLocaleString(), adminUid: _adminUid, adminUsername: _adminUsername });
+    await update(ref(db, `users/${target.uid}`), { lastWarnedAt: Date.now(), warnCount: (target.warnCount||0)+1 });
+    logAdminAction("WARN", target.username, reason);
+    flash(`${target.username} warned`);
   }
 
   async function handleUnban(uid: string, username: string) {
@@ -927,17 +960,27 @@ function BansPanel({ initUid }: { initUid?:string }) {
         {banType==="temp" && (
           <>
             <label style={c.label}>Duration</label>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const, marginBottom:12 }}>
-              {["1","3","7","14","30","90"].map(d=>(
-                <button key={d} onClick={()=>setBanDays(d)} style={{ ...btn(banDays===d?"r":""), opacity:banDays===d?1:0.5 }}>{d}d</button>
+            <div style={{ display:"flex", gap:8, marginBottom:8, flexWrap:"wrap" as const }}>
+              {(["minutes","hours","days"] as const).map(u=>(
+                <button key={u} onClick={()=>setBanUnit(u)} style={{ ...btn(banUnit===u?"r":""), opacity:banUnit===u?1:0.6, fontSize:12 }}>{u}</button>
               ))}
-              <input value={banDays} onChange={e=>setBanDays(e.target.value.replace(/\D/g,""))} placeholder="custom days" style={{ ...c.input, marginBottom:0, width:100 }} />
+            </div>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const, marginBottom:12 }}>
+              {(banUnit==="minutes"?["5","10","30","60"]:banUnit==="hours"?["1","3","6","12","24"]:["1","3","7","14","30","90"]).map(d=>(
+                <button key={d} onClick={()=>setBanAmount(d)} style={{ ...btn(banAmount===d?"r":""), opacity:banAmount===d?1:0.5, fontSize:12 }}>{d}</button>
+              ))}
+              <input value={banAmount} onChange={e=>setBanAmount(e.target.value.replace(/\D/g,""))} placeholder="custom" style={{ ...c.input, marginBottom:0, width:80 }} />
             </div>
           </>
         )}
-        <button onClick={handleBan} style={{ width:"100%", background:"linear-gradient(135deg,#ef4444,#b91c1c)", border:"none", borderRadius:10, color:"#fff", fontSize:"0.95rem", fontWeight:800, padding:"12px", cursor:"pointer" }}>
-          {banType==="temp"?`Ban for ${banDays} day(s)`:"Permanently Ban"}
-        </button>
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={handleBan} style={{ flex:2, background:"linear-gradient(135deg,#ef4444,#b91c1c)", border:"none", borderRadius:10, color:"#fff", fontSize:"0.95rem", fontWeight:800, padding:"12px", cursor:"pointer" }}>
+            {banType==="temp"?`🔨 Ban for ${banAmount} ${banUnit}`:"🔒 Permanently Ban"}
+          </button>
+          <button onClick={()=>{ if(banUid && banReason.trim()) handleWarn(banUid, banReason); else flash("Enter user + reason","error"); }} style={{ flex:1, ...btn("y"), padding:"12px", fontWeight:800 }}>
+            ⚠️ Warn Only
+          </button>
+        </div>
       </div>
 
       {/* Global chat mute */}
@@ -975,6 +1018,13 @@ function BansPanel({ initUid }: { initUid?:string }) {
 
       <div style={c.card}>
         <div style={c.h2}>Active Bans</div>
+        <div style={{ display:"flex", gap:8, marginBottom:8, flexWrap:"wrap" as const }}>
+          {(["recent","warned","banned"] as const).map(s=>(
+            <button key={s} onClick={()=>setSortBy(s)} style={{ ...btn(sortBy===s?"y":""), fontSize:12, opacity:sortBy===s?1:0.6 }}>
+              {s==="recent"?"🕐 Recent":s==="warned"?"⚠️ Most Warned":"🔨 Most Banned"}
+            </button>
+          ))}
+        </div>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={c.input} />
         {filtered.length===0 ? <div style={{ color:"#4b5563" }}>No bans</div> :
           filtered.map(b=>{
@@ -1015,6 +1065,7 @@ const NAV = [
   { id:"chatreports",   icon:"💬", label:"Chat Reports" },
   { id:"duels",         icon:"⚔️", label:"Duels" },
   { id:"bans",          icon:"🔨", label:"Bans" },
+  { id:"warns",         icon:"⚠️",  label:"Warns" },
   { id:"notifhistory",  icon:"📨", label:"Notif History" },
   { id:"activitylog",   icon:"📋", label:"Activity Log" },
   { id:"system",        icon:"⚙️", label:"System" },
@@ -1854,6 +1905,9 @@ function LinksPanel() {
 function DuelsAdminPanel() {
   const [duels, setDuels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [spectating, setSpectating] = useState<any>(null);
+  const [liveData, setLiveData] = useState<any>(null);
+  const [filter, setFilter] = useState<"all"|"live"|"done">("all");
   const { msg, flash } = useFlash();
 
   useEffect(() => {
@@ -1865,40 +1919,226 @@ function DuelsAdminPanel() {
     });
   }, []);
 
+  // Live spectate listener
+  useEffect(() => {
+    if (!spectating) { setLiveData(null); return; }
+    const duelRef = ref(db, `duels/${spectating.id}`);
+    const unsub = onValue(duelRef, snap => { if (snap.exists()) setLiveData(snap.val()); });
+    return () => off(duelRef);
+  }, [spectating?.id]);
+
   async function deleteDuel(id: string) {
+    if (!confirm("Delete this duel?")) return;
     await remove(ref(db, `duels/${id}`));
     setDuels(d => d.filter((x:any) => x.id !== id));
+    if (spectating?.id === id) setSpectating(null);
     flash("Duel deleted");
   }
+
+  async function endDuel(id: string) {
+    if (!confirm("Force-end this duel?")) return;
+    await update(ref(db, `duels/${id}`), { status:"done" });
+    setDuels(d => d.map((x:any) => x.id===id ? {...x, status:"done"} : x));
+    flash("Duel ended");
+  }
+
+  const filtered = duels.filter(d =>
+    filter==="all" ? true : filter==="live" ? d.status!=="done" : d.status==="done"
+  );
+
+  const live = spectating && liveData ? liveData : null;
 
   return (
     <div>
       <h1 style={c.h1}>⚔️ Duels ({duels.length})</h1>
       <Flash msg={msg} />
+
+      {/* Spectate panel */}
+      {live && (
+        <div style={{ ...c.card, border:"1px solid rgba(99,102,241,0.5)", marginBottom:16 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+            <div style={{ fontWeight:700, fontSize:"1rem", color:"#a5b4fc" }}>
+              👁️ Spectating Live Duel
+              {live.status!=="done" && <span style={{ marginLeft:8, fontSize:11, color:"#10b981", background:"rgba(16,185,129,0.1)", borderRadius:4, padding:"1px 6px" }}>● LIVE</span>}
+              {live.status==="done" && <span style={{ marginLeft:8, fontSize:11, color:"#6b7280" }}>Finished</span>}
+            </div>
+            <div style={{ display:"flex", gap:6 }}>
+              {live.status!=="done" && <button onClick={()=>endDuel(live.id||spectating.id)} style={{ ...btn("r"), fontSize:12 }}>Force End</button>}
+              <button onClick={()=>setSpectating(null)} style={{ ...btn(), fontSize:12 }}>✕ Close</button>
+            </div>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:12, alignItems:"center", marginBottom:12 }}>
+            <div style={{ textAlign:"center" as const }}>
+              <Avatar src={live.p1?.photoURL} name={live.p1?.name||"P1"} size={44} />
+              <div style={{ fontWeight:700, marginTop:6, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
+                {live.p1?.name} <BadgeIcon badge={live.p1?.badge} size={12} />
+              </div>
+              <div style={{ fontSize:32, fontWeight:900, color:"#f59e0b" }}>{live.p1TotalScore||0}</div>
+              <div style={{ fontSize:12, color:"#6b7280" }}>Round: {live.p1RoundScore||0}</div>
+            </div>
+            <div style={{ textAlign:"center" as const, color:"#4b5563", fontWeight:900, fontSize:18 }}>VS</div>
+            <div style={{ textAlign:"center" as const }}>
+              <Avatar src={live.p2?.photoURL} name={live.p2?.name||"P2"} size={44} />
+              <div style={{ fontWeight:700, marginTop:6, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
+                {live.p2?.name} <BadgeIcon badge={live.p2?.badge} size={12} />
+              </div>
+              <div style={{ fontSize:32, fontWeight:900, color:"#6366f1" }}>{live.p2TotalScore||0}</div>
+              <div style={{ fontSize:12, color:"#6b7280" }}>Round: {live.p2RoundScore||0}</div>
+            </div>
+          </div>
+          <div style={{ fontSize:12, color:"#6b7280", textAlign:"center" as const }}>
+            {live.rounds?.length} rounds · {live.questionsPerRound}Q each · Status: {live.status}
+          </div>
+        </div>
+      )}
+
       <div style={c.card}>
+        <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+          {(["all","live","done"] as const).map(f=>(
+            <button key={f} onClick={()=>setFilter(f)} style={{ ...btn(filter===f?"g":""), fontSize:12, opacity:filter===f?1:0.6 }}>
+              {f==="all"?"All":f==="live"?"🔴 Live":"✅ Done"}
+            </button>
+          ))}
+        </div>
         {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
-          duels.length === 0 ? <div style={{ color:"#4b5563" }}>No duels played yet</div> :
-          duels.map((d:any, i) => {
-            const p1Win = d.p1Score > d.p2Score;
-            const p2Win = d.p2Score > d.p1Score;
-            const draw = d.p1Score === d.p2Score;
+          filtered.length === 0 ? <div style={{ color:"#4b5563" }}>No duels found</div> :
+          filtered.map((d:any, i) => {
+            const isLive = d.status !== "done";
+            const p1Total = d.p1TotalScore || 0;
+            const p2Total = d.p2TotalScore || 0;
             return (
-              <div key={i} style={c.row}>
+              <div key={i} style={{ ...c.row, alignItems:"flex-start" }}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontWeight:700, fontSize:14, display:"flex", alignItems:"center", gap:8 }}>
-                    <span style={{ color: p1Win?"#f59e0b":"#9ca3af" }}>{d.p1?.name}</span>
-                    <span style={{ color:"#f59e0b", fontWeight:900 }}>{d.p1Score}</span>
+                  <div style={{ fontWeight:700, fontSize:14, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" as const }}>
+                    {isLive && <span style={{ fontSize:10, color:"#10b981", background:"rgba(16,185,129,0.15)", borderRadius:4, padding:"1px 6px" }}>● LIVE</span>}
+                    <span style={{ color:"#f59e0b" }}>{d.p1?.name}</span>
+                    <span style={{ color:"#f59e0b", fontWeight:900 }}>{p1Total}</span>
                     <span style={{ color:"#4b5563" }}>vs</span>
-                    <span style={{ color:"#a855f7", fontWeight:900 }}>{d.p2Score}</span>
-                    <span style={{ color: p2Win?"#a855f7":"#9ca3af" }}>{d.p2?.name}</span>
-                    {draw && <span style={{ color:"#6b7280", fontSize:11 }}>draw</span>}
+                    <span style={{ color:"#6366f1", fontWeight:900 }}>{p2Total}</span>
+                    <span style={{ color:"#a5b4fc" }}>{d.p2?.name}</span>
                   </div>
-                  <div style={{ fontSize:11, color:"#4b5563" }}>{new Date(d.createdAt).toLocaleString()}</div>
+                  <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{d.rounds?.length}R · {d.questionsPerRound}Q · {new Date(d.createdAt).toLocaleString()}</div>
                 </div>
-                <button onClick={() => deleteDuel(d.id)} style={btn("r")}>Delete</button>
+                <div style={{ display:"flex", gap:6, flexShrink:0, marginLeft:8 }}>
+                  <button onClick={()=>setSpectating(spectating?.id===d.id?null:d)} style={{ ...btn(spectating?.id===d.id?"g":""), fontSize:12, padding:"4px 10px" }}>
+                    {spectating?.id===d.id?"👁️ Watching":"👁️ Spectate"}
+                  </button>
+                  {isLive && <button onClick={()=>endDuel(d.id)} style={{ ...btn("y"), fontSize:12, padding:"4px 10px" }}>End</button>}
+                  <button onClick={()=>deleteDuel(d.id)} style={{ ...btn("r"), fontSize:12, padding:"4px 10px" }}>Delete</button>
+                </div>
               </div>
             );
           })
+        }
+      </div>
+    </div>
+  );
+}
+
+
+// ── WARNS PANEL ───────────────────────────────────────────────────────────────
+function WarnsPanel() {
+  const [warns, setWarns] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [warnUid, setWarnUid] = useState("");
+  const [warnReason, setWarnReason] = useState("");
+  const [sortBy, setSortBy] = useState<"recent"|"most">("recent");
+  const { msg, flash } = useFlash();
+
+  useEffect(() => {
+    Promise.all([get(ref(db,"warns")), get(ref(db,"users"))]).then(([wSnap, uSnap]) => {
+      const userMap: Record<string,any> = {};
+      if (uSnap.exists()) {
+        Object.entries(uSnap.val() as any).forEach(([uid,u]:any) => { userMap[uid] = {...u, uid}; });
+        setUsers(Object.values(userMap));
+      }
+      if (wSnap.exists()) {
+        const list: any[] = [];
+        Object.entries(wSnap.val() as any).forEach(([uid, warnObj]:any) => {
+          const warnList = Object.entries(warnObj).map(([key, w]:any) => ({
+            uid, key, username: userMap[uid]?.username||uid, ...w
+          }));
+          list.push(...warnList);
+        });
+        list.sort((a,b) => b.warnedAt - a.warnedAt);
+        setWarns(list);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  async function issueWarn() {
+    const user = users.find(u=>u.uid===warnUid.trim()||u.username?.toLowerCase()===warnUid.trim().toLowerCase());
+    if (!user) { flash("User not found","error"); return; }
+    if (!warnReason.trim()) { flash("Enter a reason","error"); return; }
+    const key = Date.now().toString();
+    const entry = { reason: warnReason.trim(), warnedAt: Date.now(), time: new Date().toLocaleString(), adminUid: _adminUid, adminUsername: _adminUsername };
+    await set(ref(db, `warns/${user.uid}/${key}`), entry);
+    await update(ref(db, `users/${user.uid}`), { lastWarnedAt: Date.now() });
+    setWarns(w => [{ uid:user.uid, key, username:user.username, ...entry }, ...w]);
+    logAdminAction("WARN", user.username, warnReason.trim());
+    flash(`⚠️ ${user.username} warned`);
+    setWarnUid(""); setWarnReason("");
+  }
+
+  async function deleteWarn(uid: string, key: string) {
+    await remove(ref(db, `warns/${uid}/${key}`));
+    setWarns(w => w.filter(x => !(x.uid===uid && x.key===key)));
+    flash("Warn removed");
+  }
+
+  // Group by user for "most warned" sort
+  const warnCounts: Record<string,number> = {};
+  warns.forEach(w => { warnCounts[w.uid] = (warnCounts[w.uid]||0)+1; });
+
+  const filtered = warns
+    .filter(w => !search || w.username?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b) => sortBy==="most" ? (warnCounts[b.uid]||0)-(warnCounts[a.uid]||0) : b.warnedAt-a.warnedAt);
+
+  return (
+    <div>
+      <h1 style={c.h1}>⚠️ Warns ({warns.length})</h1>
+      <Flash msg={msg} />
+      <div style={c.card}>
+        <div style={c.h2}>Issue Warning</div>
+        <label style={c.label}>Username or UID</label>
+        <input value={warnUid} onChange={e=>setWarnUid(e.target.value)} placeholder="username or UID" style={c.input} />
+        <label style={c.label}>Reason</label>
+        <input value={warnReason} onChange={e=>setWarnReason(e.target.value)} placeholder="e.g. inappropriate language" style={c.input}
+          onKeyDown={e=>e.key==="Enter"&&issueWarn()} />
+        <button onClick={issueWarn} style={{ ...btn("y"), width:"100%", fontWeight:800, padding:"12px" }}>⚠️ Issue Warning</button>
+      </div>
+      <div style={c.card}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+          <div style={c.h2}>All Warnings</div>
+          <div style={{ display:"flex", gap:6 }}>
+            {(["recent","most"] as const).map(s=>(
+              <button key={s} onClick={()=>setSortBy(s)} style={{ ...btn(sortBy===s?"y":""), fontSize:11, opacity:sortBy===s?1:0.6 }}>
+                {s==="recent"?"🕐 Recent":"⚠️ Most Warned"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by username…" style={c.input} />
+        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
+          filtered.length===0 ? <div style={{color:"#4b5563",textAlign:"center" as const,padding:"20px 0"}}>No warnings yet</div> :
+          filtered.map((w,i) => (
+            <div key={i} style={c.row}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" as const }}>
+                  <span style={{ fontWeight:700, color:"#f59e0b" }}>{w.username}</span>
+                  <span style={{ fontSize:11, color:"#ef4444", background:"rgba(239,68,68,0.1)", borderRadius:4, padding:"1px 6px" }}>
+                    {warnCounts[w.uid]||1} warn{(warnCounts[w.uid]||1)>1?"s":""}
+                  </span>
+                </div>
+                <div style={{ fontSize:13, color:"#d1d5db", marginTop:2 }}>{w.reason}</div>
+                <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>by {w.adminUsername} · {w.time}</div>
+              </div>
+              <button onClick={()=>deleteWarn(w.uid, w.key)} style={{ ...btn("r"), fontSize:12, padding:"4px 10px", flexShrink:0 }}>Remove</button>
+            </div>
+          ))
         }
       </div>
     </div>
