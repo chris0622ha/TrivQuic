@@ -1476,7 +1476,7 @@ export default function Home() {
   // Register service worker
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register("/api/sw").catch(() => {});
     }
     // Restore language from cookie on mount
     const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
