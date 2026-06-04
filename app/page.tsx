@@ -1338,17 +1338,22 @@ export default function Home() {
           setName(data.username);
           try { localStorage.setItem("onetap_name", data.username); } catch {}
         }
-        // Warn popup listener
+        // Warn/Ban popup listener
   useEffect(() => {
     if (!user) return;
     const warnRef = ref(db, `users/${user.uid}/pendingWarn`);
-    const unsub = onValue(warnRef, snap => {
+    const banNotifRef = ref(db, `users/${user.uid}/pendingBanNotif`);
+    const unsubWarn = onValue(warnRef, snap => {
       if (!snap.exists()) return;
-      const w = snap.val();
-      setWarnModal(w);
+      setWarnModal({ ...snap.val(), type: "warn" });
       remove(warnRef).catch(() => {});
     });
-    return () => off(warnRef);
+    const unsubBan = onValue(banNotifRef, snap => {
+      if (!snap.exists()) return;
+      setWarnModal({ ...snap.val(), type: "ban" });
+      remove(banNotifRef).catch(() => {});
+    });
+    return () => { off(warnRef); off(banNotifRef); };
   }, [user?.uid]);
 
   // Request push notification permission + get FCM token
@@ -2060,28 +2065,66 @@ export default function Home() {
         <LangModal currentLang={currentLang} onSelect={(lang) => { setCurrentLang(lang); setShowLangModal(false); }} onClose={() => setShowLangModal(false)} />
       )}
 
-      {/* Warn popup */}
+      {/* Warn / Ban popup */}
       {warnModal && (
-        <div style={{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.85)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-          <div style={{ background:"#1a1a2e", border:"2px solid rgba(245,158,11,0.6)", borderRadius:20, padding:"28px 24px", maxWidth:360, width:"100%", textAlign:"center" as const, color:"#fff" }}>
-            <div style={{ fontSize:48, marginBottom:12 }}>⚠️</div>
-            <h2 style={{ fontSize:"1.3rem", fontWeight:900, margin:"0 0 8px", color:"#f59e0b" }}>You've been warned</h2>
+        <div style={{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.9)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{
+            background:"#1a1a2e",
+            border: `2px solid ${warnModal.type==="ban" ? "rgba(239,68,68,0.7)" : "rgba(245,158,11,0.6)"}`,
+            borderRadius:20, padding:"28px 24px", maxWidth:380, width:"100%", textAlign:"center" as const, color:"#fff"
+          }}>
+            <div style={{ fontSize:52, marginBottom:12 }}>{warnModal.type==="ban" ? "🔨" : "⚠️"}</div>
+            <h2 style={{ fontSize:"1.4rem", fontWeight:900, margin:"0 0 8px", color: warnModal.type==="ban" ? "#ef4444" : "#f59e0b" }}>
+              {warnModal.type==="ban" ? "You've been banned" : "You've been warned"}
+            </h2>
+
+            {/* Duration for bans */}
+            {warnModal.type==="ban" && warnModal.duration && (
+              <div style={{ fontSize:14, fontWeight:700, color:"#ef4444", marginBottom:8 }}>
+                Duration: {warnModal.duration === "permanent" ? "Permanent" : warnModal.duration}
+              </div>
+            )}
+            {warnModal.type==="ban" && warnModal.expiresAt && (
+              <div style={{ fontSize:12, color:"#6b7280", marginBottom:8 }}>
+                Expires: {new Date(warnModal.expiresAt).toLocaleString()}
+              </div>
+            )}
+
+            {/* Subject */}
             {warnModal.subject && (
               <div style={{ fontSize:12, color:"#6b7280", marginBottom:4 }}>
-                Subject: <span style={{ color:"#f59e0b", fontWeight:700 }}>{warnModal.subject}</span>
-                {warnModal.subjectCount > 1 && <span style={{ color:"#ef4444", marginLeft:6 }}>({warnModal.subjectCount}× on this subject)</span>}
+                Subject: <span style={{ color: warnModal.type==="ban"?"#ef4444":"#f59e0b", fontWeight:700 }}>{warnModal.subject}</span>
+                {warnModal.subjectCount > 1 && (
+                  <span style={{ color:"#ef4444", marginLeft:6 }}>
+                    ({warnModal.subjectCount}× on this subject)
+                  </span>
+                )}
               </div>
             )}
-            {warnModal.totalWarns > 1 && (
-              <div style={{ fontSize:12, color:"#6b7280", marginBottom:8 }}>
-                Total warns: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalWarns}</span>
+
+            {/* Total count */}
+            {warnModal.type==="warn" && warnModal.totalWarns > 1 && (
+              <div style={{ fontSize:12, color:"#6b7280", marginBottom:4 }}>
+                Total warnings: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalWarns}</span>
               </div>
             )}
-            <p style={{ color:"#d1d5db", fontSize:14, lineHeight:1.6, margin:"12px 0 20px" }}>
+            {warnModal.type==="ban" && warnModal.totalBans > 1 && (
+              <div style={{ fontSize:12, color:"#6b7280", marginBottom:4 }}>
+                Times banned: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalBans}</span>
+              </div>
+            )}
+
+            {/* Reason */}
+            <p style={{ color:"#d1d5db", fontSize:14, lineHeight:1.6, margin:"12px 0 20px", background:"rgba(255,255,255,0.04)", borderRadius:10, padding:"12px" }}>
               {warnModal.reason || "No reason given"}
             </p>
-            <div style={{ fontSize:11, color:"#4b5563", marginBottom:16 }}>from TrivQuic Admin</div>
-            <button onClick={() => setWarnModal(null)} style={{ background:"linear-gradient(135deg,#f59e0b,#ef4444)", border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:"1rem", padding:"12px 32px", cursor:"pointer" }}>
+            <div style={{ fontSize:11, color:"#4b5563", marginBottom:16 }}>— TrivQuic Admin</div>
+            <button onClick={() => setWarnModal(null)} style={{
+              background: warnModal.type==="ban"
+                ? "linear-gradient(135deg,#ef4444,#b91c1c)"
+                : "linear-gradient(135deg,#f59e0b,#ef4444)",
+              border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:"1rem", padding:"12px 32px", cursor:"pointer"
+            }}>
               I understand
             </button>
           </div>
