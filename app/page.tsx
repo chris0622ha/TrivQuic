@@ -983,6 +983,117 @@ function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:st
   );
 }
 
+// ── Language Modal ───────────────────────────────────────────────────────────
+
+const LANGUAGES = [
+  { code:"en",    label:"English",    flag:"🇺🇸", native:"English" },
+  { code:"ko",    label:"Korean",     flag:"🇰🇷", native:"한국어" },
+  { code:"es",    label:"Spanish",    flag:"🇪🇸", native:"Español" },
+  { code:"fr",    label:"French",     flag:"🇫🇷", native:"Français" },
+  { code:"pt",    label:"Portuguese", flag:"🇧🇷", native:"Português" },
+  { code:"zh-CN", label:"Chinese",    flag:"🇨🇳", native:"中文" },
+  { code:"ja",    label:"Japanese",   flag:"🇯🇵", native:"日本語" },
+  { code:"ar",    label:"Arabic",     flag:"🇸🇦", native:"العربية" },
+  { code:"hi",    label:"Hindi",      flag:"🇮🇳", native:"हिन्दी" },
+  { code:"de",    label:"German",     flag:"🇩🇪", native:"Deutsch" },
+  { code:"it",    label:"Italian",    flag:"🇮🇹", native:"Italiano" },
+  { code:"ru",    label:"Russian",    flag:"🇷🇺", native:"Русский" },
+  { code:"vi",    label:"Vietnamese", flag:"🇻🇳", native:"Tiếng Việt" },
+  { code:"tl",    label:"Filipino",   flag:"🇵🇭", native:"Filipino" },
+];
+
+function applyGoogleTranslate(langCode: string) {
+  if (langCode === "en") {
+    // Restore original — reload without translate cookie
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+    window.location.reload();
+    return;
+  }
+  // Set Google Translate cookie and reload
+  document.cookie = `googtrans=/en/${langCode}; path=/`;
+  document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
+
+  // Inject Google Translate widget if not already there
+  if (!document.getElementById("google_translate_element")) {
+    const el = document.createElement("div");
+    el.id = "google_translate_element";
+    el.style.display = "none";
+    document.body.appendChild(el);
+  }
+  if (!(window as any).google?.translate) {
+    const script = document.createElement("script");
+    script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    document.body.appendChild(script);
+    (window as any).googleTranslateElementInit = () => {
+      new (window as any).google.translate.TranslateElement(
+        { pageLanguage: "en", autoDisplay: false },
+        "google_translate_element"
+      );
+      setTimeout(() => triggerTranslate(langCode), 1000);
+    };
+  } else {
+    triggerTranslate(langCode);
+  }
+}
+
+function triggerTranslate(langCode: string) {
+  // Find the Google Translate select element and set the language
+  const select = document.querySelector(".goog-te-combo") as HTMLSelectElement;
+  if (select) {
+    select.value = langCode;
+    select.dispatchEvent(new Event("change"));
+  }
+}
+
+function LangModal({ currentLang, onSelect, onClose }: {
+  currentLang: string; onSelect: (lang: string) => void; onClose: () => void;
+}) {
+  function choose(code: string) {
+    applyGoogleTranslate(code);
+    onSelect(code);
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:400,
+      display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44",
+        borderRadius:20, width:"100%", maxWidth:400, maxHeight:"85vh", display:"flex", flexDirection:"column",
+        overflow:"hidden", color:"#fff" }}>
+        {/* Header */}
+        <div style={{ padding:"18px 24px 14px", borderBottom:"1px solid #2d2d44", display:"flex",
+          alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+          <div style={{ fontSize:"1.1rem", fontWeight:900 }}>🌐 Language</div>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
+        </div>
+        {/* List */}
+        <div style={{ overflowY:"auto", padding:"12px 16px" }}>
+          {LANGUAGES.map(lang => (
+            <button key={lang.code} onClick={() => choose(lang.code)} style={{
+              width:"100%", display:"flex", alignItems:"center", gap:14,
+              background: currentLang === lang.code ? "rgba(245,158,11,0.1)" : "transparent",
+              border:`1px solid ${currentLang === lang.code ? "rgba(245,158,11,0.4)" : "transparent"}`,
+              borderRadius:10, padding:"11px 14px", cursor:"pointer", marginBottom:4, textAlign:"left" as const,
+            }}>
+              <span style={{ fontSize:24, flexShrink:0 }}>{lang.flag}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:700, fontSize:14, color: currentLang === lang.code ? "#f59e0b" : "#e5e7eb" }}>
+                  {lang.native}
+                </div>
+                <div style={{ fontSize:11, color:"#6b7280" }}>{lang.label}</div>
+              </div>
+              {currentLang === lang.code && <span style={{ color:"#f59e0b", fontSize:16 }}>✓</span>}
+            </button>
+          ))}
+        </div>
+        <div style={{ padding:"10px 20px 16px", fontSize:11, color:"#4b5563", textAlign:"center" as const, flexShrink:0 }}>
+          Powered by Google Translate
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Report Modal ─────────────────────────────────────────────────────────────
 
 function ReportModal({ target, reporter, onClose }: { target: any; reporter: { uid: string; name: string }; onClose: () => void }) {
@@ -1077,6 +1188,8 @@ export default function Home() {
   const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|null>(null);
   const [reportTarget, setReportTarget] = useState<any>(null);
+  const [showLangModal, setShowLangModal] = useState(false);
+  const [currentLang, setCurrentLang] = useState("en");
   const [isMobile, setIsMobile] = useState(false);
 
   const [category, setCategory] = useState("all");
@@ -1705,6 +1818,9 @@ export default function Home() {
           onClose={() => setReportTarget(null)}
         />
       )}
+      {showLangModal && (
+        <LangModal currentLang={currentLang} onSelect={(lang) => { setCurrentLang(lang); setShowLangModal(false); }} onClose={() => setShowLangModal(false)} />
+      )}
 
       <div style={{ textAlign:"center", marginBottom:28 }}>
         <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
@@ -1826,6 +1942,8 @@ export default function Home() {
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
         <a href="/admin"
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Admin</a>
+        <button onClick={() => setShowLangModal(true)}
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>🌐 Language</button>
         <a href="https://www.youtube.com/watch?v=jNQXAC9IVRw" target="_blank" rel="noreferrer"
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Don't click</a>
       </div>
