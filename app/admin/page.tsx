@@ -555,7 +555,7 @@ function UsersPanel() {
             <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid #2d2d44" }}>
               <label style={c.label}>Reward Badge</label>
               <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const, marginBottom:10 }}>
-                {[["none","None","#6b7280"],["star","⭐ Star","#f59e0b"],["check","✓ Verified","#3b82f6"],["crown","👑 Crown","#a855f7"]].map(([val,label,col])=>(
+                {[["none","None","#6b7280"],["star","⭐ Star","#f59e0b"],["check","✓ Verified","#3b82f6"],["crown","👑 Crown","#a855f7"],["tester","T Tester","#ca8a04"],["gold","🥇 Gold","#f59e0b"],["silver","🥈 Silver","#9ca3af"],["bronze","🥉 Bronze","#cd7c3a"]].map(([val,label,col])=>(
                   <button key={val} onClick={async()=>{
                     const badgeVal = val==="none" ? null : val;
                     await update(ref(db,`users/${selected.uid}`),{badge:badgeVal});
