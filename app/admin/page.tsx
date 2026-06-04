@@ -128,7 +128,7 @@ function StatsPanel() {
       const totalCorrect = users.reduce((s,u) => s+(u.totalCorrect||0), 0);
       const totalQuestions = users.reduce((s,u) => s+(u.totalQuestions||0), 0);
       const playedToday = users.filter(u => u.lastPlayed === today).length;
-      const topScore = lb.length ? Math.max(...lb.map(e=>e.score||0)) : 0;
+      const topScore = lb.length ? Math.max(...lb.map(e=>typeof e.score==="number" && e.score < 1000000 ? e.score : 0)) : 0;
       const catCounts: Record<string,number> = {};
       lb.forEach(e => { if(e.category) catCounts[e.category] = (catCounts[e.category]||0)+1; });
       const topCat = Object.entries(catCounts).sort(([,a],[,b])=>b-a)[0]?.[0] ?? "—";
@@ -2235,6 +2235,7 @@ export default function AdminPage() {
       {tab==="chatreports"   && <ChatReportsPanel />}
       {tab==="duels"         && <DuelsAdminPanel />}
       {tab==="bans"          && <BansPanel initUid={initBanUid} />}
+      {tab==="warns"         && <WarnsPanel />}
       {tab==="notifhistory"  && <NotifHistoryPanel />}
       {tab==="activitylog"   && <ActivityLogPanel />}
       {tab==="system"        && <SystemPanel />}
