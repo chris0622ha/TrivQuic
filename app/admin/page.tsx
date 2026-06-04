@@ -1957,6 +1957,9 @@ export default function AdminPage() {
       {tab==="chatreports"   && <ChatReportsPanel />}
       {tab==="duels"         && <DuelsAdminPanel />}
       {tab==="bans"          && <BansPanel initUid={initBanUid} />}
+      {tab==="notifhistory"  && <NotifHistoryPanel />}
+      {tab==="activitylog"   && <ActivityLogPanel />}
+      {tab==="system"        && <SystemPanel />}
       {tab==="links"         && <LinksPanel />}
     </>
   );
