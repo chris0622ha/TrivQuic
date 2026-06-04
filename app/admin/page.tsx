@@ -404,7 +404,7 @@ function UsersPanel() {
 
   async function handleSetUsername(uid: string) {
     const val = editUsername.trim();
-    if (!val||val.length<2||val.length>15||!/^[a-zA-Z0-9_]+$/.test(val)) { flash("Invalid username (2–15 chars, letters/numbers/underscores)", "error"); return; }
+    if (!val||val.length<1) { flash("Username cannot be empty", "error"); return; }
     const old = selected?.username;
     const updates: any = {};
     updates[`users/${uid}/username`] = val;
