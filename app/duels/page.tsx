@@ -129,6 +129,7 @@ export default function DuelsPage() {
   const [questionsPerRound,setQuestionsPerRound] = useState(10);
   const [breakTime,setBreakTime] = useState(10);
   const [isRandom,setIsRandom] = useState(false);
+  const [difficulty,setDifficulty] = useState<"easy"|"medium"|"hard"|"mixed">("mixed");
   const [showChallenge,setShowChallenge] = useState(false);
 
   const [duelId,setDuelId] = useState<string|null>(null);
@@ -320,7 +321,11 @@ export default function DuelsPage() {
     if(!user||!userData) return;
     const myName=userData.username||user.displayName?.split(" ")[0]||"Player";
     const s=challenge.settings;
-    const roundQuestions=Array.from({length:s.rounds},()=>shuffle(ALL_Q).slice(0,s.questionsPerRound));
+    const diffMap2: Record<string,number> = {easy:1,medium:2,hard:3};
+    const challengeDiff = s.difficulty||"mixed";
+    const cPool = challengeDiff==="mixed" ? ALL_Q : ALL_Q.filter((q:any)=>q.d===diffMap2[challengeDiff]);
+    const cPoolSafe = cPool.length >= s.questionsPerRound ? cPool : ALL_Q;
+    const roundQuestions=Array.from({length:s.rounds},()=>shuffle(cPoolSafe).slice(0,s.questionsPerRound));
     const id=`${challenge.fromUid}_${user.uid}_${Date.now()}`;
     const duelData={
       id,status:"countdown",
@@ -353,7 +358,7 @@ export default function DuelsPage() {
     setScreen("searching");
     const myName=userData.username||user.displayName?.split(" ")[0]||"Player";
     const myBest=userData.bestScore||0;
-    const settings={rounds,questionsPerRound,breakTime,isRandom};
+    const settings={rounds,questionsPerRound,breakTime,isRandom,difficulty};
 
     await set(ref(db,`duelQueue/${user.uid}`),{
       uid:user.uid,name:myName,bestScore:myBest,
@@ -375,7 +380,11 @@ export default function DuelsPage() {
         const eR=isRandom&&match.settings?.isRandom?Math.floor(Math.random()*8)+3:rounds;
         const eQ=isRandom&&match.settings?.isRandom?[10,20,30][Math.floor(Math.random()*3)]:questionsPerRound;
         const eB=isRandom&&match.settings?.isRandom?[5,10,20,30][Math.floor(Math.random()*4)]:breakTime;
-        const roundQuestions=Array.from({length:eR},()=>shuffle(ALL_Q).slice(0,eQ));
+        const p1Diff = match.settings?.difficulty||"mixed";
+        const diffM: Record<string,number>={easy:1,medium:2,hard:3};
+        const matchPool = p1Diff==="mixed" ? ALL_Q : ALL_Q.filter((q:any)=>q.d===diffM[p1Diff]);
+        const matchPoolSafe = matchPool.length >= eQ ? matchPool : ALL_Q;
+        const roundQuestions=Array.from({length:eR},()=>shuffle(matchPoolSafe).slice(0,eQ));
         const id=`${user.uid}_${match.uid}_${Date.now()}`;
         const duelData={
           id,status:"countdown",
@@ -490,7 +499,7 @@ export default function DuelsPage() {
     <div style={{minHeight:"100vh",background:"#0f0f1a",color:"#fff",display:"flex",flexDirection:"column",alignItems:"center",padding:"24px 16px"}}>
 
       {showChallenge&&user&&userData&&(
-        <ChallengeFriendModal user={user} userData={userData} settings={{rounds,questionsPerRound,breakTime}} onClose={()=>setShowChallenge(false)}/>
+        <ChallengeFriendModal user={user} userData={userData} settings={{rounds,questionsPerRound,breakTime,difficulty}} onClose={()=>setShowChallenge(false)}/>
       )}
 
       {incomingChallenges.length>0&&screen==="home"&&(
@@ -547,6 +556,16 @@ export default function DuelsPage() {
             {isRandom&&<div style={{fontSize:12,color:"#4b5563",marginTop:8}}>Random matches anyone regardless of settings.</div>}
           </div>
           {!isRandom&&(<>
+            <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Difficulty</div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>
+                {([["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#f59e0b"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col])=>(
+                  <button key={d} onClick={()=>setDifficulty(d)} style={{flex:1,background:difficulty===d?`rgba(${d==="easy"?"16,185,129":d==="medium"?"245,158,11":d==="hard"?"239,68,68":"168,85,247"},0.2)`:"rgba(255,255,255,0.04)",border:`1px solid ${difficulty===d?col:"#2d2d44"}`,borderRadius:10,color:difficulty===d?col:"#6b7280",fontSize:12,fontWeight:700,padding:"8px 4px",cursor:"pointer",whiteSpace:"nowrap" as const}}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
               <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Rounds (3–10)</div>
               <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>{ROUND_COUNT_OPTIONS.map(r=><SettingPill key={r} label={`${r}`} active={rounds===r} onClick={()=>setRounds(r)}/>)}</div>
@@ -661,7 +680,18 @@ export default function DuelsPage() {
           <div style={{width:"100%",height:3,background:"#1a1a2e",borderRadius:2,marginBottom:16,overflow:"hidden"}}>
             <div style={{height:"100%",width:`${(qIndex/qPerRound)*100}%`,background:"linear-gradient(90deg,#6366f1,#a855f7)",borderRadius:2,transition:"width 0.3s"}}/>
           </div>
-          <div style={{background:"#1a1a2e",borderRadius:20,padding:"22px 20px",marginBottom:14,textAlign:"center"}}><div style={{fontSize:"1.15rem",fontWeight:700,lineHeight:1.4}}>{q.q}</div></div>
+          <div style={{background:"#1a1a2e",borderRadius:20,padding:"22px 20px",marginBottom:14,textAlign:"center" as const}}>
+            {(duel?.settings?.difficulty==="mixed"||duel?.difficulty==="mixed") && q.d && (
+              <div style={{marginBottom:8}}>
+                <span style={{fontSize:11,fontWeight:700,borderRadius:99,padding:"3px 10px",
+                  background:q.d===1?"rgba(16,185,129,0.15)":q.d===3?"rgba(239,68,68,0.15)":"rgba(245,158,11,0.15)",
+                  color:q.d===1?"#10b981":q.d===3?"#ef4444":"#f59e0b",
+                  border:`1px solid ${q.d===1?"rgba(16,185,129,0.3)":q.d===3?"rgba(239,68,68,0.3)":"rgba(245,158,11,0.3)"}`,
+                }}>{q.d===1?"🟢 Easy":q.d===3?"🔴 Hard":"🟡 Medium"}</span>
+              </div>
+            )}
+            <div style={{fontSize:"1.15rem",fontWeight:700,lineHeight:1.4}}>{q.q}</div>
+          </div>
           {duel[`${mySlot}RoundDone_${currentRound}`]&&<div style={{textAlign:"center",color:"#6b7280",fontSize:14,marginBottom:14}}>Waiting for {theirName}…</div>}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {options.map((opt,i)=>{
