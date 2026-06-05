@@ -2505,6 +2505,13 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   const [searching, setSearching] = useState(false);
   const [sent, setSent] = useState<Record<string,boolean>>({});
 
+  // Auto-search as user types (debounced 300ms)
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); return; }
+    const t = setTimeout(() => search(), 300);
+    return () => clearTimeout(t);
+  }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function search() {
     if (!query.trim()) return;
     setSearching(true);
