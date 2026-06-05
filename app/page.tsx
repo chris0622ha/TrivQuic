@@ -1746,15 +1746,7 @@ export default function Home() {
       setUser(u);
       setAuthLoading(false);
       if (u) {
-        const data = await loadUserData(u.uid);
-        if (!data || !data.username) {
-          setShowUsernamePicker(true);
-        } else {
-          setUserData(data);
-          setName(data.username);
-          try { localStorage.setItem("onetap_name", data.username); } catch {}
-        }
-        // Check active ban on every load (refresh bypass prevention)
+        // Check ban IMMEDIATELY before anything else — prevents refresh bypass
         try {
           const banSnap = await get(ref(db, `bans/${u.uid}`));
           if (banSnap.exists()) {
@@ -1763,9 +1755,18 @@ export default function Home() {
             const isActive = isPermanent || !ban.expiresAt || Date.now() < ban.expiresAt;
             if (isActive) {
               setWarnModal({ ...ban, type: "ban" });
+              return; // stop here — no point loading the rest
             }
           }
         } catch {}
+        const data = await loadUserData(u.uid);
+        if (!data || !data.username) {
+          setShowUsernamePicker(true);
+        } else {
+          setUserData(data);
+          setName(data.username);
+          try { localStorage.setItem("onetap_name", data.username); } catch {}
+        }
         // Log login + track duration via periodic writes + onDisconnect
         const loginKey = Date.now().toString();
         const loginTs = Date.now();

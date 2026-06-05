@@ -899,7 +899,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
     const expiresAt = banType==="temp" ? now + ms : null;
     const label = banType==="temp" ? `${banAmount} ${banUnit}` : "permanent";
     const finalBanReason = banReason.trim() || "No reason given";
-    const banData: any = { username:target.username, photoURL:target.photoURL||null, reason:finalBanReason, bannedAt:now, type:banType, expiresAt, duration:label };
+    const banData: any = { username:target.username, photoURL:target.photoURL||null, reason:finalBanReason, bannedAt:now, type:banType, expiresAt, duration:label, adminUsername:_adminUsername };
     await set(ref(db,`bans/${target.uid}`), banData);
     await update(ref(db,`users/${target.uid}`), { banned:true, banExpiresAt:expiresAt, lastBannedAt:now });
     // Count bans for subject and total
