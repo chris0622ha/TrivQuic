@@ -1711,7 +1711,8 @@ export default function Home() {
 
 
 
-  const [warnModal, setWarnModal] = useState<any>(null);
+  const [warnModal, setWarnModal_raw] = useState<any>(null);
+  const setWarnModal = (v: any) => { console.log("[warnModal SET]", JSON.stringify(v)?.slice(0,80), new Error().stack?.split("\n")[1]?.trim()); setWarnModal_raw(v); };
   const [viewedUser, setViewedUser] = useState<any>(null); // for public profile viewing
   const [reportTarget, setReportTarget] = useState<any>(null);
   const [showLangModal, setShowLangModal] = useState(false);
