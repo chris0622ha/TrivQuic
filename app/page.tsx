@@ -1500,19 +1500,21 @@ export default function Home() {
   // Warn/Ban popup listener — MUST be top-level, not inside a callback
   useEffect(() => {
     if (!user?.uid) return;
-    const warnRef = ref(db, `users/${user.uid}/pendingWarn`);
-    const banRef = ref(db, `users/${user.uid}/pendingBanNotif`);
+    const uid = user.uid;
+    const warnRef = ref(db, `users/${uid}/pendingWarn`);
+    const banRef = ref(db, `users/${uid}/pendingBanNotif`);
     const unsubWarn = onValue(warnRef, snap => {
       if (!snap.exists()) return;
-      const d = snap.val();
-      remove(warnRef).catch(() => {});
-      setWarnModal({ ...d, type: "warn" });
+      const d = { ...snap.val(), type: "warn" };
+      // Set modal first, THEN remove so React renders before Firebase cleans up
+      setWarnModal(d);
+      setTimeout(() => remove(warnRef).catch(() => {}), 500);
     });
     const unsubBan = onValue(banRef, snap => {
       if (!snap.exists()) return;
-      const d = snap.val();
-      remove(banRef).catch(() => {});
-      setWarnModal({ ...d, type: "ban" });
+      const d = { ...snap.val(), type: "ban" };
+      setWarnModal(d);
+      setTimeout(() => remove(banRef).catch(() => {}), 500);
     });
     return () => { off(warnRef); off(banRef); };
   }, [user?.uid]);
