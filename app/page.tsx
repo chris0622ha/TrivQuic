@@ -1458,6 +1458,18 @@ export default function Home() {
     // ── UTILITY ──────────────────────────────────────────────────────
     if (cmd === "admin") { window.location.href = "/admin"; return; }
     if (cmd === "rickroll") { window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ","_blank"); return; }
+    if (cmd === "signout") { window.dispatchEvent(new CustomEvent("onetap-signout")); return; }
+    if (cmd === "profile") { window.dispatchEvent(new CustomEvent("onetap-modal", { detail: "profile" })); return; }
+    // Admin panel nav shortcuts
+    if (cmd === "users") { window.location.href = "/admin?panel=users"; return; }
+    if (cmd === "bans") { window.location.href = "/admin?panel=bans"; return; }
+    if (cmd === "warns") { window.location.href = "/admin?panel=warns"; return; }
+    if (cmd === "analytics") { window.location.href = "/admin?panel=analytics"; return; }
+    if (cmd === "logs") { window.location.href = "/admin?panel=logs"; return; }
+    if (cmd === "system") { window.location.href = "/admin?panel=system"; return; }
+    if (cmd === "announce" || cmd === "notif" || cmd === "maintenance" || cmd === "ban" || cmd === "warn" || cmd === "unban") {
+      window.location.href = `/admin?panel=${cmd}`; return;
+    }
 
     // ── PURE CSS FILTER EFFECTS ───────────────────────────────────────
     if (cmd === "invert") { root.style.filter = root.style.filter === "invert(1)" ? "" : "invert(1)"; return; }
@@ -2979,38 +2991,61 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       </div>
 
       {/* ── SECRET COMMAND PALETTE ─────────────────────────────────── */}
-      {cmdOpen && (
-        <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
-          onClick={() => setCmdOpen(false)}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"20px 24px", width:340, boxShadow:"0 0 40px rgba(245,158,11,0.3)" }}>
-            <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>⚡ COMMAND PALETTE</div>
-            <input autoFocus value={cmdInput} onChange={e => setCmdInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { runCommand(cmdInput.trim().toLowerCase()); setCmdOpen(false); setCmdInput(""); } if (e.key === "Escape") { setCmdOpen(false); setCmdInput(""); } }}
-              placeholder="type a command..."
-              style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:12 }} />
-            <div style={{ display:"flex", flexDirection:"column" as const, gap:4, maxHeight:300, overflowY:"auto" as const }}>
-              {[
-                ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["matrix","💊 matrix rain"],["snow","❄️ snow"],["bubbles","🫧 bubbles"],["lasers","🔴 lasers"],["dvd","📀 dvd"],
-                ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon glow"],["vhs","📼 vhs"],["glitch","👾 glitch"],["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],
-                ["drunk","🥴 drunk"],["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̷a̸l̵g̷o̴","zalgo"],["reverse","🔄 reverse text"],["glitch","👾 glitch"],
-                ["love","❤️ love"],["rage","😡 rage"],["party","🎊 party"],["amongus","🧑‍🚀 among us"],
-                ["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],["airhorn","📯 airhorn"],["bruh","😐 bruh"],["ding","🔔 ding"],
-                ["admin","🔑 admin"],["rickroll","🎵 rickroll"],["friday","🎉 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],
-                ["reset","🔄 reset all"],
-              ].filter((v,i,a)=>a.findIndex(x=>x[0]===v[0])===i).filter(([cmd,label])=>!cmdInput||cmd.includes(cmdInput)||label.toLowerCase().includes(cmdInput)).map(([cmd, label]) => (
-                <div key={cmd} onClick={() => { runCommand(cmd); setCmdOpen(false); setCmdInput(""); }}
-                  style={{ padding:"8px 12px", borderRadius:8, background:"rgba(245,158,11,0.08)", color:"#d1d5db", fontSize:13, cursor:"pointer" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.18)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,158,11,0.08)")}>
-                  {label}
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize:10, color:"#4b5563", marginTop:10, textAlign:"center" as const }}>` or ~ or Ctrl+K to open · Esc to close</div>
+      {cmdOpen && (() => {
+        const personalCmds: [string,string][] = [
+          ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
+          ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
+          ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
+          ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
+          ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
+          ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],["rickroll","🎵 rickroll"],
+          ["profile","👤 profile"],["stats","📊 stats"],["signout","🚪 sign out"],["admin","⚙️ admin"],
+          ["undo","↩️ undo"],["reset","🔄 reset"],
+        ];
+        const globalCmds: [string,string][] = [
+          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],
+          ["maintenance","🔧 toggle maintenance mode"],
+        ];
+        const adminCmds: [string,string][] = [
+          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
+          ["users","👥 go to users"],["bans","🔨 go to bans"],["warns","⚠️ go to warns"],
+          ["analytics","📈 go to analytics"],["logs","📋 go to activity log"],["system","⚙️ go to system"],
+        ];
+        const q = cmdInput.trim().toLowerCase();
+        const filter = (cmds: [string,string][]) => cmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
+        const Section = ({ title, color, cmds }: { title: string; color: string; cmds: [string,string][] }) => cmds.length === 0 ? null : (
+          <div style={{ marginBottom:8 }}>
+            <div style={{ fontSize:10, color, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" as const, padding:"6px 4px 4px" }}>{title}</div>
+            {cmds.map(([cmd, label]) => (
+              <div key={cmd} onClick={() => { runCommand(cmd); setCmdOpen(false); setCmdInput(""); }}
+                style={{ padding:"7px 12px", borderRadius:8, background:"rgba(255,255,255,0.04)", color:"#d1d5db", fontSize:13, cursor:"pointer", marginBottom:2 }}
+                onMouseEnter={e => (e.currentTarget.style.background = `${color}22`)}
+                onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}>
+                {label}
+              </div>
+            ))}
           </div>
-        </div>
-      )}
+        );
+        return (
+          <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
+            onClick={() => setCmdOpen(false)}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"20px 24px", width:360, boxShadow:"0 0 40px rgba(245,158,11,0.3)", maxHeight:"80vh", display:"flex", flexDirection:"column" as const }}>
+              <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>⚡ COMMAND PALETTE</div>
+              <input autoFocus value={cmdInput} onChange={e => setCmdInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { const all = [...filter(personalCmds),...filter(globalCmds),...filter(adminCmds)]; if(all.length===1){runCommand(all[0][0]);}else{runCommand(cmdInput.trim().toLowerCase());} setCmdOpen(false); setCmdInput(""); } if (e.key === "Escape") { setCmdOpen(false); setCmdInput(""); } }}
+                placeholder="type a command..."
+                style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:12, flexShrink:0 }} />
+              <div style={{ overflowY:"auto" as const, flex:1 }}>
+                <Section title="🙋 Personal" color="#f59e0b" cmds={filter(personalCmds)} />
+                {userData?.isAdmin && <Section title="🌐 Global (admin)" color="#10b981" cmds={filter(globalCmds)} />}
+                {userData?.isAdmin && <Section title="🔧 Admin Panel" color="#3b82f6" cmds={filter(adminCmds)} />}
+              </div>
+              <div style={{ fontSize:10, color:"#4b5563", marginTop:10, textAlign:"center" as const, flexShrink:0 }}>` or ~ or Ctrl+K · Esc to close</div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
