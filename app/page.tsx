@@ -1450,53 +1450,6 @@ export default function Home() {
           try { localStorage.setItem("onetap_name", data.username); } catch {}
         }
 
-  // ── Request notifications on first visit (logged in or not) ─────────────────
-  useEffect(() => {
-    // Check if we already asked — use localStorage so it persists across sessions
-    const asked = localStorage.getItem("notif_asked");
-    if (asked) return;
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "default") {
-      localStorage.setItem("notif_asked", "1");
-      return;
-    }
-    // Small delay so it doesn't fire immediately on load
-    const timer = setTimeout(async () => {
-      try {
-        const permission = await Notification.requestPermission();
-        localStorage.setItem("notif_asked", "1");
-        if (permission === "granted" && "serviceWorker" in navigator) {
-          await navigator.serviceWorker.register("/api/sw").catch(() => {});
-          const reg = await navigator.serviceWorker.ready;
-          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-          if (vapidKey) {
-            const { getMessaging, getToken, isSupported } = await import("firebase/messaging");
-            const supported = await isSupported();
-            if (supported) {
-              const { getApps, initializeApp } = await import("firebase/app");
-              const fbConfig = {
-                apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "placeholder",
-                authDomain: "onetap-trivia.firebaseapp.com",
-                databaseURL: "https://onetap-trivia-default-rtdb.firebaseio.com",
-                projectId: "onetap-trivia",
-                storageBucket: "onetap-trivia.firebasestorage.app",
-                messagingSenderId: "986046986694",
-                appId: "1:986046986694:web:2a4441bf46965ccbb3dac7",
-              };
-              const msgApp = getApps().find((a: any) => a.name === "msg") ?? initializeApp(fbConfig, "msg");
-              const messaging = getMessaging(msgApp);
-              const fcmToken = await getToken(messaging, { vapidKey, serviceWorkerRegistration: reg });
-              if (fcmToken && user) {
-                await update(ref(db, `users/${user.uid}`), { fcmToken, notificationsEnabled: true });
-              }
-            }
-          }
-        }
-      } catch {}
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []); // fires once on mount regardless of login state
-
   // Warn/Ban popup listener — subscribes via onAuthStateChanged so uid is always fresh
   useEffect(() => {
     let warnRef: any = null;
@@ -1605,6 +1558,54 @@ export default function Home() {
     });
     return () => unsub();
   }, []);
+
+
+  // ── Request notifications on first visit (logged in or not) ─────────────────
+  useEffect(() => {
+    // Check if we already asked — use localStorage so it persists across sessions
+    const asked = localStorage.getItem("notif_asked");
+    if (asked) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "default") {
+      localStorage.setItem("notif_asked", "1");
+      return;
+    }
+    // Small delay so it doesn't fire immediately on load
+    const timer = setTimeout(async () => {
+      try {
+        const permission = await Notification.requestPermission();
+        localStorage.setItem("notif_asked", "1");
+        if (permission === "granted" && "serviceWorker" in navigator) {
+          await navigator.serviceWorker.register("/api/sw").catch(() => {});
+          const reg = await navigator.serviceWorker.ready;
+          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+          if (vapidKey) {
+            const { getMessaging, getToken, isSupported } = await import("firebase/messaging");
+            const supported = await isSupported();
+            if (supported) {
+              const { getApps, initializeApp } = await import("firebase/app");
+              const fbConfig = {
+                apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "placeholder",
+                authDomain: "onetap-trivia.firebaseapp.com",
+                databaseURL: "https://onetap-trivia-default-rtdb.firebaseio.com",
+                projectId: "onetap-trivia",
+                storageBucket: "onetap-trivia.firebasestorage.app",
+                messagingSenderId: "986046986694",
+                appId: "1:986046986694:web:2a4441bf46965ccbb3dac7",
+              };
+              const msgApp = getApps().find((a: any) => a.name === "msg") ?? initializeApp(fbConfig, "msg");
+              const messaging = getMessaging(msgApp);
+              const fcmToken = await getToken(messaging, { vapidKey, serviceWorkerRegistration: reg });
+              if (fcmToken && user) {
+                await update(ref(db, `users/${user.uid}`), { fcmToken, notificationsEnabled: true });
+              }
+            }
+          }
+        }
+      } catch {}
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []); // fires once on mount regardless of login state
 
   useEffect(() => {
     const handler = (e: Event) => setModal((e as CustomEvent).detail);
