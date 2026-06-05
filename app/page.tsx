@@ -1998,7 +1998,7 @@ export default function Home() {
       // Ctrl+K works everywhere; backtick and ~ only when not in an input
       const isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "k";
       const isTilde = (e.key === "`" || e.key === "~") && !e.ctrlKey && !e.metaKey && !e.altKey;
-      if (isCtrlK || (!inInput && isTilde)) {
+      if ((isCtrlK || (!inInput && isTilde)) && userData?.isAdmin) {
         e.preventDefault();
         setCmdOpen(o => !o);
       }
@@ -3140,8 +3140,8 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
         <a href="/admin"
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Admin</a>
-        <button onClick={() => setCmdOpen(o => !o)}
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }} title="Command palette (` or Ctrl+K)">⚡</button>
+        {userData?.isAdmin && <button onClick={() => setCmdOpen(o => !o)}
+          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }} title="Command palette (` or Ctrl+K)">⚡</button>}
         <a href="https://www.youtube.com/watch?v=jNQXAC9IVRw" target="_blank" rel="noreferrer"
           style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Don't click</a>
       </div>
