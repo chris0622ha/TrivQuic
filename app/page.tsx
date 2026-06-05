@@ -3062,7 +3062,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
         ];
         const q = cmdInput.trim().toLowerCase();
         const filter = (cmds: [string,string][]) => cmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
-        const personalOnlyCmds = new Set(["profile","signout","admin","undo","reset","rickroll","friday","midnight","newyear","announce","notif","maintenance","ban","warn","unban","users","bans","warns","analytics","logs","system","hack","sudo","404"]);
+        const personalOnlyCmds = new Set(["profile","signout","admin","notif","maintenance","ban","warn","unban","users","bans","warns","analytics","logs","system"]);
         const allCmds: [string,string][] = [
           ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
           ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
