@@ -2410,7 +2410,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             <p style={{ color:"#d1d5db", fontSize:14, lineHeight:1.6, margin:"12px 0 20px", background:"rgba(255,255,255,0.04)", borderRadius:10, padding:"12px" }}>
               {warnModal.reason || "No reason given"}
             </p>
-            <div style={{ fontSize:11, color:"#4b5563", marginBottom:16 }}>— TrivQuic Admin</div>
+            <div style={{ fontSize:11, color:"#4b5563", marginBottom:16 }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
             <button onClick={() => setWarnModal(null)} style={{ background:"linear-gradient(135deg,#f59e0b,#ef4444)", border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:"1rem", padding:"12px 32px", cursor:"pointer" }}>
               I understand
             </button>
@@ -2445,7 +2445,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:14, padding:"16px 24px", maxWidth:360, margin:"16px 0 24px", textAlign:"center" as const }}>
             <div style={{ fontSize:14, color:"#d1d5db", lineHeight:1.7 }}>{warnModal.reason || "No reason given"}</div>
           </div>
-          <div style={{ fontSize:12, color:"#4b5563" }}>— TrivQuic Admin</div>
+          <div style={{ fontSize:12, color:"#4b5563" }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
           <div style={{ fontSize:11, color:"#2d2d44", marginTop:40 }}>If you believe this is a mistake, contact support.</div>
         </div>
       )}

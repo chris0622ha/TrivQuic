@@ -961,7 +961,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
     const allWarns2 = await get(ref(db, `warns/${target.uid}`));
     const totalWarns = allWarns2.exists() ? Object.keys(allWarns2.val()).length : 1;
     // Trigger popup for the user
-    await set(ref(db, `users/${target.uid}/pendingWarn`), { reason: finalReason, subject: subject||null, subjectCount, totalWarns, warnedAt: Date.now() });
+    await set(ref(db, `users/${target.uid}/pendingWarn`), { reason: finalReason, subject: subject||null, subjectCount, totalWarns, warnedAt: Date.now(), adminUsername: _adminUsername });
     await update(ref(db, `users/${target.uid}`), { lastWarnedAt: Date.now() });
     logAdminAction("WARN", target.username, (subject ? `[${subject}] ` : "") + finalReason);
     flash(`⚠️ ${target.username} warned`);
@@ -2184,7 +2184,7 @@ function WarnsPanel() {
     }
     const totalWarns = warns.filter(w => w.uid===target.uid).length + 1;
     // Trigger popup
-    await set(ref(db, `users/${target.uid}/pendingWarn`), { reason: finalReason, subject: subj||null, subjectCount, totalWarns, warnedAt: Date.now() });
+    await set(ref(db, `users/${target.uid}/pendingWarn`), { reason: finalReason, subject: subj||null, subjectCount, totalWarns, warnedAt: Date.now(), adminUsername: _adminUsername });
     await update(ref(db, `users/${target.uid}`), { lastWarnedAt: Date.now() });
     setWarns(w => [{ uid:target.uid, key, username:target.username, ...entry }, ...w]);
     logAdminAction("WARN", target.username, (subj ? `[${subj}] ` : "") + finalReason);
