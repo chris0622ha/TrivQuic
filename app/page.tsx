@@ -1416,7 +1416,6 @@ export default function Home() {
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdInput, setCmdInput] = useState("");
-  const [cmdTarget, setCmdTarget] = useState<{cmd:string;label:string}|null>(null); // pending cmd waiting for audience picker
 
   // ── Effects canvas manager
   const effectsRef = React.useRef<{ stop: () => void } | null>(null);
@@ -3115,37 +3114,6 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           </div>
         );
       })()}
-
-      {/* ── COMMAND AUDIENCE PICKER ─────────────────────────────────── */}
-      {cmdTarget && (
-        <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.7)" }}
-          onClick={() => setCmdTarget(null)}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background:"#1a1a2e", border:"1px solid #10b981", borderRadius:14, padding:"24px 28px", width:320, boxShadow:"0 0 40px rgba(16,185,129,0.3)" }}>
-            <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.1em", marginBottom:4 }}>📡 SEND COMMAND</div>
-            <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:16 }}>{cmdTarget.label}</div>
-            <div style={{ display:"flex", flexDirection:"column" as const, gap:8 }}>
-              {([
-                ["just_me","🙋 Personal Only"] as const,
-                ["all","🌐 Anyone"] as const,
-              ]).map(([audience, label]) => (
-                <div key={audience} onClick={async () => {
-                  const cmd = cmdTarget.cmd;
-                  setCmdTarget(null);
-                  runCommand(cmd);
-                  if (audience === "all") await broadcastCmd(cmd, "all");
-                }}
-                  style={{ padding:"14px 18px", borderRadius:10, background:"rgba(16,185,129,0.08)", cursor:"pointer", border:"1px solid rgba(16,185,129,0.15)", textAlign:"center" as const }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.25)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(16,185,129,0.08)")}>
-                  <div style={{ color:"#fff", fontWeight:800, fontSize:15 }}>{label}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize:10, color:"#4b5563", marginTop:12, textAlign:"center" as const }}>Esc to cancel</div>
-          </div>
-        </div>
-      )}
 
       <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
