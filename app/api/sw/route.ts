@@ -18,11 +18,17 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// webpush.notification is displayed by the browser automatically.
-// Calling showNotification here causes a second "New notification from TrivQuic".
-// So we do nothing — notificationclick still works below.
-messaging.onBackgroundMessage((_payload) => {
-  // intentionally empty
+// Handle background messages — data-only payload, we show the notification ourselves
+messaging.onBackgroundMessage((payload) => {
+  const { title, body, url } = payload.data || {};
+  if (!title) return;
+  self.registration.showNotification(title, {
+    body: body || "",
+    icon: "/favicon.ico",
+    badge: "/favicon.ico",
+    vibrate: [100, 50, 100],
+    data: { url: url || "/" },
+  });
 });
 
 self.addEventListener("notificationclick", (event) => {

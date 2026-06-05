@@ -44,24 +44,21 @@ export async function POST(req: NextRequest) {
     const accessToken = await getAccessToken();
     const finalBody = sender ? `${body} -${sender}` : body;
 
-    // Send as webpush.notification ONLY — no top-level notification field
-    // This ensures FCM shows exactly one notification via the webpush channel
+    // Send as data-only — SW's onBackgroundMessage shows exactly one notification.
+    // webpush.notification caused a duplicate ("New notification from TrivQuic" + actual).
     const res = await fetch(FCM_URL, {
       method:"POST",
       headers:{"Content-Type":"application/json", Authorization:`Bearer ${accessToken}`},
       body: JSON.stringify({
         message: {
           token,
-          // NO top-level "notification" key — webpush only
+          data: {
+            title,
+            body: finalBody,
+            url: url || "/",
+          },
           webpush: {
-            notification: {
-              title,
-              body: finalBody,
-              icon: "/favicon.ico",
-              badge: "/favicon.ico",
-              vibrate: [100, 50, 100],
-              requireInteraction: false,
-            },
+            headers: { TTL: "86400" },
             fcm_options: { link: url || "/" },
           },
         },

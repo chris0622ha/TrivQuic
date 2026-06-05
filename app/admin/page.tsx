@@ -696,13 +696,6 @@ function UsersPanel() {
               <button onClick={()=>handleToggleAdmin(selected.uid,selected.isAdmin)} style={btn(selected.isAdmin?"r":"y",true)}>
                 {selected.isAdmin?"Revoke admin":"Grant admin"}
               </button>
-              <button onClick={() => {
-                sessionStorage.setItem("impersonateUid", selected.uid);
-                window.dispatchEvent(new CustomEvent("admin-impersonate", { detail: { uid: selected.uid } }));
-                window.dispatchEvent(new CustomEvent("admin-tab", { detail: { tab: "system" } }));
-              }} style={{ ...btn("g"), width:"100%", marginBottom:8 }}>
-                👁️ View As This User
-              </button>
               <a href={`/admin?tab=bans&uid=${selected.uid}`} style={{ ...btn("r",true), textAlign:"center" as const, textDecoration:"none", display:"block" }}>
                 Ban this user →
               </a>
@@ -1612,164 +1605,9 @@ function ActivityLogPanel() {
 
 
 // ── IMPERSONATE VIEW ─────────────────────────────────────────────────────────
-function ImpersonateView({ userData, onClose }: { userData: any; onClose: () => void }) {
-  const CAT = {
-    geography:{emoji:"🗺️",label:"Geography"},
-    science:{emoji:"🔬",label:"Science"},
-    history:{emoji:"📜",label:"History"},
-    math:{emoji:"🔢",label:"Math"},
-    sports:{emoji:"⚽",label:"Sports"},
-    entertainment:{emoji:"🎬",label:"Entertainment"},
-  } as Record<string,{emoji:string;label:string}>;
-  const acc = userData.totalQuestions ? Math.round((userData.totalCorrect||0)/userData.totalQuestions*100) : 0;
-  const u = userData;
-
-  return (
-    <div style={{ marginTop:12, border:"2px solid rgba(239,68,68,0.5)", borderRadius:14, overflow:"hidden" }}>
-      {/* Admin banner */}
-      <div style={{ background:"rgba(239,68,68,0.2)", padding:"8px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <span style={{ color:"#ef4444", fontWeight:700, fontSize:13 }}>👁️ ADMIN VIEW — seeing as {u.username}</span>
-        <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#ef4444", fontSize:20, cursor:"pointer" }}>×</button>
-      </div>
-
-      {/* Mock game screen */}
-      <div style={{ background:"#0a0a1a", padding:0, fontSize:14 }}>
-
-        {/* Mock header */}
-        <div style={{ background:"rgba(10,10,26,0.95)", borderBottom:"1px solid #2d2d44", padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ color:"#f59e0b", fontWeight:900, fontSize:16 }}>⚡ TrivQuic</div>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            {u.photoURL
-              ? <img src={u.photoURL} width={28} height={28} style={{ borderRadius:"50%", border:"2px solid #f59e0b" }} />
-              : <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(245,158,11,0.2)", border:"2px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:900, color:"#f59e0b" }}>{(u.username||"?")[0].toUpperCase()}</div>
-            }
-            <span style={{ color:"#e5e7eb", fontWeight:700, fontSize:13 }}>{u.username}</span>
-            <BadgeIcon badge={u.badge} size={13} />
-            <span style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.4)", borderRadius:6, color:"#ef4444", fontSize:10, fontWeight:700, padding:"2px 6px" }}>Sign out</span>
-          </div>
-        </div>
-
-        <div style={{ padding:"16px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          {/* Left — Solo section mock */}
-          <div>
-            <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:8 }}>⚡ SOLO</div>
-
-            {/* Name input mock */}
-            <div style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:10, padding:"8px 12px", marginBottom:10, fontSize:13, color:"#9ca3af" }}>
-              {u.username}
-            </div>
-
-            {/* Categories */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4, marginBottom:8 }}>
-              <div style={{ gridColumn:"1/-1", background:"rgba(245,158,11,0.15)", border:"1px solid #f59e0b", borderRadius:8, padding:"5px", textAlign:"center" as const, fontSize:11, fontWeight:700, color:"#f59e0b" }}>🌍 All</div>
-              {Object.values(CAT).map(c=>(
-                <div key={c.label} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid #2d2d44", borderRadius:8, padding:"5px 4px", textAlign:"center" as const, fontSize:10, color:"#6b7280" }}>{c.emoji} {c.label}</div>
-              ))}
-            </div>
-
-            {/* Stats strip */}
-            <div style={{ background:"#1a1a2e", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
-              <div style={{ fontSize:10, color:"#6b7280", marginBottom:6, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Their Stats</div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
-                {[["🏆 Best",u.bestScore||0,"#f59e0b"],["🎮 Games",u.gamesPlayed||0,"#10b981"],["🔥 Streak",u.bestStreak||0,"#ef4444"],["✅ Correct",u.totalCorrect||0,"#6366f1"],["📊 Acc",acc+"%","#a855f7"],["⚔️ Duels",u.duelsPlayed||0,"#60a5fa"]].map(([l,v,col])=>(
-                  <div key={l as string} style={{ textAlign:"center" as const }}>
-                    <div style={{ fontSize:14, fontWeight:900, color:col as string }}>{v as any}</div>
-                    <div style={{ fontSize:9, color:"#4b5563" }}>{l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Category bests */}
-            {u.categoryBests && Object.keys(u.categoryBests).length > 0 && (
-              <div style={{ background:"#1a1a2e", borderRadius:10, padding:"10px 12px" }}>
-                <div style={{ fontSize:10, color:"#6b7280", marginBottom:6, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Category Bests</div>
-                {Object.entries(u.categoryBests as Record<string,any>).map(([cat, data]: [string,any]) => (
-                  <div key={cat} style={{ display:"flex", justifyContent:"space-between", padding:"3px 0", fontSize:11, borderBottom:"1px solid #1e1e30" }}>
-                    <span style={{ color:"#9ca3af" }}>{CAT[cat]?.emoji||"❓"} {cat}</span>
-                    <span style={{ color:"#f59e0b", fontWeight:700 }}>{data?.score||data}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right — info */}
-          <div>
-            <div style={{ fontSize:11, color:"#a855f7", fontWeight:700, letterSpacing:"0.1em", marginBottom:8 }}>👤 PROFILE</div>
-            <div style={{ background:"#1a1a2e", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
-              <div style={{ fontWeight:700, display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                {u.username} <BadgeIcon badge={u.badge} size={13} />
-                {u.isAdmin && <span style={{ fontSize:10, color:"#f59e0b" }}>⚡ Admin</span>}
-              </div>
-              {u.bio && <div style={{ fontSize:11, color:"#9ca3af", fontStyle:"italic" as const, marginBottom:4 }}>"{u.bio}"</div>}
-              {u.status?.preset && u.status.preset !== "online" && (
-                <div style={{ fontSize:11, color:"#6b7280" }}>
-                  {u.status.preset==="dnd"&&"⛔ DND"}{u.status.preset==="sleeping"&&"😴 Sleeping"}
-                  {u.status.preset==="focused"&&"🎯 Focused"}{u.status.preset==="custom"&&u.status.custom}
-                </div>
-              )}
-              <div style={{ fontSize:10, color:"#4b5563", marginTop:4 }}>UID: {(u.uid||"").slice(0,16)}…</div>
-            </div>
-
-            {/* Duel record */}
-            {(u.duelsPlayed||0)>0 && (
-              <div style={{ background:"#1a1a2e", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
-                <div style={{ fontSize:10, color:"#6b7280", marginBottom:6, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Duel Record</div>
-                <div style={{ display:"flex", justifyContent:"space-around" }}>
-                  {[["W",u.duelWins||0,"#10b981"],["L",u.duelLosses||0,"#ef4444"],["D",u.duelDraws||0,"#6b7280"]].map(([l,v,col])=>(
-                    <div key={l as string} style={{ textAlign:"center" as const }}>
-                      <div style={{ fontSize:16, fontWeight:900, color:col as string }}>{v as number}</div>
-                      <div style={{ fontSize:10, color:"#4b5563" }}>{l}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent logins */}
-            {u.loginHistory && (
-              <div style={{ background:"#1a1a2e", borderRadius:10, padding:"10px 12px" }}>
-                <div style={{ fontSize:10, color:"#6b7280", marginBottom:6, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Recent Logins</div>
-                {Object.values(u.loginHistory as any).sort((a:any,b:any)=>b.ts-a.ts).slice(0,4).map((l:any,i:number)=>(
-                  <div key={i} style={{ fontSize:10, color:"#6b7280", padding:"2px 0", borderBottom:"1px solid #1e1e30" }}>
-                    {l.loginAt} · {l.durationMin||0} min
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-// ── SYSTEM PANEL ──────────────────────────────────────────────────────────────
 function SystemPanel() {
   const [stats, setStats] = useState<any>(null);
-  const [suspScores, setSuspScores] = useState<any[]>([]);
-  const [impersonateUid, setImpersonateUid] = useState("");
-  const [impersonateUser, setImpersonateUser] = useState<any>(null);
-
-  useEffect(() => {
-    // Listen for cross-panel impersonate event from Users panel
-    const handler = (e: any) => {
-      setImpersonateUid(e.detail.uid);
-      // Auto-trigger load after state update
-      setTimeout(() => {
-        const btn = document.getElementById("impersonate-load-btn");
-        if (btn) btn.click();
-      }, 100);
-    };
-    window.addEventListener("admin-impersonate", handler);
-    // Also check sessionStorage on mount
-    const stored = sessionStorage.getItem("impersonateUid");
-    if (stored) { setImpersonateUid(stored); sessionStorage.removeItem("impersonateUid"); }
-    return () => window.removeEventListener("admin-impersonate", handler);
-  }, []);
-  const [cronResult, setCronResult] = useState("");
+  const [suspScores, setSuspScores] = useState<any[]>([]);  const [cronResult, setCronResult] = useState("");
   const [loading, setLoading] = useState(true);
   const { msg, flash } = useFlash();
 
@@ -1826,36 +1664,6 @@ function SystemPanel() {
       setCronResult(data.ok ? `✅ Done — ${data.processed}/${data.total} badges updated` : `❌ ${JSON.stringify(data)}`);
     } catch (e:any) { setCronResult("❌ " + e.message); }
   }
-
-  async function loadImpersonate() {
-    const q = impersonateUid.trim();
-    if (!q) return;
-    // Try as UID first
-    let snap = await get(ref(db, `users/${q}`));
-    if (!snap.exists()) {
-      // Try username lookup
-      const uidSnap = await get(ref(db, `usernames/${q.toLowerCase()}`));
-      if (uidSnap.exists()) snap = await get(ref(db, `users/${uidSnap.val()}`));
-    }
-    if (!snap.exists()) { setImpersonateUser({error:"User not found"}); return; }
-    const uid = q.length > 20 ? q : (await get(ref(db, `usernames/${q.toLowerCase()}`))).val() || q;
-    // Load friends
-    const userData = snap.val();
-    const friendIds: string[] = userData.friendIds ? Object.values(userData.friendIds) : [];
-    const friends = await Promise.all(
-      friendIds.slice(0,10).map((id:string) => get(ref(db,`users/${id}`)).then(s => s.exists()?{uid:id,...s.val()}:null))
-    );
-    // Load leaderboard entries
-    const lbSnap = await get(ref(db,"leaderboard"));
-    const lbEntries = lbSnap.exists()
-      ? Object.values(lbSnap.val() as any).filter((e:any) => e.uid === snap.ref.key || Object.keys(lbSnap.val()).some(k=>k.startsWith((snap.ref.key||"")+"_")))
-      : [];
-    setImpersonateUser({ uid: snap.ref.key, ...userData, _friends: friends.filter(Boolean), _lbEntries: lbEntries });
-  }
-
-  const CAT_EMOJI: Record<string,string> = {geography:"🗺️",science:"🔬",history:"📜",math:"🔢",sports:"⚽",entertainment:"🎬"};
-
-  if (loading) return <div style={{color:"#6b7280"}}>Loading…</div>;
 
   return (
     <div>
@@ -1936,23 +1744,6 @@ function SystemPanel() {
             </div>
           ))
         }
-      </div>
-
-      {/* View As User */}
-      <div style={c.card}>
-        <div style={c.h2}>👁️ View As User</div>
-        <p style={{color:"#9ca3af",fontSize:13,marginBottom:12}}>Enter a UID or username to open a full read-only preview of what that user sees.</p>
-        <div style={{display:"flex",gap:8,marginBottom:12}}>
-          <input value={impersonateUid} onChange={e=>setImpersonateUid(e.target.value)}
-            placeholder="UID or username" style={{...c.input,marginBottom:0,flex:1}}
-            onKeyDown={e=>e.key==="Enter"&&loadImpersonate()} />
-          <button id="impersonate-load-btn" onClick={loadImpersonate} style={btn("g")}>Load</button>
-        </div>
-        {impersonateUser && (
-          impersonateUser.error
-            ? <div style={{color:"#ef4444"}}>{impersonateUser.error}</div>
-            : <ImpersonateView userData={impersonateUser} onClose={()=>setImpersonateUser(null)} />
-        )}
       </div>
     </div>
   );
