@@ -1990,14 +1990,17 @@ export default function Home() {
   }, []);
 
   // Backtick / ~ / Ctrl+K opens command palette
+  const isAdminRef = React.useRef(false);
+  useEffect(() => { isAdminRef.current = !!userData?.isAdmin; }, [userData]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (!isAdminRef.current) return;
       const tag = (document.activeElement as HTMLElement)?.tagName;
       const inInput = tag === "INPUT" || tag === "TEXTAREA";
-      // Ctrl+K works everywhere; backtick and ~ only when not in an input
       const isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "k";
       const isTilde = (e.key === "`" || e.key === "~") && !e.ctrlKey && !e.metaKey && !e.altKey;
-      if ((isCtrlK || (!inInput && isTilde)) && userData?.isAdmin) {
+      if (isCtrlK || (!inInput && isTilde)) {
         e.preventDefault();
         setCmdOpen(o => !o);
       }
@@ -3018,52 +3021,18 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
 
       {/* ── SECRET COMMAND PALETTE ─────────────────────────────────── */}
       {cmdOpen && (() => {
-        const personalCmds: [string,string][] = [
-          ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
-          ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
-          ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
-          ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
-          ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
-          ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],["rickroll","🎵 rickroll"],
-          ["profile","👤 profile"],["signout","🚪 sign out"],["admin","⚙️ admin"],
-          ["undo","↩️ undo"],["reset","🔄 reset"],
-          // also show global+admin here for everyone
-          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],["maintenance","🔧 maintenance mode"],
-          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
-          ["users","👥 users panel"],["bans","🔨 bans panel"],["warns","⚠️ warns panel"],
-          ["analytics","📈 analytics"],["logs","📋 activity log"],["system","⚙️ system"],
-        ];
-        const globalCmds: [string,string][] = [
-          ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
-          ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
-          ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
-          ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
-          ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
-          ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],
-          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],["maintenance","🔧 maintenance mode"],
-          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
-          ["users","👥 users panel"],["bans","🔨 bans panel"],["warns","⚠️ warns panel"],
-          ["analytics","📈 analytics"],["logs","📋 activity log"],["system","⚙️ system"],
-          ["undo","↩️ undo"],["reset","🔄 reset"],
-        ];
-        const adminCmds: [string,string][] = [
-          ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
-          ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
-          ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
-          ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
-          ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
-          ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],
-          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],["maintenance","🔧 maintenance mode"],
-          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
-          ["users","👥 users panel"],["bans","🔨 bans panel"],["warns","⚠️ warns panel"],
-          ["analytics","📈 analytics"],["logs","📋 activity log"],["system","⚙️ system"],
-          ["profile","👤 profile"],["signout","🚪 sign out"],["admin","⚙️ admin"],
-          ["undo","↩️ undo"],["reset","🔄 reset"],
-        ];
         const q = cmdInput.trim().toLowerCase();
         const filter = (cmds: [string,string][]) => cmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
-        const personalOnlyCmds = new Set(["profile","signout","admin","notif","maintenance","ban","warn","unban","users","bans","warns","analytics","logs","system"]);
-        const allCmds: [string,string][] = [
+        // Personal Only: nav/account commands only
+        const personalCmds: [string,string][] = [
+          ["profile","👤 profile"],["signout","🚪 sign out"],["admin","⚙️ admin"],
+          ["notif","🔔 push notif"],["maintenance","🔧 maintenance"],
+          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
+          ["users","👥 users"],["bans","🔨 bans"],["warns","⚠️ warns"],
+          ["analytics","📈 analytics"],["logs","📋 logs"],["system","⚙️ system"],
+        ];
+        // Global: everything fun + announce + undo/reset
+        const globalCmds: [string,string][] = [
           ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
           ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
           ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
@@ -3071,44 +3040,61 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],
           ["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
           ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],["rickroll","🎵 rickroll"],
-          ["profile","👤 profile"],["signout","🚪 sign out"],["admin","⚙️ admin"],
-          ["announce","📢 announce"],["notif","🔔 push notif"],["maintenance","🔧 maintenance"],
-          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
-          ["users","👥 users"],["bans","🔨 bans"],["warns","⚠️ warns"],["analytics","📈 analytics"],["logs","📋 logs"],["system","⚙️ system"],
-          ["undo","↩️ undo"],["reset","🔄 reset"],
+          ["announce","📢 announce"],["undo","↩️ undo"],["reset","🔄 reset"],
         ];
-        const filtered = allCmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
-        const filteredAnyone = filtered.filter(([cmd]) => !personalOnlyCmds.has(cmd));
-        const CmdBtn = ({ cmd, label, audience }: { cmd: string; label: string; audience: "just_me"|"all" }) => (
-          <div onClick={async () => {
-              setCmdOpen(false); setCmdInput("");
-              runCommand(cmd);
-              if (audience === "all") await broadcastCmd(cmd, "all");
-            }}
+        const [globalAudience, setGlobalAudience] = React.useState<"all"|"crown"|"gold"|"silver"|"bronze">("all");
+        const fpersonal = personalCmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
+        const fglobal = globalCmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
+        const PersonalBtn = ({ cmd, label }: { cmd: string; label: string }) => (
+          <div onClick={() => { runCommand(cmd); setCmdInput(""); }}
             style={{ padding:"7px 12px", borderRadius:8, background:"rgba(255,255,255,0.04)", color:"#d1d5db", fontSize:13, cursor:"pointer", marginBottom:2 }}
-            onMouseEnter={e => (e.currentTarget.style.background = audience === "all" ? "rgba(16,185,129,0.18)" : "rgba(245,158,11,0.18)")}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.18)")}
             onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}>
             {label}
           </div>
         );
+        const GlobalBtn = ({ cmd, label }: { cmd: string; label: string }) => (
+          <div onClick={async () => { runCommand(cmd); setCmdInput(""); await broadcastCmd(cmd, globalAudience); }}
+            style={{ padding:"7px 12px", borderRadius:8, background:"rgba(255,255,255,0.04)", color:"#d1d5db", fontSize:13, cursor:"pointer", marginBottom:2 }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.18)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}>
+            {label}
+          </div>
+        );
+        const audiences: [string, string, "all"|"crown"|"gold"|"silver"|"bronze"][] = [
+          ["🌐","Everyone","all"],["👑","Crown","crown"],["🥇","Gold","gold"],["🥈","Silver","silver"],["🥉","Bronze","bronze"],
+        ];
         return (
           <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
             onClick={() => setCmdOpen(false)}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"20px 24px", width:400, boxShadow:"0 0 40px rgba(245,158,11,0.3)", maxHeight:"80vh", display:"flex", flexDirection:"column" as const }}>
+              style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"20px 24px", width:480, boxShadow:"0 0 40px rgba(245,158,11,0.3)", maxHeight:"85vh", display:"flex", flexDirection:"column" as const }}>
               <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>⚡ COMMAND PALETTE</div>
               <input autoFocus value={cmdInput} onChange={e => setCmdInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Escape") { setCmdOpen(false); setCmdInput(""); } }}
                 placeholder="type a command..."
                 style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:12, flexShrink:0 }} />
+              {/* Audience selector for global */}
+              <div style={{ display:"flex", gap:4, marginBottom:10, flexShrink:0 }}>
+                <div style={{ fontSize:10, color:"#6b7280", display:"flex", alignItems:"center", marginRight:4 }}>Send to:</div>
+                {audiences.map(([icon, name, val]) => (
+                  <div key={val} onClick={() => setGlobalAudience(val)}
+                    style={{ padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer",
+                      background: globalAudience === val ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.04)",
+                      color: globalAudience === val ? "#10b981" : "#6b7280",
+                      border: globalAudience === val ? "1px solid #10b981" : "1px solid transparent" }}>
+                    {icon} {name}
+                  </div>
+                ))}
+              </div>
               <div style={{ overflowY:"auto" as const, flex:1, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                 <div>
                   <div style={{ fontSize:10, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" as const, padding:"4px 4px 8px" }}>🙋 Personal Only</div>
-                  {filtered.map(([cmd, label]) => <CmdBtn key={cmd} cmd={cmd} label={label} audience="just_me" />)}
+                  {fpersonal.map(([cmd, label]) => <PersonalBtn key={cmd} cmd={cmd} label={label} />)}
                 </div>
                 <div>
-                  <div style={{ fontSize:10, color:"#10b981", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" as const, padding:"4px 4px 8px" }}>🌐 Anyone</div>
-                  {filteredAnyone.map(([cmd, label]) => <CmdBtn key={cmd} cmd={cmd} label={label} audience="all" />)}
+                  <div style={{ fontSize:10, color:"#10b981", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" as const, padding:"4px 4px 8px" }}>🌐 Global</div>
+                  {fglobal.map(([cmd, label]) => <GlobalBtn key={cmd} cmd={cmd} label={label} />)}
                 </div>
               </div>
               <div style={{ fontSize:10, color:"#4b5563", marginTop:10, textAlign:"center" as const, flexShrink:0 }}>` or ~ or Ctrl+K · Esc to close</div>
