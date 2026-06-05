@@ -4,5 +4,9 @@
       "path": "/api/badge-cron",
       "schedule": "0 3 * * *"
     }
-  ]
+  ],
+  "buildCommand": "next build",
+  "env": {
+    "BUILD_BUST": "1780697847"
+  }
 }
