@@ -1497,27 +1497,43 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []); // fires once on mount regardless of login state
 
-  // Warn/Ban popup listener — MUST be top-level, not inside a callback
+  // Warn/Ban popup listener — subscribes via onAuthStateChanged so uid is always fresh
   useEffect(() => {
-    if (!user?.uid) return;
-    const uid = user.uid;
-    const warnRef = ref(db, `users/${uid}/pendingWarn`);
-    const banRef = ref(db, `users/${uid}/pendingBanNotif`);
-    const unsubWarn = onValue(warnRef, snap => {
-      if (!snap.exists()) return;
-      const d = { ...snap.val(), type: "warn" };
-      // Set modal first, THEN remove so React renders before Firebase cleans up
-      setWarnModal(d);
-      setTimeout(() => remove(warnRef).catch(() => {}), 500);
+    let warnRef: any = null;
+    let banRef: any = null;
+    let unsubWarn: any = null;
+    let unsubBan: any = null;
+
+    const unsubAuth = onAuthStateChanged(auth, (u) => {
+      // Clean up previous listeners
+      if (warnRef && unsubWarn) { unsubWarn(); off(warnRef); }
+      if (banRef && unsubBan) { unsubBan(); off(banRef); }
+      if (!u) return;
+
+      warnRef = ref(db, `users/${u.uid}/pendingWarn`);
+      banRef = ref(db, `users/${u.uid}/pendingBanNotif`);
+
+      unsubWarn = onValue(warnRef, (snap) => {
+        if (!snap.exists()) return;
+        const d = { ...snap.val(), type: "warn" };
+        setWarnModal(d);
+        setTimeout(() => remove(warnRef).catch(() => {}), 300);
+      });
+
+      unsubBan = onValue(banRef, (snap) => {
+        if (!snap.exists()) return;
+        const d = { ...snap.val(), type: "ban" };
+        setWarnModal(d);
+        setTimeout(() => remove(banRef).catch(() => {}), 300);
+      });
     });
-    const unsubBan = onValue(banRef, snap => {
-      if (!snap.exists()) return;
-      const d = { ...snap.val(), type: "ban" };
-      setWarnModal(d);
-      setTimeout(() => remove(banRef).catch(() => {}), 500);
-    });
-    return () => { off(warnRef); off(banRef); };
-  }, [user?.uid]);
+
+    return () => {
+      unsubAuth();
+      if (warnRef && unsubWarn) { unsubWarn(); off(warnRef); }
+      if (banRef && unsubBan) { unsubBan(); off(banRef); }
+    };
+  }, []); // empty deps — manages own auth subscription
 
   // Ban expiry checker
   useEffect(() => {
