@@ -1404,6 +1404,14 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  // Show ban screen instantly from cache before Firebase resolves
+  const _cachedBan = (() => { try { const b = localStorage.getItem("tq_ban"); return b ? JSON.parse(b) : null; } catch { return null; } })();
+  const [warnModal, setWarnModal_real] = useState<any>(_cachedBan && _cachedBan.expiresAt && Date.now() < _cachedBan.expiresAt ? { ..._cachedBan, type: "ban" } : _cachedBan && _cachedBan.duration === "permanent" ? { ..._cachedBan, type: "ban" } : null);
+  function setWarnModal(v: any) {
+    if (v?.type === "ban") { try { localStorage.setItem("tq_ban", JSON.stringify(v)); } catch {} }
+    else if (!v || v?.type === "unbanned") { try { localStorage.removeItem("tq_ban"); } catch {} }
+    setWarnModal_real(v);
+  }
   const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -1711,7 +1719,7 @@ export default function Home() {
 
 
 
-  const [warnModal, setWarnModal] = useState<any>(null);
+  // warnModal declared above with cache
   const [viewedUser, setViewedUser] = useState<any>(null); // for public profile viewing
   const [reportTarget, setReportTarget] = useState<any>(null);
   const [showLangModal, setShowLangModal] = useState(false);
