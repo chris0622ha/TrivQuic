@@ -1416,6 +1416,7 @@ export default function Home() {
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdInput, setCmdInput] = useState("");
+  const [globalAudience, setGlobalAudience] = useState<"all"|"crown"|"gold"|"silver"|"bronze">("all");
 
   // ── Effects canvas manager
   const effectsRef = React.useRef<{ stop: () => void } | null>(null);
@@ -3042,7 +3043,6 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],["rickroll","🎵 rickroll"],
           ["announce","📢 announce"],["undo","↩️ undo"],["reset","🔄 reset"],
         ];
-        const [globalAudience, setGlobalAudience] = React.useState<"all"|"crown"|"gold"|"silver"|"bronze">("all");
         const fpersonal = personalCmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
         const fglobal = globalCmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
         const PersonalBtn = ({ cmd, label }: { cmd: string; label: string }) => (
