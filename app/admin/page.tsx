@@ -52,7 +52,7 @@ async function logAdminAction(action: string, target?: string, details?: string)
       target: target || null,
       details: details || null,
       ts: Date.now(),
-      time: new Date().toLocaleString(),
+      time: new Date().toLocaleString("en-US", { timeZone:"America/New_York", month:"numeric", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true }) + " ET",
     });
   } catch(e) { console.error("logAdminAction failed:", e); }
 }
@@ -186,7 +186,7 @@ function AnnouncementPanel() {
 
   async function saveAnnouncement() {
     if (!text.trim()) { flash("Enter announcement text", "error"); return; }
-    const data = { text:text.trim(), postedAt:new Date().toLocaleString() };
+    const data = { text:text.trim(), postedAt:new Date().toLocaleString("en-US", { timeZone:"America/New_York", month:"numeric", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true }) + " ET" };
     await set(ref(db, "config/announcement"), data);
     setCurrent(data); setText("");
     flash("Announcement posted — shows on everyone's home screen");
@@ -947,7 +947,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
     if (!target) return;
     const finalReason = reason.trim() || "No reason given";
     const key = Date.now().toString();
-    const entry: any = { reason: finalReason, warnedAt: Date.now(), time: new Date().toLocaleString(), adminUid: _adminUid, adminUsername: _adminUsername };
+    const entry: any = { reason: finalReason, warnedAt: Date.now(), time: new Date().toLocaleString("en-US", { timeZone:"America/New_York", month:"numeric", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true }) + " ET", adminUid: _adminUid, adminUsername: _adminUsername };
     if (subject) entry.subject = subject;
     await set(ref(db, `warns/${target.uid}/${key}`), entry);
     // Count warns for this subject
@@ -2166,7 +2166,7 @@ function WarnsPanel() {
     if (!target) { flash("User not found","error"); return; }
     const finalReason = warnReason.trim() || "No reason given";
     const key = Date.now().toString();
-    const entry: any = { reason: finalReason, warnedAt: Date.now(), time: new Date().toLocaleString(), adminUid: _adminUid, adminUsername: _adminUsername };
+    const entry: any = { reason: finalReason, warnedAt: Date.now(), time: new Date().toLocaleString("en-US", { timeZone:"America/New_York", month:"numeric", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true }) + " ET", adminUid: _adminUid, adminUsername: _adminUsername };
     if (warnSubject.trim()) entry.subject = warnSubject.trim();
     await set(ref(db, `warns/${target.uid}/${key}`), entry);
     // Count subject warns
