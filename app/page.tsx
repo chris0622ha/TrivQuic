@@ -1467,7 +1467,7 @@ export default function Home() {
       // Stop canvas effects too when switching to CSS mode... actually keep canvas, just stop CSS
     }
 
-    const root = document.documentElement;
+    const root = (document.getElementById("__next") || document.documentElement) as HTMLElement;
 
     // ── RESET / UNDO helpers ──────────────────────────────────────────
     if (cmd === "reset" || cmd.startsWith("undo_")) {
