@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { db, auth, googleProvider } from "./lib/firebase";
 import { ref, get, set, update, remove, onValue, off, query, orderByChild, equalTo } from "firebase/database";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
@@ -1406,6 +1406,107 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdInput, setCmdInput] = useState("");
+
+  // ── Effects canvas manager
+  const effectsRef = React.useRef<{ stop: () => void } | null>(null);
+
+  function runCommand(cmd: string) {
+    // Clean up any existing effect
+    if (effectsRef.current) { effectsRef.current.stop(); effectsRef.current = null; }
+    if (cmd === "reset") { document.documentElement.style.filter = ""; return; }
+
+    if (cmd === "invert") {
+      const on = document.documentElement.style.filter === "invert(1)";
+      document.documentElement.style.filter = on ? "" : "invert(1)";
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:fixed;inset:0;z-index:8888;pointer-events:none;width:100%;height:100%";
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d")!;
+    let raf: number;
+    let stopped = false;
+
+    if (cmd === "fireworks") {
+      type Particle = { x:number; y:number; vx:number; vy:number; alpha:number; color:string; size:number };
+      const particles: Particle[] = [];
+      const colors = ["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fff"];
+      function burst(x: number, y: number) {
+        for (let i = 0; i < 60; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 6 + 1;
+          particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, alpha:1, color: colors[Math.floor(Math.random()*colors.length)], size: Math.random()*3+1 });
+        }
+      }
+      let t = 0;
+      function draw() {
+        if (stopped) return;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        t++;
+        if (t % 40 === 0) burst(Math.random()*canvas.width, Math.random()*canvas.height*0.7);
+        for (let i = particles.length-1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.alpha -= 0.018;
+          if (p.alpha <= 0) { particles.splice(i,1); continue; }
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        raf = requestAnimationFrame(draw);
+      }
+      burst(canvas.width/2, canvas.height/3);
+      draw();
+      effectsRef.current = { stop: () => { stopped=true; cancelAnimationFrame(raf); canvas.remove(); } };
+      setTimeout(() => { if (effectsRef.current) { effectsRef.current.stop(); effectsRef.current = null; } }, 8000);
+    }
+
+    if (cmd === "matrix") {
+      const cols = Math.floor(canvas.width/16);
+      const drops = Array(cols).fill(1);
+      const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF";
+      function draw() {
+        if (stopped) return;
+        ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "#0f0"; ctx.font = "14px monospace";
+        for (let i = 0; i < drops.length; i++) {
+          ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*16, drops[i]*16);
+          if (drops[i]*16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
+        }
+        raf = requestAnimationFrame(draw);
+      }
+      draw();
+      effectsRef.current = { stop: () => { stopped=true; cancelAnimationFrame(raf); canvas.remove(); } };
+      setTimeout(() => { if (effectsRef.current) { effectsRef.current.stop(); effectsRef.current = null; } }, 12000);
+    }
+
+    if (cmd === "confetti") {
+      type Piece = { x:number; y:number; vx:number; vy:number; rot:number; vrot:number; color:string; w:number; h:number };
+      const pieces: Piece[] = [];
+      const colors = ["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fbbf24","#34d399"];
+      for (let i = 0; i < 180; i++) pieces.push({ x: Math.random()*canvas.width, y: -20-Math.random()*canvas.height, vx: (Math.random()-0.5)*3, vy: Math.random()*3+2, rot: Math.random()*360, vrot: (Math.random()-0.5)*8, color: colors[Math.floor(Math.random()*colors.length)], w: Math.random()*10+6, h: Math.random()*6+4 });
+      function draw() {
+        if (stopped) return;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for (const p of pieces) {
+          p.x+=p.vx; p.y+=p.vy; p.rot+=p.vrot;
+          if (p.y > canvas.height) { p.y=-20; p.x=Math.random()*canvas.width; }
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+          ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+        }
+        raf = requestAnimationFrame(draw);
+      }
+      draw();
+      effectsRef.current = { stop: () => { stopped=true; cancelAnimationFrame(raf); canvas.remove(); } };
+      setTimeout(() => { if (effectsRef.current) { effectsRef.current.stop(); effectsRef.current = null; } }, 10000);
+    }
+  }
+
   const [warnModal, setWarnModal] = useState<any>(null);
   const [viewedUser, setViewedUser] = useState<any>(null); // for public profile viewing
   const [reportTarget, setReportTarget] = useState<any>(null);
@@ -1619,6 +1720,21 @@ export default function Home() {
     window.addEventListener("onetap-modal", handler);
     return () => window.removeEventListener("onetap-modal", handler);
   }, []);
+
+  // Backtick opens command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "`" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        e.preventDefault();
+        setCmdOpen(o => !o);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700);
@@ -2616,6 +2732,32 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           <LeaderboardView globalLB={globalLB} />
         </div>
       </div>
+
+      {/* ── SECRET COMMAND PALETTE ─────────────────────────────────── */}
+      {cmdOpen && (
+        <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
+          onClick={() => setCmdOpen(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"20px 24px", width:340, boxShadow:"0 0 40px rgba(245,158,11,0.3)" }}>
+            <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>⚡ COMMAND PALETTE</div>
+            <input autoFocus value={cmdInput} onChange={e => setCmdInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { runCommand(cmdInput.trim().toLowerCase()); setCmdOpen(false); setCmdInput(""); } if (e.key === "Escape") { setCmdOpen(false); setCmdInput(""); } }}
+              placeholder="type a command..."
+              style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:12 }} />
+            <div style={{ display:"flex", flexDirection:"column" as const, gap:4 }}>
+              {[["invert","🎨 invert colors"],["fireworks","🎆 fireworks"],["matrix","💊 matrix rain"],["confetti","🎉 confetti"],["reset","🔄 reset all effects"]].map(([cmd, label]) => (
+                <div key={cmd} onClick={() => { runCommand(cmd); setCmdOpen(false); setCmdInput(""); }}
+                  style={{ padding:"8px 12px", borderRadius:8, background:"rgba(245,158,11,0.08)", color:"#d1d5db", fontSize:13, cursor:"pointer" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,158,11,0.18)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,158,11,0.08)")}>
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize:10, color:"#4b5563", marginTop:10, textAlign:"center" as const }}>Press ` to open · Esc to close</div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
