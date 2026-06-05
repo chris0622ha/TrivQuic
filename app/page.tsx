@@ -2999,17 +2999,40 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
           ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
           ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],["rickroll","🎵 rickroll"],
-          ["profile","👤 profile"],["stats","📊 stats"],["signout","🚪 sign out"],["admin","⚙️ admin"],
+          ["profile","👤 profile"],["signout","🚪 sign out"],["admin","⚙️ admin"],
           ["undo","↩️ undo"],["reset","🔄 reset"],
+          // also show global+admin here for everyone
+          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],["maintenance","🔧 maintenance mode"],
+          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
+          ["users","👥 users panel"],["bans","🔨 bans panel"],["warns","⚠️ warns panel"],
+          ["analytics","📈 analytics"],["logs","📋 activity log"],["system","⚙️ system"],
         ];
         const globalCmds: [string,string][] = [
-          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],
-          ["maintenance","🔧 toggle maintenance mode"],
+          ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
+          ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
+          ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
+          ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
+          ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
+          ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],
+          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],["maintenance","🔧 maintenance mode"],
+          ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
+          ["users","👥 users panel"],["bans","🔨 bans panel"],["warns","⚠️ warns panel"],
+          ["analytics","📈 analytics"],["logs","📋 activity log"],["system","⚙️ system"],
+          ["undo","↩️ undo"],["reset","🔄 reset"],
         ];
         const adminCmds: [string,string][] = [
+          ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
+          ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
+          ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
+          ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
+          ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","̴z̴a̴l̴g̴o̴ zalgo"],["reverse","↩️ reverse text"],["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
+          ["friday","📅 friday"],["midnight","🌙 midnight"],["newyear","🎆 new year"],
+          ["announce","📢 send announcement"],["notif","🔔 push notification to all"],["maintenance","🔧 maintenance mode"],
           ["ban","🔨 ban user"],["warn","⚠️ warn user"],["unban","✅ unban user"],
-          ["users","👥 go to users"],["bans","🔨 go to bans"],["warns","⚠️ go to warns"],
-          ["analytics","📈 go to analytics"],["logs","📋 go to activity log"],["system","⚙️ go to system"],
+          ["users","👥 users panel"],["bans","🔨 bans panel"],["warns","⚠️ warns panel"],
+          ["analytics","📈 analytics"],["logs","📋 activity log"],["system","⚙️ system"],
+          ["profile","👤 profile"],["signout","🚪 sign out"],["admin","⚙️ admin"],
+          ["undo","↩️ undo"],["reset","🔄 reset"],
         ];
         const q = cmdInput.trim().toLowerCase();
         const filter = (cmds: [string,string][]) => cmds.filter(([cmd,label]) => !q || cmd.includes(q) || label.toLowerCase().includes(q));
