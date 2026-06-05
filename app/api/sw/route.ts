@@ -18,22 +18,11 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Only handle background messages here — FCM will NOT auto-display if we use
-// data-only messages (no notification key at top level or in webpush)
-messaging.onBackgroundMessage((payload) => {
-  // If FCM already showed a notification (webpush.notification), don't show another
-  if (payload.notification) return;
-  const data = payload.data || {};
-  const title = data.title || "TrivQuic";
-  const body = data.body || "";
-  if (!body && !title) return;
-  self.registration.showNotification(title, {
-    body,
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
-    data: { url: data.url || "/" },
-    vibrate: [100, 50, 100],
-  });
+// webpush.notification is displayed by the browser automatically.
+// Calling showNotification here causes a second "New notification from TrivQuic".
+// So we do nothing — notificationclick still works below.
+messaging.onBackgroundMessage((_payload) => {
+  // intentionally empty
 });
 
 self.addEventListener("notificationclick", (event) => {
