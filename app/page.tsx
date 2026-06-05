@@ -1459,8 +1459,13 @@ export default function Home() {
   }
 
   function runCommand(cmd: string) {
-    if (cmd === "undo") { cmd = lastCmdRef.current ? "undo_" + lastCmdRef.current : "reset"; }
-    else { lastCmdRef.current = cmd; }
+    if (cmd === "undo") {
+      // Pop and stop only the most recent canvas effect
+      const last = effectsRef.current.pop();
+      if (last) { last.stop(); return; }
+      // No canvas effect — undo the last CSS command
+      cmd = lastCmdRef.current ? "undo_" + lastCmdRef.current : "reset";
+    } else { lastCmdRef.current = cmd; }
 
     // CSS-only effects (filter/transform) stop each other; canvas effects stack
     const isCanvasCmd = ["fireworks","confetti","party","snow","matrix","bubbles","lasers","dvd","love","rage","amongus"].includes(cmd);
