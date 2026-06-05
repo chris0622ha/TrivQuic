@@ -1776,7 +1776,11 @@ export default function Home() {
           } else if (cachedBan) {
             // Cache says banned but Firebase says no ban — was manually removed
             try { localStorage.removeItem("tq_ban"); } catch {}
-            setWarnModal({ type: "unbanned" });
+            // Check if admin left an unban notification
+            const unbanSnap = await get(ref(db, `users/${u.uid}/pendingUnban`));
+            const unbanAdmin = unbanSnap.exists() ? unbanSnap.val().adminUsername : null;
+            if (unbanSnap.exists()) remove(ref(db, `users/${u.uid}/pendingUnban`)).catch(() => {});
+            setWarnModal({ type: "unbanned", removedBy: unbanAdmin });
             return;
           }
         } catch {}
@@ -2812,10 +2816,15 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       {warnModal && warnModal.type === "unbanned" && (
         <div style={{ position:"fixed" as const, inset:0, background:"#0a0a0a", zIndex:9999, display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:24, color:"#fff" }}>
           <div style={{ fontSize:80, marginBottom:20 }}>🎉</div>
-          <h1 style={{ fontSize:"2rem", fontWeight:900, color:"#10b981", margin:"0 0 12px", textAlign:"center" as const }}>Your ban has expired</h1>
-          <p style={{ color:"#9ca3af", fontSize:15, textAlign:"center" as const, marginBottom:32, maxWidth:320 }}>
+          <h1 style={{ fontSize:"2rem", fontWeight:900, color:"#10b981", margin:"0 0 12px", textAlign:"center" as const }}>
+            {warnModal.removedBy ? "Your ban was removed" : "Your ban has expired"}
+          </h1>
+          <p style={{ color:"#9ca3af", fontSize:15, textAlign:"center" as const, marginBottom:warnModal.removedBy ? 8 : 32, maxWidth:320 }}>
             You're free to continue playing. Please follow the community rules going forward.
           </p>
+          {warnModal.removedBy && (
+            <div style={{ color:"#6b7280", fontSize:13, marginBottom:32 }}>— removed by {warnModal.removedBy}</div>
+          )}
           <button onClick={() => setWarnModal(null)} style={{
             background:"linear-gradient(135deg,#10b981,#059669)", border:"none",
             borderRadius:14, color:"#fff", fontWeight:900, fontSize:"1.1rem",

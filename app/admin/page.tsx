@@ -962,6 +962,8 @@ function BansPanel({ initUid }: { initUid?:string }) {
   }
 
   async function handleUnban(uid: string, username: string) {
+    // Write unban notification before removing ban so client knows who removed it
+    await set(ref(db, `users/${uid}/pendingUnban`), { adminUsername: _adminUsername, unbannedAt: Date.now() });
     await remove(ref(db,`bans/${uid}`));
     await update(ref(db,`users/${uid}`),{banned:false,banExpiresAt:null});
     setBans(b=>b.filter(x=>x.uid!==uid));
