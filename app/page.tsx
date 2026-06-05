@@ -1416,6 +1416,7 @@ export default function Home() {
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdInput, setCmdInput] = useState("");
+  const [cmdTarget, setCmdTarget] = useState<{cmd:string;label:string}|null>(null); // pending cmd waiting for audience picker
 
   // ── Effects canvas manager
   const effectsRef = React.useRef<{ stop: () => void } | null>(null);
@@ -1433,6 +1434,24 @@ export default function Home() {
   }
 
   const lastCmdRef = React.useRef<string>("");
+
+  // Broadcast a command to other users via Firebase
+  async function broadcastCmd(cmd: string, audience: "all" | string) {
+    try {
+      const usersSnap = await get(ref(db, "users"));
+      if (!usersSnap.exists()) return;
+      const updates: Record<string, any> = {};
+      Object.entries(usersSnap.val() as Record<string, any>).forEach(([uid, u]) => {
+        if (uid === user?.uid) return; // skip self
+        if (audience === "all" || u.badge === audience) {
+          updates[`users/${uid}/pendingCmd`] = { cmd, sentAt: Date.now() };
+        }
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+      }
+    } catch (e) { console.error(e); }
+  }
 
   function runCommand(cmd: string) {
     if (cmd === "undo") { cmd = lastCmdRef.current ? "undo_" + lastCmdRef.current : "reset"; }
@@ -1882,6 +1901,14 @@ export default function Home() {
         const d = { ...snap.val() }; d.type = "ban";
         setWarnModal(d);
         remove(ref(db, `users/${u.uid}/pendingBanNotif`)).catch(() => {});
+      });
+
+      // pendingCmd — run a command sent by admin
+      onValue(ref(db, `users/${u.uid}/pendingCmd`), (snap) => {
+        if (!snap.exists()) return;
+        const { cmd } = snap.val();
+        remove(ref(db, `users/${u.uid}/pendingCmd`)).catch(() => {});
+        if (cmd) runCommand(cmd);
       });
     });
 
@@ -3040,7 +3067,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           <div style={{ marginBottom:8 }}>
             <div style={{ fontSize:10, color, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" as const, padding:"6px 4px 4px" }}>{title}</div>
             {cmds.map(([cmd, label]) => (
-              <div key={cmd} onClick={() => { runCommand(cmd); setCmdOpen(false); setCmdInput(""); }}
+              <div key={cmd} onClick={() => { if (userData?.isAdmin) { setCmdTarget({cmd, label}); setCmdOpen(false); setCmdInput(""); } else { runCommand(cmd); setCmdOpen(false); setCmdInput(""); } }}
                 style={{ padding:"7px 12px", borderRadius:8, background:"rgba(255,255,255,0.04)", color:"#d1d5db", fontSize:13, cursor:"pointer", marginBottom:2 }}
                 onMouseEnter={e => (e.currentTarget.style.background = `${color}22`)}
                 onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}>
@@ -3069,6 +3096,42 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           </div>
         );
       })()}
+
+      {/* ── COMMAND AUDIENCE PICKER ─────────────────────────────────── */}
+      {cmdTarget && (
+        <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.7)" }}
+          onClick={() => setCmdTarget(null)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background:"#1a1a2e", border:"1px solid #10b981", borderRadius:14, padding:"24px 28px", width:320, boxShadow:"0 0 40px rgba(16,185,129,0.3)" }}>
+            <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.1em", marginBottom:4 }}>📡 SEND COMMAND</div>
+            <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:16 }}>{cmdTarget.label}</div>
+            <div style={{ display:"flex", flexDirection:"column" as const, gap:8 }}>
+              {[
+                ["just_me","🙋 Just me","Only you"],
+                ["all","🌐 Everyone","All logged-in users"],
+                ["crown","👑 Crown","Crown badge holders"],
+                ["gold","🥇 Gold","Gold badge holders"],
+                ["silver","🥈 Silver","Silver badge holders"],
+                ["bronze","🥉 Bronze","Bronze badge holders"],
+              ].map(([audience, label, desc]) => (
+                <div key={audience} onClick={async () => {
+                  const cmd = cmdTarget.cmd;
+                  setCmdTarget(null);
+                  runCommand(cmd); // always run for self
+                  if (audience !== "just_me") await broadcastCmd(cmd, audience);
+                }}
+                  style={{ padding:"10px 14px", borderRadius:10, background:"rgba(16,185,129,0.08)", cursor:"pointer", border:"1px solid rgba(16,185,129,0.15)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.18)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(16,185,129,0.08)")}>
+                  <div style={{ color:"#fff", fontWeight:700, fontSize:14 }}>{label}</div>
+                  <div style={{ color:"#6b7280", fontSize:12 }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize:10, color:"#4b5563", marginTop:12, textAlign:"center" as const }}>Esc to cancel</div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
