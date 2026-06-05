@@ -1819,8 +1819,10 @@ export default function Home() {
       };
       let raf2:number;let stopped2=false;
       const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);x+=vx;y+=vy;
-        if(x+W>c.width||x<0){vx*=-1;hue=(hue+50)%360;}
-        if(y+H>c.height||y<0){vy*=-1;hue=(hue+50)%360;}
+        if(x+W>c.width){x=c.width-W;vx*=-1;hue=(hue+60)%360;}
+        if(x<0){x=0;vx*=-1;hue=(hue+60)%360;}
+        if(y+H>c.height){y=c.height-H;vy*=-1;hue=(hue+60)%360;}
+        if(y<0){y=0;vy*=-1;hue=(hue+60)%360;}
         drawLogo(x,y,`hsl(${hue},100%,65%)`);
         raf2=requestAnimationFrame(tick);};
       tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();}});autoStop(15000); return;
