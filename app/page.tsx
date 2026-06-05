@@ -1418,6 +1418,7 @@ export default function Home() {
   const [cmdInput, setCmdInput] = useState("");
   const [globalAudience, setGlobalAudience] = useState<"all"|"crown"|"gold"|"silver"|"bronze">("all");
   const [expandedCmd, setExpandedCmd] = useState<string|null>(null);
+  const [cmdDuration, setCmdDuration] = useState<number>(10); // seconds
 
   // ── Effects canvas manager
   const effectsRef = React.useRef<{ stop: () => void }[]>([]);
@@ -1440,7 +1441,7 @@ export default function Home() {
   const lastCmdRef = React.useRef<string>("");
 
   // Broadcast a command to other users via Firebase
-  async function broadcastCmd(cmd: string, audience: "all" | string) {
+  async function broadcastCmd(cmd: string, audience: "all" | string, duration = 10) {
     try {
       const usersSnap = await get(ref(db, "users"));
       if (!usersSnap.exists()) return;
@@ -1448,7 +1449,7 @@ export default function Home() {
       Object.entries(usersSnap.val() as Record<string, any>).forEach(([uid, u]) => {
         if (uid === user?.uid) return; // skip self
         if (audience === "all" || u.badge === audience) {
-          updates[`users/${uid}/pendingCmd`] = { cmd, sentAt: Date.now() };
+          updates[`users/${uid}/pendingCmd`] = { cmd, sentAt: Date.now(), duration };
         }
       });
       if (Object.keys(updates).length > 0) {
@@ -2032,9 +2033,13 @@ export default function Home() {
       // pendingCmd — run a command sent by admin
       onValue(ref(db, `users/${u.uid}/pendingCmd`), (snap) => {
         if (!snap.exists()) return;
-        const { cmd } = snap.val();
+        const { cmd, duration } = snap.val();
         remove(ref(db, `users/${u.uid}/pendingCmd`)).catch(() => {});
-        if (cmd) runCommand(cmd);
+        if (cmd) {
+          runCommand(cmd);
+          // Auto-stop after admin-set duration
+          if (duration && duration > 0) setTimeout(() => runCommand("reset"), duration * 1000);
+        }
       });
     });
 
@@ -3215,15 +3220,25 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                       {label}
                     </div>
                     {expandedCmd === cmd && (
-                      <div style={{ display:"flex", gap:4, padding:"4px 8px 6px", flexWrap:"wrap" as const }}>
-                        {([ ["🙋 Me","just_me"],["🌐 Everyone","all"],["👑 Crown","crown"],["🥇 Gold","gold"],["🥈 Silver","silver"],["🥉 Bronze","bronze"] ] as [string,string][]).map(([lbl, aud]) => (
-                          <div key={aud} onClick={async () => { runCommand(cmd); if (aud !== "just_me") await broadcastCmd(cmd, aud as any); setExpandedCmd(null); }}
-                            style={{ padding:"3px 8px", borderRadius:6, background:"rgba(16,185,129,0.15)", color:"#10b981", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(16,185,129,0.3)" }}
-                            onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.35)")}
-                            onMouseLeave={e => (e.currentTarget.style.background = "rgba(16,185,129,0.15)")}>
-                            {lbl}
-                          </div>
-                        ))}
+                      <div style={{ padding:"4px 8px 8px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
+                          <span style={{ color:"#6b7280", fontSize:11 }}>Duration:</span>
+                          <input type="number" min={1} max={300} value={cmdDuration}
+                            onChange={e => setCmdDuration(Math.max(1, Math.min(300, parseInt(e.target.value)||10)))}
+                            onClick={e => e.stopPropagation()}
+                            style={{ width:52, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:5, color:"#fff", fontSize:12, padding:"2px 6px", textAlign:"center" as const }} />
+                          <span style={{ color:"#6b7280", fontSize:11 }}>sec</span>
+                        </div>
+                        <div style={{ display:"flex", gap:4, flexWrap:"wrap" as const }}>
+                          {([ ["🙋 Me","just_me"],["🌐 Everyone","all"],["👑 Crown","crown"],["🥇 Gold","gold"],["🥈 Silver","silver"],["🥉 Bronze","bronze"] ] as [string,string][]).map(([lbl, aud]) => (
+                            <div key={aud} onClick={async (e) => { e.stopPropagation(); runCommand(cmd); if (aud !== "just_me") await broadcastCmd(cmd, aud as any, cmdDuration); setExpandedCmd(null); }}
+                              style={{ padding:"3px 8px", borderRadius:6, background:"rgba(16,185,129,0.15)", color:"#10b981", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(16,185,129,0.3)" }}
+                              onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.35)")}
+                              onMouseLeave={e => (e.currentTarget.style.background = "rgba(16,185,129,0.15)")}>
+                              {lbl}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
