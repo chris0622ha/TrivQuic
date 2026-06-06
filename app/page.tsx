@@ -3056,12 +3056,18 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   if (screen === "home") return (
     <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"72px 16px 20px", color:"#fff" }}>
       <AuthHeader />
-      {announcement && userData?.isAdmin && (
-        <div style={{ position:"fixed", top:48, left:"50%", transform:"translateX(-50%)", zIndex:1000 }}>
-          <div onClick={async () => { await remove(ref(db, "config/announcement")); setAnnouncement(null); }}
-            style={{ background:"#ef4444", color:"#fff", fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.3)" }}>
-            ✕ Remove Announcement
+      {userData?.isAdmin && (
+        <div style={{ position:"fixed", top:48, left:"50%", transform:"translateX(-50%)", zIndex:1000, display:"flex", gap:6 }}>
+          <div onClick={() => setAnnounceModal(true)}
+            style={{ background:"#f59e0b", color:"#000", fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
+            📢 Announcement
           </div>
+          {announcement && (
+            <div onClick={async () => { await remove(ref(db, "config/announcement")); setAnnouncement(null); }}
+              style={{ background:"#ef4444", color:"#fff", fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
+              ✕ Delete Announcement
+            </div>
+          )}
         </div>
       )}
       {announcement && (
