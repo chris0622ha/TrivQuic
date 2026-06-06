@@ -2654,7 +2654,7 @@ export default function Home() {
       )}
       {/* Language button — top left, fixed */}
       <button onClick={() => setShowLangModal(true)}
-        style={{ position:"fixed", top: announcement ? 50 : 12, left:16, zIndex:200, transition:"top 0.2s", background:"rgba(15,15,26,0.7)", border:"1px solid rgba(45,45,68,0.6)", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
+        style={{ position:"fixed", top: announcement ? 50 : 12, left:16, zIndex:200, transition:"top 0.2s", display: screen === "game" ? "none" : undefined, background:"rgba(15,15,26,0.7)", border:"1px solid rgba(45,45,68,0.6)", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
         🌐 {LANGUAGES.find(l => l.code === currentLang)?.flag || "🌐"}
       </button>
 
@@ -2682,7 +2682,7 @@ export default function Home() {
       )}
 
       {/* Right side — profile + actions, fixed, no scroll */}
-      <div style={{ position:"fixed", top: announcement ? 38 : 0, right:0, padding:"12px 16px", zIndex:200, display:"flex", alignItems:"center", gap:10, transition:"top 0.2s" }}>
+      <div style={{ position:"fixed", top: announcement ? 38 : 0, right:0, padding:"12px 16px", zIndex:200, display: screen === "game" ? "none" : "flex", alignItems:"center", gap:10, transition:"top 0.2s" }}>
         {authLoading ? null : user ? (
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <button onClick={() => setModal("profile")} title="View your profile"
@@ -3551,7 +3551,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       <AuthHeader />
       {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
       <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <div style={{ fontSize:22, fontWeight:900, color:"#f59e0b" }}>{score}</div>
+        <button onClick={() => setScreen("home")} style={{ background:"transparent", border:"none", color:"#4b5563", fontSize:13, fontWeight:700, cursor:"pointer", padding:"4px 0" }}>✕ Leave</button>
         <div style={{ fontSize:13, color:"#6b7280" }}>{qIndex + 1} / {questions.length}</div>
         <div style={{ fontSize:16, fontWeight:700, color: streak > 0 ? "#ef4444" : "#4b5563" }}>🔥{streak}</div>
       </div>
