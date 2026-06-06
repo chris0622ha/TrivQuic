@@ -1769,37 +1769,21 @@ export default function Home() {
 
     // ── PIXELATE ──────────────────────────────────────────────────────
     if (cmd === "pixelate") {
-      // Safe pixelation: canvas grid overlay — works on all devices, stackable
-      const current = parseInt(root.dataset.pixelLevel || "0");
-      const level = current + 1;
+      const level = parseInt(root.dataset.pixelLevel || "0") + 1;
       root.dataset.pixelLevel = String(level);
-      const blockSize = level * 10; // 10, 20, 30px blocks per stack level
-      const c = makeCanvas(9990 + level);
-      const ctx2 = c.getContext("2d")!;
-      let stopped2 = false;
-      // Draw a colored pixel grid overlay
-      const cols = ["#ef4444","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4"];
-      const drawGrid = () => {
-        ctx2.clearRect(0, 0, c.width, c.height);
-        for (let x = 0; x < c.width; x += blockSize) {
-          for (let y = 0; y < c.height; y += blockSize) {
-            const i = (Math.floor(x / blockSize) + Math.floor(y / blockSize)) % 2;
-            if (i === 0) continue; // checkerboard — only color every other block
-            ctx2.fillStyle = cols[(Math.floor(x/blockSize)*3 + Math.floor(y/blockSize)*7) % cols.length] + "22";
-            ctx2.fillRect(x, y, blockSize, blockSize);
-          }
-        }
-        // Draw grid lines
-        ctx2.strokeStyle = "rgba(0,0,0,0.15)";
-        ctx2.lineWidth = 0.5;
-        for (let x = 0; x < c.width; x += blockSize) { ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, c.height); ctx2.stroke(); }
-        for (let y = 0; y < c.height; y += blockSize) { ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(c.width, y); ctx2.stroke(); }
-      };
-      drawGrid();
+      const factor = Math.max(0.05, 1 / (level * 3)); // 33%, 16%, 11%...
+      const pct = Math.round(factor * 100);
+      const invPct = Math.round(100 / factor);
+      // Inject a style that scales the page down then back up with no smoothing
+      const styleId = `__px_${level}`;
+      const s = Object.assign(document.createElement("style"), { id: styleId });
+      s.textContent = `#__next { transform: scale(${factor}); transform-origin: top left; image-rendering: pixelated; width: ${invPct}%; height: ${invPct}%; overflow: hidden; } body { transform: scale(${1/factor}); transform-origin: top left; overflow: hidden; }`;
+      document.head.appendChild(s);
       effectsRef.current.push({stop:()=>{
-        stopped2=true; c.remove();
+        s.remove();
         const lvl = parseInt(root.dataset.pixelLevel || "1") - 1;
         root.dataset.pixelLevel = String(Math.max(0, lvl));
+        if (lvl <= 0) { root.style.cssText = ""; document.body.style.cssText = ""; }
       }});
       autoStop((durationSec??15)*1000);return;
     }
@@ -2197,11 +2181,13 @@ export default function Home() {
         remove(ref(db, `users/${u.uid}/pendingBanNotif`)).catch(() => {});
       });
 
-      // Listen to active global effects — run for late joiners
+      // Listen to active global effects — only for effects started AFTER page load
+      const pageLoadTime = Date.now();
       onValue(ref(db, "config/activeEffects"), (snap) => {
         if (!snap.exists()) return;
         const effects = snap.val() as Record<string, {cmd:string;durationSec:number;startedAt:number}>;
         Object.values(effects).forEach(({ cmd, durationSec, startedAt }) => {
+          if (startedAt < pageLoadTime) return; // ignore old effects
           const elapsed = (Date.now() - startedAt) / 1000;
           const remaining = Math.floor(durationSec - elapsed);
           if (remaining > 2) runCommand(cmd, remaining);
@@ -3436,7 +3422,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                   style={{ padding:"3px 8px", borderRadius:6, background:"rgba(245,158,11,0.15)", color:"#f59e0b", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(245,158,11,0.3)" }}
                   onMouseEnter={e=>(e.currentTarget.style.background="rgba(245,158,11,0.3)")}
                   onMouseLeave={e=>(e.currentTarget.style.background="rgba(245,158,11,0.15)")}>↩ Undo</div>
-                <div onClick={() => { effectsRef.current.forEach(ef=>ef.stop()); effectsRef.current=[]; const r=(document.getElementById("__next")||document.documentElement) as HTMLElement; r.style.filter=""; r.style.transform=""; r.style.animation=""; (r as any).style.fontFamily=""; document.getElementById("__cmd_style")?.remove(); document.querySelectorAll<HTMLCanvasElement>("canvas[style*='z-index']").forEach(c=>c.remove()); }}
+                <div onClick={() => { effectsRef.current.forEach(ef=>ef.stop()); effectsRef.current=[]; remove(ref(db,"config/activeEffects")).catch(()=>{}); const r=(document.getElementById("__next")||document.documentElement) as HTMLElement; r.style.cssText=""; document.querySelectorAll("style[id^='__']").forEach(s=>s.remove()); document.querySelectorAll("canvas").forEach(c=>{if((c as HTMLElement).style.zIndex)c.remove();}); document.querySelectorAll("[data-orig-text]").forEach((el:any)=>{el.innerText=el.dataset.origText;delete el.dataset.origText;}); document.querySelectorAll("[data-orig-style]").forEach((el:any)=>{el.style.cssText=el.dataset.origStyle;delete el.dataset.origStyle;}); (r as any).dataset.pixelLevel="0"; }}
                   style={{ padding:"3px 8px", borderRadius:6, background:"rgba(239,68,68,0.15)", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(239,68,68,0.3)" }}
                   onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.3)")}
                   onMouseLeave={e=>(e.currentTarget.style.background="rgba(239,68,68,0.15)")}>⏹ Stop</div>
