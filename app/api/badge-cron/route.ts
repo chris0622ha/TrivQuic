@@ -44,8 +44,8 @@ export async function GET(req: NextRequest) {
       const history: Record<string, any> = user.loginHistory || {};
       const sessions = Object.values(history).filter((s: any) => s.ts);
 
-      // Unique days logged in during the last 7 days
-      const last7 = sessions.filter((s: any) => now - s.ts < oneWeek);
+      // Unique days logged in during the last 7 days — only sessions >= 10 min count
+      const last7 = sessions.filter((s: any) => now - s.ts < oneWeek && (s.durationMin || 0) >= 10);
       const uniqueDays = new Set(last7.map((s: any) => new Date(s.ts).toDateString())).size;
 
       // Days since last login (for demotion)
