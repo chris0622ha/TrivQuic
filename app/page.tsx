@@ -2401,7 +2401,7 @@ export default function Home() {
   const [announcement, setAnnouncement] = useState<{text:string;postedAt:string;postedBy?:string}|null>(null);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   useEffect(() => {
-    get(ref(db, "config/announcement")).then(s => { if(s.exists()) setAnnouncement(s.val()); });
+    onValue(ref(db, "config/announcement"), s => { setAnnouncement(s.exists() ? s.val() : null); });
     get(ref(db, "config/maintenanceMode")).then(s => { if(s.exists()) setMaintenanceMode(s.val()); });
   }, []);
 
