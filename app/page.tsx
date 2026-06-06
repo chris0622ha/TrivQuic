@@ -1459,6 +1459,12 @@ export default function Home() {
       if (Object.keys(updates).length > 0) {
         await update(ref(db), updates);
       }
+      // Persist to activeEffects so late joiners get it (only for "all" audience)
+      if (audience === "all" && duration > 0) {
+        const effectKey = `${cmd}_${Date.now()}`;
+        await set(ref(db, `config/activeEffects/${effectKey}`), { cmd, durationSec: duration, startedAt: Date.now() });
+        setTimeout(() => remove(ref(db, `config/activeEffects/${effectKey}`)).catch(()=>{}), duration * 1000 + 2000);
+      }
     } catch (e) { console.error(e); }
   }
 
@@ -1482,6 +1488,7 @@ export default function Home() {
     // ── RESET / UNDO helpers ──────────────────────────────────────────
     if (cmd === "reset" || cmd.startsWith("undo_")) {
       effectsRef.current.forEach(e => e.stop()); effectsRef.current = [];
+      remove(ref(db, "config/activeEffects")).catch(()=>{});
       root.style.filter = "";
       root.style.transform = "";
       root.style.animation = "";
@@ -1975,14 +1982,7 @@ export default function Home() {
       const tick=()=>{if(stopped2)return;ctx2.fillStyle="rgba(0,0,0,0.05)";ctx2.fillRect(0,0,c.width,c.height);ctx2.fillStyle="#0f0";ctx2.font="14px monospace";for(let i=0;i<drops.length;i++){ctx2.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,drops[i]*16);if(drops[i]*16>c.height&&Math.random()>0.975)drops[i]=0;drops[i]++;}raf2=requestAnimationFrame(tick);};
       tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();}});autoStop((durationSec??12)*1000); return;
     }
-    if (cmd === "snow") {
-      const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      type Flake={x:number;y:number;r:number;speed:number;drift:number;alpha:number};
-      const flakes:Flake[]=Array.from({length:120},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*4+1,speed:Math.random()*1.5+0.3,drift:Math.random()*1-0.5,alpha:Math.random()*0.7+0.3}));
-      let raf2:number;let stopped2=false;
-      const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);flakes.forEach(f=>{f.y+=f.speed;f.x+=f.drift;if(f.y>c.height)f.y=-10;if(f.x>c.width)f.x=0;if(f.x<0)f.x=c.width;ctx2.beginPath();ctx2.arc(f.x,f.y,f.r,0,Math.PI*2);ctx2.fillStyle=`rgba(255,255,255,${f.alpha})`;ctx2.fill();});raf2=requestAnimationFrame(tick);};
-      tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();}});autoStop((durationSec??15)*1000); return;
-    }
+
     if (cmd === "bubbles") {
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
       type Bubble={x:number;y:number;r:number;speed:number;hue:number;drift:number};
@@ -2031,33 +2031,10 @@ export default function Home() {
       const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);const y=Math.random()*c.height;ctx2.fillStyle=`rgba(255,255,255,${Math.random()*0.08})`;ctx2.fillRect(0,y,c.width,Math.random()*3+1);if(Math.random()<0.1){ctx2.fillStyle=`rgba(0,255,0,0.03)`;ctx2.fillRect(0,0,c.width,c.height);}raf2=requestAnimationFrame(tick);};
       tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();style.remove();document.documentElement.style.filter="";document.documentElement.style.animation="";}});autoStop((durationSec??12)*1000); return;
     }
-    if (cmd === "love") {
-      const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      type H={x:number;y:number;vy:number;size:number;alpha:number};
-      const hearts:H[]=Array.from({length:50},()=>({x:Math.random()*c.width,y:c.height+50,vy:-(Math.random()*2+0.5),size:Math.random()*24+10,alpha:Math.random()*0.5+0.5}));
-      let raf2:number;let stopped2=false;
-      const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);hearts.forEach(h=>{h.y+=h.vy;if(h.y<-40){h.y=c.height+20;h.x=Math.random()*c.width;}ctx2.font=`${h.size}px serif`;ctx2.globalAlpha=h.alpha;ctx2.fillText("❤️",h.x,h.y);});ctx2.globalAlpha=1;raf2=requestAnimationFrame(tick);};
-      tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();}});autoStop((durationSec??10)*1000); return;
-    }
-    if (cmd === "rage") {
-      const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      const emojis=["😡","🤬","💢","🔥","💀"];
-      type Em={x:number;y:number;vy:number;emoji:string;size:number};
-      const ems:Em[]=Array.from({length:40},()=>({x:Math.random()*c.width,y:c.height+50,vy:-(Math.random()*4+2),emoji:emojis[Math.floor(Math.random()*emojis.length)],size:Math.random()*30+20}));
-      let t2=0;let raf2:number;let stopped2=false;
-      const tick=()=>{if(stopped2)return;t2++;ctx2.clearRect(0,0,c.width,c.height);ctx2.fillStyle=`rgba(239,68,68,${Math.sin(t2*0.2)*0.05+0.05})`;ctx2.fillRect(0,0,c.width,c.height);root.style.filter=`hue-rotate(${Math.sin(t2*0.1)*20}deg) saturate(${1.5+Math.sin(t2*0.3)*0.5})`;ems.forEach(e=>{e.y+=e.vy;if(e.y<-60){e.y=c.height+20;e.x=Math.random()*c.width;}ctx2.font=`${e.size}px serif`;ctx2.fillText(e.emoji,e.x,e.y);});raf2=requestAnimationFrame(tick);};
-      tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();root.style.filter="";}});autoStop((durationSec??6)*1000); return;
-    }
 
-    if (cmd === "party") {
-      let hue2=0;let raf2:number;let stopped2=false;
-      const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      const colors4=["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fbbf24","#34d399"];
-      type PP={x:number;y:number;vx:number;vy:number;rot:number;vrot:number;color:string;w:number;h:number};
-      const pieces2:PP[]=Array.from({length:200},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height,vx:(Math.random()-0.5)*3,vy:Math.random()*3+2,rot:Math.random()*360,vrot:(Math.random()-0.5)*8,color:colors4[Math.floor(Math.random()*colors4.length)],w:Math.random()*10+6,h:Math.random()*6+4}));
-      const tick=()=>{if(stopped2)return;hue2=(hue2+1)%360;root.style.filter=`hue-rotate(${hue2}deg)`;ctx2.clearRect(0,0,c.width,c.height);pieces2.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vrot;if(p.y>c.height){p.y=-20;p.x=Math.random()*c.width;}ctx2.save();ctx2.translate(p.x,p.y);ctx2.rotate(p.rot*Math.PI/180);ctx2.fillStyle=p.color;ctx2.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx2.restore();});raf2=requestAnimationFrame(tick);};
-      tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();root.style.filter="";}});autoStop((durationSec??12)*1000); return;
-    }
+
+
+
   }
 
 
@@ -2213,6 +2190,17 @@ export default function Home() {
         const d = { ...snap.val() }; d.type = "ban";
         setWarnModal(d);
         remove(ref(db, `users/${u.uid}/pendingBanNotif`)).catch(() => {});
+      });
+
+      // Listen to active global effects — run for late joiners
+      onValue(ref(db, "config/activeEffects"), (snap) => {
+        if (!snap.exists()) return;
+        const effects = snap.val() as Record<string, {cmd:string;durationSec:number;startedAt:number}>;
+        Object.values(effects).forEach(({ cmd, durationSec, startedAt }) => {
+          const elapsed = (Date.now() - startedAt) / 1000;
+          const remaining = Math.floor(durationSec - elapsed);
+          if (remaining > 2) runCommand(cmd, remaining);
+        });
       });
 
       // pendingCmd — run a command sent by admin
