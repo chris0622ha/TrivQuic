@@ -1468,7 +1468,7 @@ export default function Home() {
     } else { lastCmdRef.current = cmd; }
 
     // CSS-only effects (filter/transform) stop each other; canvas effects stack
-    const isCanvasCmd = ["fireworks","confetti","party","snow","matrix","bubbles","lasers","dvd","love","rage","amongus"].includes(cmd);
+    const isCanvasCmd = ["fireworks","confetti","party","snow","matrix","bubbles","lasers","dvd","love","rage",].includes(cmd);
     if (!isCanvasCmd) {
       // Stop canvas effects too when switching to CSS mode... actually keep canvas, just stop CSS
     }
@@ -1757,15 +1757,7 @@ export default function Home() {
     }
 
     // ── AMONG US ─────────────────────────────────────────────────────
-    if (cmd === "amongus") {
-      const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      const colors=["#ef4444","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4","#fff"];
-      type Crew={x:number;y:number;color:string;speed:number;flip:boolean};
-      const crew:Crew[]=Array.from({length:6},()=>({x:Math.random()*c.width,y:Math.random()*c.height*0.8+c.height*0.1,color:colors[Math.floor(Math.random()*colors.length)],speed:(Math.random()*2+1)*(Math.random()>0.5?1:-1),flip:Math.random()>0.5}));
-      let raf2:number; let stopped2=false;
-      const drawCrewmate=(x:number,y:number,color:string,flip:boolean)=>{
-        ctx2.save();if(flip){ctx2.translate(x+20,y);ctx2.scale(-1,1);ctx2.translate(-20,0);}else{ctx2.translate(x,y);}
-        ctx2.fillStyle=color;ctx2.beginPath();ctx2.ellipse(20,30,18,22,0,0,Math.PI*2);ctx2.fill();
+    ctx2.fillStyle=color;ctx2.beginPath();ctx2.ellipse(20,30,18,22,0,0,Math.PI*2);ctx2.fill();
         ctx2.beginPath();ctx2.ellipse(20,12,14,12,0,0,Math.PI*2);ctx2.fill();
         ctx2.fillStyle="rgba(150,220,255,0.8)";ctx2.beginPath();ctx2.ellipse(20,12,10,7,0,0,Math.PI*2);ctx2.fill();
         ctx2.fillStyle=color;ctx2.fillRect(6,44,10,12);ctx2.fillRect(24,44,10,12);
@@ -2539,7 +2531,7 @@ export default function Home() {
           {[
             { version:"v1.84 — Friday, June 5, 2026", date:"Friday, June 5, 2026", items:[
   "⚡ Secret command palette (admin only) — press ` or Ctrl+K to open",
-  "🎆 30+ commands: fireworks, confetti, party, snow, matrix, bubbles, lasers, dvd, love, rage, among us, rainbow, invert, neon, vhs, glitch, shake, spin, zoom, flip, mirror, pixelate, drunk, comic sans, tiny, huge, zalgo, reverse, hack, sudo, 404, friday, midnight, new year, rickroll + more",
+  "🎆 30+ commands: fireworks, confetti, party, snow, matrix, bubbles, lasers, dvd, love, rage, rainbow, invert, neon, vhs, glitch, shake, spin, zoom, flip, mirror, pixelate, drunk, comic sans, tiny, huge, zalgo, reverse, hack, sudo, 404, friday, midnight, new year, rickroll + more",
   "📡 Global broadcast — run any effect on Everyone, or by badge (Crown/Gold/Silver/Bronze)",
   "🙋 Personal Only column for nav shortcuts, 🌐 Global column for broadcastable effects",
   "Stack multiple effects simultaneously for chaos",
@@ -2976,8 +2968,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
 
   const globalCmds: [string,string][] = [
     ["fireworks","🎆 fireworks"],["confetti","🎉 confetti"],["party","🎊 party"],["snow","❄️ snow"],["matrix","💊 matrix"],
-    ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],["amongus","🧑‍🚀 among us"],
-    ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
+    ["bubbles","🫧 bubbles"],["lasers","⚡ lasers"],["dvd","📀 dvd"],["love","❤️ love"],["rage","😡 rage"],    ["rainbow","🌈 rainbow"],["invert","🙃 invert"],["neon","✨ neon"],["vhs","📼 vhs"],["glitch","👾 glitch"],
     ["shake","💥 shake"],["spin","🌀 spin"],["zoom","🔍 zoom"],["flip","🙃 flip"],["mirror","🪞 mirror"],["pixelate","🟫 pixelate"],["drunk","🥴 drunk"],
     ["comic","🎭 comic sans"],["tiny","🔬 tiny"],["huge","🔭 huge"],["zalgo","👾 zalgo"],["reverse","↩️ reverse text"],
     ["hack","💻 hack"],["sudo","⌨️ sudo"],["404","🚫 404"],
