@@ -18,19 +18,24 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages — data-only payload, we show exactly one notification.
-// Returning a promise from onBackgroundMessage suppresses FCM's own auto-notification.
+// onBackgroundMessage fires for data messages.
+// The webpush notification field already handles display — we just handle click routing.
+// We still call showNotification here as fallback but with same tag to deduplicate.
 messaging.onBackgroundMessage((payload) => {
   const { title, body, url } = payload.data || {};
   if (!title) return;
-  return self.registration.showNotification(title, {
-    body: body || "",
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
-    vibrate: [100, 50, 100],
-    data: { url: url || "/" },
-    tag: "trivquic-notif",
-    renotify: true,
+  // Check if a notification with this tag already exists (webpush already showed it)
+  return self.registration.getNotifications({ tag: "trivquic-notif" }).then((existing) => {
+    if (existing.length > 0) return; // already shown by webpush, don't duplicate
+    return self.registration.showNotification(title, {
+      body: body || "",
+      icon: "/favicon.ico",
+      badge: "/favicon.ico",
+      vibrate: [100, 50, 100],
+      data: { url: url || "/" },
+      tag: "trivquic-notif",
+      renotify: true,
+    });
   });
 });
 

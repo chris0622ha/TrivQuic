@@ -44,18 +44,43 @@ export async function POST(req: NextRequest) {
     const accessToken = await getAccessToken();
     const finalBody = sender ? `${body} -${sender}` : body;
 
-    // Pure data-only — no webpush block at all, prevents browser auto-notification.
-    // SW's onBackgroundMessage handles showing exactly one notification.
+    // Include notification payload for iOS/Safari compatibility.
+    // SW uses the same tag to suppress duplicates on Android.
     const res = await fetch(FCM_URL, {
       method:"POST",
       headers:{"Content-Type":"application/json", Authorization:`Bearer ${accessToken}`},
       body: JSON.stringify({
         message: {
           token,
+          notification: {
+            title,
+            body: finalBody,
+          },
           data: {
             title,
             body: finalBody,
             url: url || "/",
+          },
+          webpush: {
+            headers: { TTL: "86400" },
+            notification: {
+              title,
+              body: finalBody,
+              icon: "/favicon.ico",
+              badge: "/favicon.ico",
+              tag: "trivquic-notif",
+              renotify: true,
+              data: { url: url || "/" },
+            },
+            fcm_options: { link: url || "/" },
+          },
+          apns: {
+            payload: {
+              aps: {
+                alert: { title, body: finalBody },
+                sound: "default",
+              },
+            },
           },
         },
       }),
