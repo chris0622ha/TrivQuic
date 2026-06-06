@@ -3551,9 +3551,12 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       <AuthHeader />
       {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
       <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <button onClick={() => setScreen("home")} style={{ background:"transparent", border:"none", color:"#4b5563", fontSize:13, fontWeight:700, cursor:"pointer", padding:"4px 0" }}>✕ Leave</button>
+        <div style={{ fontSize:22, fontWeight:900, color:"#f59e0b" }}>{score}</div>
         <div style={{ fontSize:13, color:"#6b7280" }}>{qIndex + 1} / {questions.length}</div>
-        <div style={{ fontSize:16, fontWeight:700, color: streak > 0 ? "#ef4444" : "#4b5563" }}>🔥{streak}</div>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ fontSize:16, fontWeight:700, color: streak > 0 ? "#ef4444" : "#4b5563" }}>🔥{streak}</div>
+          <button onClick={() => setScreen("home")} style={{ background:"transparent", border:"none", color:"#4b5563", fontSize:13, fontWeight:700, cursor:"pointer", padding:"4px 0" }}>✕</button>
+        </div>
       </div>
       <div style={{ width:"100%", maxWidth:480, height:4, background:"#1a1a2e", borderRadius:2, marginBottom:24, overflow:"hidden" }}>
         <div style={{ height:"100%", width: pct + "%", background:"linear-gradient(90deg, #f59e0b, #ef4444)", borderRadius:2, transition:"width 0.3s" }} />
