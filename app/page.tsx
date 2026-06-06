@@ -1761,41 +1761,39 @@ export default function Home() {
 
     // ── PIXELATE ──────────────────────────────────────────────────────
     if (cmd === "pixelate") {
-      // Stack pixelation: each call reduces resolution more (scale down more)
+      // Safe pixelation: canvas grid overlay — works on all devices, stackable
       const current = parseInt(root.dataset.pixelLevel || "0");
       const level = current + 1;
       root.dataset.pixelLevel = String(level);
-      // CSS trick: scale down to 1/level resolution, scale back up with no smoothing
-      const factor = Math.max(0.05, 1 / (level * 2 + 2));
-      const inv = 1 / factor;
-      root.style.imageRendering = "pixelated";
-      root.style.transform = `scale(${factor})`;
-      root.style.transformOrigin = "top left";
-      root.style.width = `${inv * 100}%`;
-      root.style.height = `${inv * 100}%`;
-      root.style.overflow = "hidden";
-      // Wrapper scales back up
-      const wrapper = root.parentElement || document.body;
-      wrapper.style.transform = `scale(${inv})`;
-      wrapper.style.transformOrigin = "top left";
-      wrapper.style.overflow = "hidden";
+      const blockSize = level * 10; // 10, 20, 30px blocks per stack level
+      const c = makeCanvas(9990 + level);
+      const ctx2 = c.getContext("2d")!;
+      let raf2: number; let stopped2 = false;
+      // Draw a colored pixel grid overlay
+      const cols = ["#ef4444","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4"];
+      const drawGrid = () => {
+        ctx2.clearRect(0, 0, c.width, c.height);
+        for (let x = 0; x < c.width; x += blockSize) {
+          for (let y = 0; y < c.height; y += blockSize) {
+            const i = (Math.floor(x / blockSize) + Math.floor(y / blockSize)) % 2;
+            if (i === 0) continue; // checkerboard — only color every other block
+            ctx2.fillStyle = cols[(Math.floor(x/blockSize)*3 + Math.floor(y/blockSize)*7) % cols.length] + "22";
+            ctx2.fillRect(x, y, blockSize, blockSize);
+          }
+        }
+        // Draw grid lines
+        ctx2.strokeStyle = "rgba(0,0,0,0.15)";
+        ctx2.lineWidth = 0.5;
+        for (let x = 0; x < c.width; x += blockSize) { ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, c.height); ctx2.stroke(); }
+        for (let y = 0; y < c.height; y += blockSize) { ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(c.width, y); ctx2.stroke(); }
+      };
+      drawGrid();
       effectsRef.current.push({stop:()=>{
+        stopped2=true; cancelAnimationFrame(raf2); c.remove();
         const lvl = parseInt(root.dataset.pixelLevel || "1") - 1;
         root.dataset.pixelLevel = String(Math.max(0, lvl));
-        if (lvl <= 0) {
-          root.style.imageRendering=""; root.style.transform="";
-          root.style.width=""; root.style.height=""; root.style.overflow="";
-          wrapper.style.transform=""; wrapper.style.overflow="";
-        } else {
-          const f2 = Math.max(0.05, 1/(lvl*2+2));
-          const i2 = 1/f2;
-          root.style.transform=`scale(${f2})`;
-          root.style.width=`${i2*100}%`;
-          root.style.height=`${i2*100}%`;
-          wrapper.style.transform=`scale(${i2})`;
-        }
       }});
-      return;
+      autoStop((durationSec??15)*1000);return;
     }
 
     // ── DRUNK ─────────────────────────────────────────────────────────
