@@ -1635,10 +1635,40 @@ export default function Home() {
 
     // ── PIXELATE ──────────────────────────────────────────────────────
     if (cmd === "pixelate") {
-      let px=1; let dir=1; let raf2:number; let stopped2=false;
-      const tick=()=>{if(stopped2)return;px+=dir*0.5;if(px>20)dir=-1;if(px<=1){root.style.imageRendering="";root.style.filter="";return;}root.style.filter=`blur(${px*0.3}px)`;root.style.imageRendering="pixelated";raf2=requestAnimationFrame(tick);};
-      tick();
-      effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);root.style.filter="";root.style.imageRendering="";}});
+      // Stack pixelation: each call reduces resolution more (scale down more)
+      const current = parseInt(root.dataset.pixelLevel || "0");
+      const level = current + 1;
+      root.dataset.pixelLevel = String(level);
+      // CSS trick: scale down to 1/level resolution, scale back up with no smoothing
+      const factor = Math.max(0.05, 1 / (level * 2 + 2));
+      const inv = 1 / factor;
+      root.style.imageRendering = "pixelated";
+      root.style.transform = `scale(${factor})`;
+      root.style.transformOrigin = "top left";
+      root.style.width = `${inv * 100}%`;
+      root.style.height = `${inv * 100}%`;
+      root.style.overflow = "hidden";
+      // Wrapper scales back up
+      const wrapper = root.parentElement || document.body;
+      wrapper.style.transform = `scale(${inv})`;
+      wrapper.style.transformOrigin = "top left";
+      wrapper.style.overflow = "hidden";
+      effectsRef.current.push({stop:()=>{
+        const lvl = parseInt(root.dataset.pixelLevel || "1") - 1;
+        root.dataset.pixelLevel = String(Math.max(0, lvl));
+        if (lvl <= 0) {
+          root.style.imageRendering=""; root.style.transform="";
+          root.style.width=""; root.style.height=""; root.style.overflow="";
+          wrapper.style.transform=""; wrapper.style.overflow="";
+        } else {
+          const f2 = Math.max(0.05, 1/(lvl*2+2));
+          const i2 = 1/f2;
+          root.style.transform=`scale(${f2})`;
+          root.style.width=`${i2*100}%`;
+          root.style.height=`${i2*100}%`;
+          wrapper.style.transform=`scale(${i2})`;
+        }
+      }});
       return;
     }
 
