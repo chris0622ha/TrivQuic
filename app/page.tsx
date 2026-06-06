@@ -1768,7 +1768,7 @@ export default function Home() {
       const blockSize = level * 10; // 10, 20, 30px blocks per stack level
       const c = makeCanvas(9990 + level);
       const ctx2 = c.getContext("2d")!;
-      let raf2: number; let stopped2 = false;
+      let stopped2 = false;
       // Draw a colored pixel grid overlay
       const cols = ["#ef4444","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4"];
       const drawGrid = () => {
@@ -1789,7 +1789,7 @@ export default function Home() {
       };
       drawGrid();
       effectsRef.current.push({stop:()=>{
-        stopped2=true; cancelAnimationFrame(raf2); c.remove();
+        stopped2=true; c.remove();
         const lvl = parseInt(root.dataset.pixelLevel || "1") - 1;
         root.dataset.pixelLevel = String(Math.max(0, lvl));
       }});
