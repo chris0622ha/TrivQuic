@@ -3225,8 +3225,8 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                       <div style={{ padding:"4px 8px 8px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
                           <span style={{ color:"#6b7280", fontSize:11 }}>Duration:</span>
-                          <input type="number" min={1} max={300} value={cmdDuration}
-                            onChange={e => setCmdDuration(Math.max(1, Math.min(300, parseInt(e.target.value)||10)))}
+                          <input type="number" min={1} value={cmdDuration}
+                            onChange={e => setCmdDuration(Math.max(1, parseInt(e.target.value)||10))}
                             onClick={e => e.stopPropagation()}
                             onFocus={e => e.currentTarget.select()}
                             style={{ width:52, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:5, color:"#fff", fontSize:12, padding:"2px 6px", textAlign:"center" as const }} />
