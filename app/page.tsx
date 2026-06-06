@@ -1556,11 +1556,12 @@ export default function Home() {
       const tick=()=>{if(stopped2)return;t2+=0.08;const s=1+Math.sin(t2)*0.015;root.style.transform=`scale(${s})`;raf2=requestAnimationFrame(tick);};
       tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);root.style.transform="";}});autoStop((durationSec??15)*1000);return;
     }
-    if (cmd === "big") { root.style.transform="scale(1.4)";root.style.transformOrigin="top center";effectsRef.current.push({stop:()=>{root.style.transform="";root.style.transformOrigin="";}}); return; }
-    if (cmd === "small") { root.style.transform="scale(0.65)";root.style.transformOrigin="top center";effectsRef.current.push({stop:()=>{root.style.transform="";root.style.transformOrigin="";}}); return; }
+    if (cmd === "big") { root.style.transform="scale(1.4)";root.style.transformOrigin="top center";effectsRef.current.push({stop:()=>{root.style.transform="";root.style.transformOrigin="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "small") { root.style.transform="scale(0.65)";root.style.transformOrigin="top center";effectsRef.current.push({stop:()=>{root.style.transform="";root.style.transformOrigin="";}}); autoStop((durationSec??10)*1000); return; }
     if (cmd === "caps") {
       document.querySelectorAll<HTMLElement>("p,span,div,button,h1,h2,h3,label").forEach(el=>{if(!el.dataset.origStyle){el.dataset.origStyle=el.style.cssText;}el.style.textTransform="uppercase";});
-      effectsRef.current.push({stop:()=>{document.querySelectorAll<HTMLElement>("[data-orig-style]").forEach(el=>{el.style.cssText=el.dataset.origStyle!;delete el.dataset.origStyle;});}});return;
+      effectsRef.current.push({stop:()=>{document.querySelectorAll<HTMLElement>("[data-orig-style]").forEach(el=>{el.style.cssText=el.dataset.origStyle!;delete el.dataset.origStyle;});}});
+      autoStop((durationSec??10)*1000); return;
     }
     if (cmd === "wave") {
       const style=Object.assign(document.createElement("style"),{id:"__wave_style"});
@@ -1640,8 +1641,8 @@ export default function Home() {
       tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();}});return;
     }
     if (cmd === "upsidedown") {
-      root.style.transform=root.style.transform.includes("rotate(180deg)")?"":"rotate(180deg)";
-      effectsRef.current.push({stop:()=>{root.style.transform=root.style.transform.replace("rotate(180deg)","");}});return;
+      root.style.transform="rotate(180deg)";
+      effectsRef.current.push({stop:()=>{root.style.transform="";}}); autoStop((durationSec??10)*1000); return;
     }
     if (cmd === "oldtv") {
       const c=makeCanvas(99999); const ctx2=c.getContext("2d")!;
@@ -1694,42 +1695,42 @@ export default function Home() {
     }
 
     // ── PURE CSS FILTER EFFECTS ───────────────────────────────────────
-    if (cmd === "invert") { root.style.filter = root.style.filter === "invert(1)" ? "" : "invert(1)"; return; }
-    if (cmd === "dark")   { root.style.filter = "brightness(0.3)"; return; }
-    if (cmd === "light")  { root.style.filter = "brightness(2) saturate(0)"; return; }
-    if (cmd === "neon")   { root.style.filter = "drop-shadow(0 0 8px #0ff) drop-shadow(0 0 16px #f0f) saturate(2)"; return; }
-    if (cmd === "flip")   { root.style.transform = root.style.transform.includes("scaleY(-1)") ? "" : "scaleY(-1)"; return; }
-    if (cmd === "mirror") { root.style.transform = root.style.transform.includes("scaleX(-1)") ? "" : "scaleX(-1)"; return; }
-    if (cmd === "comic")  {
-      const s = document.getElementById("__cmd_style") || Object.assign(document.createElement("style"),{id:"__cmd_style"});
+    if (cmd === "invert") { root.style.filter="invert(1)"; effectsRef.current.push({stop:()=>{root.style.filter="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "dark")   { root.style.filter="brightness(0.3)"; effectsRef.current.push({stop:()=>{root.style.filter="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "light")  { root.style.filter="brightness(2) saturate(0)"; effectsRef.current.push({stop:()=>{root.style.filter="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "neon")   { root.style.filter="drop-shadow(0 0 8px #0ff) drop-shadow(0 0 16px #f0f) saturate(2)"; effectsRef.current.push({stop:()=>{root.style.filter="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "flip")   { root.style.transform="scaleY(-1)"; effectsRef.current.push({stop:()=>{root.style.transform="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "mirror") { root.style.transform="scaleX(-1)"; effectsRef.current.push({stop:()=>{root.style.transform="";}}); autoStop((durationSec??10)*1000); return; }
+    if (cmd === "comic") {
+      const s = Object.assign(document.createElement("style"),{id:"__comic_style"});
       s.textContent = `* { font-family: "Comic Sans MS", "Chalkboard SE", cursive !important; }`;
-      document.head.appendChild(s); return;
+      document.head.appendChild(s); effectsRef.current.push({stop:()=>s.remove()}); autoStop((durationSec??10)*1000); return;
     }
-    if (cmd === "tiny")  {
-      const s = document.getElementById("__cmd_style") || Object.assign(document.createElement("style"),{id:"__cmd_style"});
+    if (cmd === "tiny") {
+      const s = Object.assign(document.createElement("style"),{id:"__tiny_style"});
       s.textContent = `* { font-size: 8px !important; }`;
-      document.head.appendChild(s); return;
+      document.head.appendChild(s); effectsRef.current.push({stop:()=>s.remove()}); autoStop((durationSec??10)*1000); return;
     }
-    if (cmd === "huge")  {
-      const s = document.getElementById("__cmd_style") || Object.assign(document.createElement("style"),{id:"__cmd_style"});
+    if (cmd === "huge") {
+      const s = Object.assign(document.createElement("style"),{id:"__huge_style"});
       s.textContent = `* { font-size: 32px !important; }`;
-      document.head.appendChild(s); return;
+      document.head.appendChild(s); effectsRef.current.push({stop:()=>s.remove()}); autoStop((durationSec??10)*1000); return;
     }
 
     // ── SHAKE ─────────────────────────────────────────────────────────
     if (cmd === "shake") {
-      const s = document.getElementById("__cmd_style") || Object.assign(document.createElement("style"),{id:"__cmd_style"});
-      s.textContent = `@keyframes __shake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(8px,-4px)}30%{transform:translate(-6px,6px)}40%{transform:translate(6px,-2px)}50%{transform:translate(-10px,2px)}60%{transform:translate(10px,4px)}70%{transform:translate(-4px,-6px)}80%{transform:translate(4px,6px)}90%{transform:translate(-6px,-4px)}} html{animation:__shake 0.1s infinite;}`;
+      const s = Object.assign(document.createElement("style"),{id:"__shake_style"});
+      s.textContent = `@keyframes __shake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(8px,-4px)}30%{transform:translate(-6px,6px)}40%{transform:translate(6px,-2px)}50%{transform:translate(-10px,2px)}60%{transform:translate(10px,4px)}70%{transform:translate(-4px,-6px)}80%{transform:translate(4px,6px)}90%{transform:translate(-6px,-4px)}} #__next{animation:__shake 0.1s infinite;}`;
       document.head.appendChild(s);
-      setTimeout(()=>{s.remove();root.style.animation="";},2000); return;
+      effectsRef.current.push({stop:()=>{s.remove();}}); autoStop((durationSec??8)*1000); return;
     }
 
     // ── SPIN ──────────────────────────────────────────────────────────
     if (cmd === "spin") {
-      const s = document.getElementById("__cmd_style") || Object.assign(document.createElement("style"),{id:"__cmd_style"});
-      s.textContent = `@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} html{animation:__spin 1s linear;}`;
+      const s = Object.assign(document.createElement("style"),{id:"__spin_style"});
+      s.textContent = `@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} #__next{animation:__spin ${durationSec??5}s linear;}`;
       document.head.appendChild(s);
-      setTimeout(()=>{s.remove();},1100); return;
+      effectsRef.current.push({stop:()=>{s.remove();}}); autoStop((durationSec??5)*1000); return;
     }
 
     // ── ZOOM ──────────────────────────────────────────────────────────
@@ -1819,7 +1820,9 @@ export default function Home() {
           el.dataset.origText=el.innerText;
           el.innerText=[...el.innerText].reverse().join("");
         }
-      }); return;
+      });
+      effectsRef.current.push({stop:()=>{document.querySelectorAll<HTMLElement>("[data-orig-text]").forEach(el=>{el.innerText=el.dataset.origText!;delete el.dataset.origText;});}});
+      autoStop((durationSec??10)*1000); return;
     }
 
     // ── ZALGO ─────────────────────────────────────────────────────────
@@ -1830,7 +1833,9 @@ export default function Home() {
           el.dataset.origText=el.innerText;
           el.innerText=[...el.innerText].map(c=>c+zalgoChars[Math.floor(Math.random()*zalgoChars.length)].repeat(Math.floor(Math.random()*4)+1)).join("");
         }
-      }); return;
+      });
+      effectsRef.current.push({stop:()=>{document.querySelectorAll<HTMLElement>("[data-orig-text]").forEach(el=>{el.innerText=el.dataset.origText!;delete el.dataset.origText;});}});
+      autoStop((durationSec??10)*1000); return;
     }
 
     // ── SUDO ──────────────────────────────────────────────────────────
@@ -1851,7 +1856,7 @@ export default function Home() {
       const div=Object.assign(document.createElement("div"),{style:"position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;"});
       div.innerHTML=`<div style="font-size:96px;font-weight:900;color:#ef4444">404</div><div style="font-size:20px;margin-bottom:8px">Page Not Found</div><div style="font-size:13px;color:#4b5563">This is fine.</div>`;
       document.body.appendChild(div);
-      setTimeout(()=>div.remove(),2500); return;
+      effectsRef.current.push({stop:()=>div.remove()}); autoStop((durationSec??4)*1000); return;
     }
 
     // ── RAGE ──────────────────────────────────────────────────────────
