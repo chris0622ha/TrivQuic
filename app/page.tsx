@@ -1416,6 +1416,7 @@ export default function Home() {
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [announceModal, setAnnounceModal] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState<{text:string;from:string}|null>(null);
   const [announceText, setAnnounceText] = useState("");
   const [announceTempMin, setAnnounceTempMin] = useState<number|null>(null); // null = permanent
   const [announceIsTemp, setAnnounceIsTemp] = useState(false);
@@ -2217,6 +2218,15 @@ export default function Home() {
         });
       });
 
+      // pendingBroadcast — admin broadcast message
+      onValue(ref(db, `users/${u.uid}/pendingBroadcast`), (snap) => {
+        if (!snap.exists()) return;
+        const { text, from } = snap.val();
+        remove(ref(db, `users/${u.uid}/pendingBroadcast`)).catch(()=>{});
+        setBroadcastMsg({ text, from });
+        setTimeout(() => setBroadcastMsg(null), 8000);
+      });
+
       // pendingCmd — run a command sent by admin
       onValue(ref(db, `users/${u.uid}/pendingCmd`), (snap) => {
         if (!snap.exists()) return;
@@ -2549,6 +2559,7 @@ export default function Home() {
     setAnim("");
     answerRef.current = false;
     setScreen("game");
+    if (user) update(ref(db, `users/${user.uid}`), { currentScreen: "game", gameStartedAt: Date.now() }).catch(()=>{});
   }
 
   const q = questions[qIndex];
@@ -2681,6 +2692,14 @@ export default function Home() {
 
   const AuthHeader = () => (
     <>
+      {/* Broadcast message toast */}
+      {broadcastMsg && (
+        <div data-protect="1" style={{ position:"fixed", bottom: 80, left:"50%", transform:"translateX(-50%)", zIndex:600, background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:12, padding:"12px 20px", maxWidth:"min(400px,90vw)", boxShadow:"0 4px 20px rgba(0,0,0,0.5)", cursor:"pointer" }}
+          onClick={() => setBroadcastMsg(null)}>
+          <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, marginBottom:4 }}>📣 {broadcastMsg.from}</div>
+          <div style={{ color:"#e5e7eb", fontSize:14 }}>{broadcastMsg.text}</div>
+        </div>
+      )}
       {/* Global Announcement Banner — fixed, centered, all screens */}
       {announcement && (
         <div data-protect="1" style={{ position:"fixed", top:0, left:0, right:0, zIndex:490, background:"rgba(245,158,11,0.15)", borderBottom:"2px solid rgba(245,158,11,0.5)", padding:"10px 16px", backdropFilter:"blur(8px)", boxShadow:"0 2px 20px rgba(0,0,0,0.4)", textAlign:"center" as const, fontSize: isMobile ? 14 : 16, lineHeight:1.5, pointerEvents:"none", whiteSpace:"normal" as const, wordBreak:"break-word" as const }}>

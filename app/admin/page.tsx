@@ -1156,6 +1156,10 @@ const NAV = [
   { id:"notifhistory",  icon:"📨", label:"Notif History" },
   { id:"activitylog",   icon:"📋", label:"Activity Log" },
   { id:"system",        icon:"⚙️", label:"System" },
+  { id:"sessions",      icon:"🎮", label:"Sessions" },
+  { id:"broadcast",     icon:"📣", label:"Broadcast" },
+  { id:"usernotes",     icon:"📝", label:"User Notes" },
+  { id:"questioneditor",icon:"❓", label:"Questions" },
   { id:"links",         icon:"🔗", label:"Quick Links" },
 ];
 
@@ -2147,6 +2151,10 @@ export default function AdminPage() {
       {tab==="notifhistory"  && <NotifHistoryPanel />}
       {tab==="activitylog"   && <ActivityLogPanel />}
       {tab==="system"        && <SystemPanel />}
+      {tab==="sessions"      && <SessionsPanel />}
+      {tab==="broadcast"     && <BroadcastPanel />}
+      {tab==="usernotes"     && <UserNotesPanel />}
+      {tab==="questioneditor"&& <QuestionEditorPanel />}
       {tab==="links"         && <LinksPanel />}
     </>
   );
@@ -2228,6 +2236,298 @@ export default function AdminPage() {
 
       <div style={c.main}>
         {PANELS}
+      </div>
+    </div>
+  );
+}
+
+// ── SESSIONS PANEL ────────────────────────────────────────────────────────────
+function SessionsPanel() {
+  
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onValue(ref(db, "users"), snap => {
+      if (!snap.exists()) { setSessions([]); setLoading(false); return; }
+      const now = Date.now();
+      const active: any[] = [];
+      Object.entries(snap.val()).forEach(([uid, u]: [string, any]) => {
+        if (u.currentScreen === "game" && u.gameStartedAt && now - u.gameStartedAt < 3600000) {
+          active.push({ uid, username: u.username, gameStartedAt: u.gameStartedAt, badge: u.badge });
+        }
+      });
+      active.sort((a, b) => b.gameStartedAt - a.gameStartedAt);
+      setSessions(active);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  // Also get multiplayer games
+  const [games, setGames] = useState<any[]>([]);
+  useEffect(() => {
+    const unsub = onValue(ref(db, "games"), snap => {
+      if (!snap.exists()) { setGames([]); return; }
+      const active: any[] = [];
+      Object.entries(snap.val()).forEach(([id, g]: [string, any]) => {
+        if (g.phase === "playing" && Date.now() - (g.startedAt || 0) < 7200000) {
+          const players = Object.values(g.players || {}) as any[];
+          active.push({ id, players, startedAt: g.startedAt, category: g.category });
+        }
+      });
+      setGames(active);
+    });
+    return () => unsub();
+  }, []);
+
+  return (
+    <div>
+      <h1 style={c.h1}>🎮 Sessions</h1>
+      <div style={c.card}>
+        <div style={c.h2}>Solo Games ({sessions.length} active)</div>
+        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> : sessions.length === 0 ? <div style={{color:"#6b7280"}}>No active solo sessions</div> : sessions.map(s => (
+          <div key={s.uid} style={{...c.row}}>
+            <span style={{fontWeight:700}}>{s.username}</span>
+            <span style={{color:"#6b7280",fontSize:12}}>playing for {Math.floor((Date.now()-s.gameStartedAt)/60000)}m</span>
+          </div>
+        ))}
+      </div>
+      <div style={c.card}>
+        <div style={c.h2}>Multiplayer Games ({games.length} active)</div>
+        {games.length === 0 ? <div style={{color:"#6b7280"}}>No active multiplayer games</div> : games.map(g => (
+          <div key={g.id} style={{...c.card, marginBottom:8}}>
+            <div style={{fontWeight:700, marginBottom:6}}>Game #{g.id} — {g.category || "All"}</div>
+            {g.players.map((p: any) => (
+              <div key={p.name} style={{...c.row}}>
+                <span>{p.name}</span><span style={{color:"#f59e0b",fontWeight:700}}>{p.score} pts</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── BROADCAST PANEL ───────────────────────────────────────────────────────────
+function BroadcastPanel() {
+  const [msg, setMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [adminName, setAdminName] = useState("admin");
+
+  useEffect(() => {
+    auth.currentUser?.uid && get(ref(db, `users/${auth.currentUser.uid}/username`)).then(s => { if(s.exists()) setAdminName(s.val()); });
+  }, []);
+
+  const send = async () => {
+    if (!msg.trim()) return;
+    setSending(true);
+    try {
+      const usersSnap = await get(ref(db, "users"));
+      if (!usersSnap.exists()) return;
+      const updates: Record<string, any> = {};
+      Object.keys(usersSnap.val()).forEach(uid => {
+        updates[`users/${uid}/pendingBroadcast`] = {
+          text: msg.trim(), from: adminName, sentAt: Date.now()
+        };
+      });
+      await update(ref(db), updates);
+      setMsg(""); setSent(true); setTimeout(() => setSent(false), 3000);
+    } finally { setSending(false); }
+  };
+
+  return (
+    <div>
+      <h1 style={c.h1}>📣 Broadcast Message</h1>
+      <div style={c.card}>
+        <div style={c.h2}>Send to all online users</div>
+        <p style={{color:"#6b7280",fontSize:13,marginBottom:12}}>Shows as a popup notification in-game for all users currently on the site.</p>
+        <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={4} placeholder="Type your message..."
+          style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:8,color:"#fff",fontSize:14,padding:"10px 12px",resize:"vertical",boxSizing:"border-box" as const,fontFamily:"inherit",marginBottom:12}} />
+        <button onClick={send} disabled={sending || !msg.trim()}
+          style={{background:sent?"#10b981":"#f59e0b",border:"none",borderRadius:8,color:"#000",fontWeight:700,padding:"10px 24px",cursor:"pointer",fontSize:14}}>
+          {sent ? "✓ Sent!" : sending ? "Sending…" : "📣 Broadcast"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── USER NOTES PANEL ──────────────────────────────────────────────────────────
+function UserNotesPanel() {
+  
+  const [search, setSearch] = useState("");
+  const [users, setUsers] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any>(null);
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    get(ref(db, "users")).then(snap => {
+      if (!snap.exists()) return;
+      setUsers(Object.entries(snap.val()).map(([uid, u]: [string, any]) => ({ uid, ...u })));
+    });
+  }, []);
+
+  const filtered = users.filter(u => !search || (u.username||"").toLowerCase().includes(search.toLowerCase()));
+
+  const loadNote = async (u: any) => {
+    setSelected(u);
+    const snap = await get(ref(db, `adminNotes/${u.uid}`));
+    setNote(snap.exists() ? snap.val().text : "");
+  };
+
+  const saveNote = async () => {
+    if (!selected) return;
+    setSaving(true);
+    await set(ref(db, `adminNotes/${selected.uid}`), { text: note, updatedAt: Date.now() });
+    setSaving(false);
+  };
+
+  return (
+    <div>
+      <h1 style={c.h1}>📝 User Notes</h1>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}}>
+        <div style={c.card}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users…"
+            style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"8px 10px",boxSizing:"border-box" as const,marginBottom:10}} />
+          <div style={{maxHeight:400,overflowY:"auto" as const}}>
+            {filtered.map(u => (
+              <div key={u.uid} onClick={() => loadNote(u)}
+                style={{padding:"8px 10px",borderRadius:6,cursor:"pointer",background:selected?.uid===u.uid?"rgba(245,158,11,0.15)":"transparent",fontWeight:700,fontSize:13}}
+                onMouseEnter={e=>(e.currentTarget.style.background="rgba(255,255,255,0.05)")}
+                onMouseLeave={e=>(e.currentTarget.style.background=selected?.uid===u.uid?"rgba(245,158,11,0.15)":"transparent")}>
+                {u.username || u.uid.slice(0,8)}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={c.card}>
+          {selected ? <>
+            <div style={{fontWeight:700,marginBottom:10}}>Notes for {selected.username}</div>
+            <textarea value={note} onChange={e => setNote(e.target.value)} rows={8} placeholder="Add private notes…"
+              style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:8,color:"#fff",fontSize:14,padding:"10px 12px",resize:"vertical",boxSizing:"border-box" as const,fontFamily:"inherit",marginBottom:10}} />
+            <button onClick={saveNote} disabled={saving}
+              style={{background:"#f59e0b",border:"none",borderRadius:8,color:"#000",fontWeight:700,padding:"8px 20px",cursor:"pointer"}}>
+              {saving ? "Saving…" : "💾 Save"}
+            </button>
+          </> : <div style={{color:"#6b7280"}}>Select a user to view/edit notes</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── QUESTION EDITOR PANEL ─────────────────────────────────────────────────────
+function QuestionEditorPanel() {
+  
+  const CATS = ["geography","science","history","math","sports","entertainment"];
+  const [cat, setCat] = useState("geography");
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editIdx, setEditIdx] = useState<number|null>(null);
+  const [editQ, setEditQ] = useState({q:"",a:"",opts:["","","",""]});
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    get(ref(db, `customQuestions/${cat}`)).then(snap => {
+      setQuestions(snap.exists() ? snap.val() : []);
+      setLoading(false);
+    });
+  }, [cat]);
+
+  const saveQ = async () => {
+    if (!editQ.q.trim() || !editQ.a.trim() || editQ.opts.some(o => !o.trim())) {
+      setMsg("Fill in all fields"); return;
+    }
+    if (!editQ.opts.includes(editQ.a)) { setMsg("Correct answer must be one of the 4 options"); return; }
+    setSaving(true);
+    const updated = [...questions];
+    if (editIdx === null) updated.push(editQ);
+    else updated[editIdx] = editQ;
+    await set(ref(db, `customQuestions/${cat}`), updated);
+    setQuestions(updated);
+    setEditIdx(null); setEditQ({q:"",a:"",opts:["","","",""]}); setMsg("✓ Saved!");
+    setTimeout(() => setMsg(""), 2000); setSaving(false);
+  };
+
+  const deleteQ = async (i: number) => {
+    if (!confirm("Delete this question?")) return;
+    const updated = questions.filter((_,idx) => idx !== i);
+    await set(ref(db, `customQuestions/${cat}`), updated);
+    setQuestions(updated);
+  };
+
+  const filtered = questions.filter(q => !search || q.q.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div>
+      <h1 style={c.h1}>❓ Question Editor</h1>
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap" as const}}>
+        {CATS.map(ct => (
+          <button key={ct} onClick={() => {setCat(ct);setEditIdx(null);}}
+            style={{background:cat===ct?"#f59e0b":"rgba(255,255,255,0.06)",border:"none",borderRadius:8,color:cat===ct?"#000":"#9ca3af",fontWeight:700,padding:"6px 14px",cursor:"pointer",textTransform:"capitalize" as const}}>
+            {ct}
+          </button>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        <div style={c.card}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={c.h2}>Custom Questions ({filtered.length})</div>
+            <button onClick={() => {setEditIdx(null);setEditQ({q:"",a:"",opts:["","","",""]});}}
+              style={{background:"#f59e0b",border:"none",borderRadius:6,color:"#000",fontWeight:700,padding:"4px 12px",cursor:"pointer",fontSize:12}}>+ Add</button>
+          </div>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
+            style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"6px 10px",boxSizing:"border-box" as const,marginBottom:8}} />
+          {loading ? <div style={{color:"#6b7280"}}>Loading…</div> : filtered.length === 0 ?
+            <div style={{color:"#6b7280",fontSize:13}}>No custom questions yet. Add some above!</div> :
+            filtered.map((q, i) => (
+              <div key={i} style={{padding:"8px 10px",borderRadius:6,background:"rgba(255,255,255,0.04)",marginBottom:4,cursor:"pointer"}}
+                onClick={() => {setEditIdx(i);setEditQ({...q,opts:[...q.opts]});}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#e5e7eb",marginBottom:2}}>{q.q.slice(0,60)}{q.q.length>60?"…":""}</div>
+                <div style={{display:"flex",justifyContent:"space-between"}}>
+                  <span style={{color:"#10b981",fontSize:11}}>✓ {q.a}</span>
+                  <span onClick={e=>{e.stopPropagation();deleteQ(i);}} style={{color:"#ef4444",fontSize:11,cursor:"pointer"}}>🗑 Delete</span>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        <div style={c.card}>
+          <div style={c.h2}>{editIdx === null ? "Add Question" : "Edit Question"}</div>
+          {msg && <div style={{color:msg.startsWith("✓")?"#10b981":"#ef4444",fontSize:13,marginBottom:8}}>{msg}</div>}
+          <div style={{marginBottom:10}}>
+            <label style={{color:"#9ca3af",fontSize:12,display:"block",marginBottom:4}}>Question</label>
+            <textarea value={editQ.q} onChange={e=>setEditQ({...editQ,q:e.target.value})} rows={2}
+              style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"8px",resize:"vertical",boxSizing:"border-box" as const}} />
+          </div>
+          <div style={{marginBottom:10}}>
+            <label style={{color:"#9ca3af",fontSize:12,display:"block",marginBottom:4}}>4 Options</label>
+            {editQ.opts.map((opt,i) => (
+              <input key={i} value={opt} onChange={e=>{const o=[...editQ.opts];o[i]=e.target.value;setEditQ({...editQ,opts:o});}}
+                placeholder={`Option ${i+1}`}
+                style={{width:"100%",background:"#0a0a14",border:`1px solid ${opt&&opt===editQ.a?"#10b981":"#2d2d44"}`,borderRadius:6,color:"#fff",fontSize:13,padding:"6px 10px",marginBottom:4,boxSizing:"border-box" as const}} />
+            ))}
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{color:"#9ca3af",fontSize:12,display:"block",marginBottom:4}}>Correct Answer</label>
+            <select value={editQ.a} onChange={e=>setEditQ({...editQ,a:e.target.value})}
+              style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"6px 10px"}}>
+              <option value="">Select correct answer…</option>
+              {editQ.opts.filter(o=>o.trim()).map((o,i) => <option key={i} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <button onClick={saveQ} disabled={saving}
+            style={{background:"#f59e0b",border:"none",borderRadius:8,color:"#000",fontWeight:700,padding:"8px 20px",cursor:"pointer"}}>
+            {saving ? "Saving…" : "💾 Save Question"}
+          </button>
+        </div>
       </div>
     </div>
   );
