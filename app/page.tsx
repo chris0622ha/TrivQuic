@@ -87,7 +87,7 @@ async function claimUsername(uid: string, username: string, oldUsername?: string
 }
 
 async function saveUserStats(uid: string, username: string, displayName: string, gameResult: {
-  score: number; bestStreak: number; correct: number; total: number; category: string;
+  score: number; bestStreak: number; correct: number; total: number; category: string; difficulty?: string;
 }) {
   try {
     const existing = await loadUserData(uid);
@@ -112,6 +112,19 @@ async function saveUserStats(uid: string, username: string, displayName: string,
       categoryBests,
       lastPlayed: new Date().toLocaleDateString(),
     });
+    // Save to recent scores history (keep last 5)
+    const recentSnap = await get(ref(db, `users/${uid}/recentScores`));
+    const recent = recentSnap.exists() ? recentSnap.val() : [];
+    recent.unshift({
+      score: gameResult.score,
+      correct: gameResult.correct,
+      total: gameResult.total,
+      category: gameResult.category,
+      difficulty: gameResult.difficulty,
+      date: new Date().toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+      ts: Date.now(),
+    });
+    await set(ref(db, `users/${uid}/recentScores`), recent.slice(0, 5));
   } catch {}
 }
 
@@ -234,7 +247,50 @@ function UserProfileView({ uid, onClose, onSendFriendRequest }: {
 }) {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", history:"📜", math:"🔢", sports:"⚽", entertainment:"🎬" };
+
+
+
+// ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+// ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+const ACHIEVEMENTS: {id:string; name:string; desc:string; icon:string; check:(u:any,game?:any)=>boolean}[] = [
+  { id:"first_game",   name:"First Game",      icon:"🎮", desc:"Play your first game",                  check:(u)=>u.gamesPlayed>=1 },
+  { id:"games_10",     name:"Addicted",         icon:"🔥", desc:"Play 10 games",                          check:(u)=>u.gamesPlayed>=10 },
+  { id:"games_50",     name:"Trivia Nerd",      icon:"🤓", desc:"Play 50 games",                          check:(u)=>u.gamesPlayed>=50 },
+  { id:"games_100",    name:"Centurion",         icon:"💯", desc:"Play 100 games",                         check:(u)=>u.gamesPlayed>=100 },
+  { id:"score_500",    name:"High Scorer",      icon:"⭐", desc:"Score 500+ in one game",                 check:(_,g)=>g?.score>=500 },
+  { id:"score_1000",   name:"Legend",           icon:"👑", desc:"Score 1000+ in one game",                check:(_,g)=>g?.score>=1000 },
+  { id:"perfect",      name:"Perfect Game",     icon:"💎", desc:"Get every answer correct",               check:(_,g)=>g?.correct===g?.total&&g?.total>0 },
+  { id:"streak_5",     name:"On Fire",          icon:"🔥", desc:"Get a 5x streak",                        check:(_,g)=>g?.bestStreak>=5 },
+  { id:"streak_10",    name:"Unstoppable",      icon:"⚡", desc:"Get a 10x streak",                       check:(_,g)=>g?.bestStreak>=10 },
+  { id:"accuracy_90",  name:"Sharp Mind",       icon:"🎯", desc:"90%+ accuracy over 20+ games",           check:(u)=>u.gamesPlayed>=20&&u.totalQuestions>0&&(u.totalCorrect/u.totalQuestions)>=0.9 },
+  { id:"all_cats",     name:"Well Rounded",     icon:"🌍", desc:"Play every category",                    check:(u)=>Object.keys(u.categoryBests||{}).length>=6 },
+  { id:"speed_demon",  name:"Speed Demon",      icon:"⏩", desc:"Perfect game with 1s timer",             check:(_,g)=>g?.correct===g?.total&&g?.total>0&&g?.timerDuration===1 },
+  { id:"night_owl",    name:"Night Owl",        icon:"🦉", desc:"Play after midnight ET",                 check:()=>{ const h=new Date().toLocaleString("en-US",{timeZone:"America/New_York",hour:"numeric",hour12:false}); return parseInt(h)>=0&&parseInt(h)<5; } },
+  { id:"early_bird",   name:"Early Bird",       icon:"🐦", desc:"Play before 6am ET",                    check:()=>{ const h=new Date().toLocaleString("en-US",{timeZone:"America/New_York",hour:"numeric",hour12:false}); return parseInt(h)<6; } },
+  { id:"social",       name:"Social Butterfly", icon:"🦋", desc:"Play 5 multiplayer games",              check:(u)=>u.multiplayerGames>=5 },
+  { id:"duel_10",      name:"Duelist",          icon:"⚔️", desc:"Win 10 duels",                           check:(u)=>u.duelWins>=10 },
+];
+
+async function checkAndAwardAchievements(uid: string, userData: any, gameResult?: any) {
+  try {
+    const earnedSnap = await get(ref(db, `users/${uid}/achievements`));
+    const earned: string[] = earnedSnap.exists() ? earnedSnap.val() : [];
+    const newlyEarned: string[] = [];
+    for (const ach of ACHIEVEMENTS) {
+      if (!earned.includes(ach.id) && ach.check(userData, gameResult)) {
+        earned.push(ach.id);
+        newlyEarned.push(ach.id);
+      }
+    }
+    if (newlyEarned.length > 0) {
+      await set(ref(db, `users/${uid}/achievements`), earned);
+      // Write newly earned for toast notification
+      await set(ref(db, `users/${uid}/newAchievements`), newlyEarned);
+    }
+  } catch {}
+}
+
+const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", history:"📜", math:"🔢", sports:"⚽", entertainment:"🎬" };
 
   useEffect(() => {
     get(ref(db, `users/${uid}`)).then(snap => {
@@ -333,10 +389,33 @@ function UserProfileView({ uid, onClose, onSendFriendRequest }: {
   );
 }
 
-function ProfileModal({ user, userData, onClose, onUserDataChange }: {
+function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, setDarkMode, fontSize, setFontSize }: {
   user: User; userData: any; onClose: () => void; onUserDataChange: (d: any) => void;
+  darkMode?: boolean; setDarkMode?: (v:boolean) => void;
+  fontSize?: string; setFontSize?: (v:any) => void;
 }) {
-  const [tab, setTab] = useState<"stats"|"edit"|"status"|"prefs"|"friends">("stats");
+  const [tab, setTab] = useState<"stats"|"edit"|"status"|"prefs"|"friends"|"achievements">("stats");
+  const [earnedAch, setEarnedAch] = useState<string[]>([]);
+  useEffect(() => { get(ref(db, `users/${user.uid}/achievements`)).then(s => { if(s.exists()) setEarnedAch(s.val()); }); }, []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allAchievements: {id:string;name:string;desc:string;icon:string}[] = [
+    {id:"first_game",icon:"🎮",name:"First Game",desc:"Play your first game"},
+    {id:"games_10",icon:"🔥",name:"Addicted",desc:"Play 10 games"},
+    {id:"games_50",icon:"🤓",name:"Trivia Nerd",desc:"Play 50 games"},
+    {id:"games_100",icon:"💯",name:"Centurion",desc:"Play 100 games"},
+    {id:"score_500",icon:"⭐",name:"High Scorer",desc:"Score 500+ in one game"},
+    {id:"score_1000",icon:"👑",name:"Legend",desc:"Score 1000+ in one game"},
+    {id:"perfect",icon:"💎",name:"Perfect Game",desc:"Get every answer correct"},
+    {id:"streak_5",icon:"🔥",name:"On Fire",desc:"Get a 5x streak"},
+    {id:"streak_10",icon:"⚡",name:"Unstoppable",desc:"Get a 10x streak"},
+    {id:"accuracy_90",icon:"🎯",name:"Sharp Mind",desc:"90%+ accuracy over 20+ games"},
+    {id:"all_cats",icon:"🌍",name:"Well Rounded",desc:"Play every category"},
+    {id:"speed_demon",icon:"⏩",name:"Speed Demon",desc:"Perfect game with 1s timer"},
+    {id:"night_owl",icon:"🦉",name:"Night Owl",desc:"Play after midnight ET"},
+    {id:"early_bird",icon:"🐦",name:"Early Bird",desc:"Play before 6am ET"},
+    {id:"social",icon:"🦋",name:"Social Butterfly",desc:"Play 5 multiplayer games"},
+    {id:"duel_10",icon:"⚔️",name:"Duelist",desc:"Win 10 duels"},
+  ];
 
   // Edit tab state
   const [newUsername, setNewUsername] = useState(userData?.username || "");
@@ -610,6 +689,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
           <TabBtn id="status" label="Status" />
           <TabBtn id="prefs" label="Preferences" />
           <TabBtn id="friends" label="Friends" badge={incomingRequests.length} />
+          <TabBtn id="achievements" label="🏆" />
         </div>
 
         <div style={{ padding:"20px 24px 24px", maxHeight:420, overflowY:"auto" }}>
@@ -885,12 +965,61 @@ function ProfileModal({ user, userData, onClose, onUserDataChange }: {
 
           {/* PREFERENCES TAB */}
           {tab === "prefs" && (<>
+            {setDarkMode && (
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:12, color:"#9ca3af", fontWeight:600, marginBottom:8 }}>🎨 Theme</div>
+                <div style={{ display:"flex", gap:8 }}>
+                  {([["🌙 Dark", true],["☀️ Light", false]] as [string,boolean][]).map(([label, val]) => (
+                    <div key={String(val)} onClick={() => setDarkMode(val)}
+                      style={{ flex:1, padding:"8px", borderRadius:8, textAlign:"center" as const, cursor:"pointer", fontSize:13, fontWeight:700,
+                        background: darkMode===val ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${darkMode===val?"#f59e0b":"#2d2d44"}`,
+                        color: darkMode===val ? "#f59e0b" : "#9ca3af" }}>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {setFontSize && (
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:12, color:"#9ca3af", fontWeight:600, marginBottom:8 }}>🔤 Font Size</div>
+                <div style={{ display:"flex", gap:8 }}>
+                  {(["small","normal","large"] as const).map(s => (
+                    <div key={s} onClick={() => setFontSize(s)}
+                      style={{ flex:1, padding:"8px", borderRadius:8, textAlign:"center" as const, cursor:"pointer", fontSize:13, fontWeight:700,
+                        background: fontSize===s ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${fontSize===s?"#f59e0b":"#2d2d44"}`,
+                        color: fontSize===s ? "#f59e0b" : "#9ca3af", textTransform:"capitalize" as const }}>
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div style={{ color:"#4b5563", fontSize:13, textAlign:"center" as const, padding:"20px 0" }}>
               No preferences available yet.
             </div>
           </>)}
 
           {/* FRIENDS TAB */}
+          {tab === "achievements" && (
+            <div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                {allAchievements.map((ach) => {
+                  const earned = earnedAch.includes(ach.id);
+                  return (
+                    <div key={ach.id} style={{ background: earned ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.03)", border:`1px solid ${earned?"#f59e0b":"#2d2d44"}`, borderRadius:10, padding:"10px 12px", opacity: earned ? 1 : 0.45 }}>
+                      <div style={{ fontSize:22, marginBottom:4 }}>{ach.icon}</div>
+                      <div style={{ fontWeight:700, fontSize:12, color: earned?"#f59e0b":"#6b7280" }}>{ach.name}</div>
+                      <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{ach.desc}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop:12, fontSize:12, color:"#6b7280", textAlign:"center" as const }}>{earnedAch.length} / {allAchievements.length} unlocked</div>
+            </div>
+          )}
           {tab === "friends" && (<>
 
             {/* Incoming requests */}
@@ -1415,6 +1544,10 @@ export default function Home() {
   const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
   const [updatesSub, setUpdatesSub] = useState<"updates"|"admin">("updates");
+  const [recentScores, setRecentScores] = useState<any[]>([]);
+  const [newAchievement, setNewAchievement] = useState<string|null>(null);
+  const [darkMode, setDarkMode] = useState(() => { try { return localStorage.getItem("tq_darkMode") !== "false"; } catch { return true; } });
+  const [fontSize, setFontSize] = useState<"small"|"normal"|"large">(() => { try { return (localStorage.getItem("tq_fontSize") as any) || "normal"; } catch { return "normal"; } });
   const [cmdOpen, setCmdOpen] = useState(false);
   const [announceModal, setAnnounceModal] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState<{text:string;from:string}|null>(null);
@@ -2141,6 +2274,8 @@ export default function Home() {
           setName(data.username);
           try { localStorage.setItem("onetap_name", data.username); } catch {}
         }
+        // Load recent scores
+        get(ref(db, `users/${u.uid}/recentScores`)).then(s => { if(s.exists()) setRecentScores(s.val()); }).catch(()=>{});
         // Log login + track duration via periodic writes + onDisconnect
         const loginKey = Date.now().toString();
         const loginTs = Date.now();
@@ -2219,6 +2354,17 @@ export default function Home() {
         const d = { ...snap.val() }; d.type = "ban";
         setWarnModal(d);
         remove(ref(db, `users/${u.uid}/pendingBanNotif`)).catch(() => {});
+      });
+
+      // Listen for newly earned achievements
+      onValue(ref(db, `users/${u.uid}/newAchievements`), (snap) => {
+        if (!snap.exists()) return;
+        const ids: string[] = snap.val();
+        if (!ids || ids.length === 0) return;
+        remove(ref(db, `users/${u.uid}/newAchievements`)).catch(()=>{});
+        const _achList = [{id:"first_game",icon:"🎮",name:"First Game"},{id:"games_10",icon:"🔥",name:"Addicted"},{id:"games_50",icon:"🤓",name:"Trivia Nerd"},{id:"games_100",icon:"💯",name:"Centurion"},{id:"score_500",icon:"⭐",name:"High Scorer"},{id:"score_1000",icon:"👑",name:"Legend"},{id:"perfect",icon:"💎",name:"Perfect Game"},{id:"streak_5",icon:"🔥",name:"On Fire"},{id:"streak_10",icon:"⚡",name:"Unstoppable"},{id:"accuracy_90",icon:"🎯",name:"Sharp Mind"},{id:"all_cats",icon:"🌍",name:"Well Rounded"},{id:"speed_demon",icon:"⏩",name:"Speed Demon"},{id:"night_owl",icon:"🦉",name:"Night Owl"},{id:"early_bird",icon:"🐦",name:"Early Bird"},{id:"social",icon:"🦋",name:"Social Butterfly"},{id:"duel_10",icon:"⚔️",name:"Duelist"}];
+        const ach = _achList.find((a: any) => a.id === ids[0]);
+        if (ach) { setNewAchievement(`${ach.icon} ${ach.name}`); setTimeout(() => setNewAchievement(null), 5000); }
       });
 
       // Listen to active global effects — track which we've already started
@@ -2345,6 +2491,12 @@ export default function Home() {
         e.preventDefault();
         setCmdOpen(o => !o);
       }
+      // 1/2/3/4 keyboard shortcuts to answer during game
+      if (!inInput && screen === "game" && !selected && ["1","2","3","4"].includes(e.key)) {
+        const idx = parseInt(e.key) - 1;
+        const opts = questions[qIndex]?.opts;
+        if (opts && opts[idx]) handleAnswer(opts[idx], questions, qIndex);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -2465,8 +2617,36 @@ export default function Home() {
         await saveUserStats(user.uid, userData.username, currentName, {
           score: finalScore, bestStreak: finalBest,
           correct: finalCorrect, total: finalTotal, category: finalCat,
+          difficulty: difficulty,
         });
         await saveToGlobalLB(user.uid, currentName, userData.username, finalScore, finalBest, finalCat, finalRounds, finalTimer);
+        // Check achievements inline
+        const updatedUser = await loadUserData(user.uid);
+        if (updatedUser && user) {
+          try {
+            const _earnedSnap = await get(ref(db, `users/${user.uid}/achievements`));
+            const _earned: string[] = _earnedSnap.exists() ? _earnedSnap.val() : [];
+            const _game = { score: finalScore, correct: finalCorrect, total: finalTotal, bestStreak: finalBest, category: finalCat, timerDuration: finalTimer };
+            const _checks: Record<string,(u:any,g:any)=>boolean> = {
+              first_game:(u)=>u.gamesPlayed>=1, games_10:(u)=>u.gamesPlayed>=10,
+              games_50:(u)=>u.gamesPlayed>=50, games_100:(u)=>u.gamesPlayed>=100,
+              score_500:(_,g)=>g.score>=500, score_1000:(_,g)=>g.score>=1000,
+              perfect:(_,g)=>g.correct===g.total&&g.total>0, streak_5:(_,g)=>g.bestStreak>=5,
+              streak_10:(_,g)=>g.bestStreak>=10, speed_demon:(_,g)=>g.correct===g.total&&g.timerDuration===1,
+              all_cats:(u)=>Object.keys(u.categoryBests||{}).length>=6,
+              accuracy_90:(u)=>u.gamesPlayed>=20&&u.totalQuestions>0&&(u.totalCorrect/u.totalQuestions)>=0.9,
+            };
+            const _newIds: string[] = [];
+            for (const [id, check] of Object.entries(_checks)) {
+              if (!_earned.includes(id) && check(updatedUser, _game)) { _earned.push(id); _newIds.push(id); }
+            }
+            if (_newIds.length > 0) {
+              await set(ref(db, `users/${user.uid}/achievements`), _earned);
+              await set(ref(db, `users/${user.uid}/newAchievements`), _newIds);
+            }
+          } catch {}
+        }
+        get(ref(db, `users/${user.uid}/recentScores`)).then(s => { if(s.exists()) setRecentScores(s.val()); }).catch(()=>{});
       } else if (!user) {
         const lbName = name || "Anonymous";
         try {
@@ -2644,11 +2824,12 @@ export default function Home() {
             )}
           </div>
           {updatesSub === "updates" && [
-            { version:"v0.9.0 — Sunday, June 7, 2026", items:[
-              "⚡ Command palette (admin only) — 50+ effects, broadcast to everyone or individuals",
-              "📢 Announcement system — real-time messages visible on all screens",
-              "🎯 Effects respect duration input and stack properly",
-              "🐛 Various bug fixes and mobile improvements",
+            { version:"v0.10.0 — Sunday, June 7, 2026", items:[
+              "⌨️ Keyboard shortcuts — press 1/2/3/4 to answer during game",
+              "📊 Recent scores — last 5 games shown on home screen",
+              "🏆 Achievements — 16 achievements to unlock, shown in profile",
+              "🎨 Theme toggle — dark/light mode in preferences",
+              "🔤 Font size — small/normal/large in preferences",
             ] },
           ].map(({ version, items }) => (
             <div key={version} style={{ marginBottom:16 }}>
@@ -2659,7 +2840,7 @@ export default function Home() {
             </div>
           ))}
           {updatesSub === "admin" && userData?.isAdmin && [
-            { version:"v0.9.0 — Sunday, June 7, 2026", items:[
+            { version:"v0.10.0 — Sunday, June 7, 2026", items:[
               "🎮 Sessions panel — see who's playing in real time",
               "📣 Broadcast panel — popup messages to all online users",
               "📝 User Notes panel — private notes per user",
@@ -2683,6 +2864,17 @@ export default function Home() {
   );
 
   // ── AUTH HEADER ──────────────────────────────────────────────────────────────
+  // Apply dark/light mode + font size
+  React.useEffect(() => {
+    const bg = darkMode ? "#0f0f1a" : "#f5f5f0";
+    const fg = darkMode ? "#fff" : "#111";
+    const fz = fontSize === "small" ? "13px" : fontSize === "large" ? "17px" : "15px";
+    const s = document.getElementById("__theme_style") || Object.assign(document.createElement("style"), { id:"__theme_style" });
+    (s as HTMLStyleElement).textContent = `body { background: ${bg} !important; color: ${fg} !important; font-size: ${fz} !important; } .trivquic-fx { background: ${bg} !important; }`;
+    document.head.appendChild(s);
+    try { localStorage.setItem("tq_darkMode", String(darkMode)); localStorage.setItem("tq_fontSize", fontSize); } catch {}
+  }, [darkMode, fontSize]);
+
   // Inject a permanent style to protect overlay elements from CSS effects
   React.useEffect(() => {
     const s = Object.assign(document.createElement("style"), { id: "__protect_style" });
@@ -2708,6 +2900,16 @@ export default function Home() {
 
   const AuthHeader = () => (
     <>
+      {/* Achievement toast */}
+      {newAchievement && (
+        <div data-protect="1" style={{ position:"fixed", top: announcement ? 52 : 12, left:"50%", transform:"translateX(-50%)", zIndex:600,
+          background:"linear-gradient(135deg,#1a1a2e,#0f0f1a)", border:"1px solid #f59e0b",
+          borderRadius:14, padding:"10px 20px", maxWidth:"min(340px,90vw)",
+          boxShadow:"0 0 30px rgba(245,158,11,0.4)", textAlign:"center" as const, pointerEvents:"none" }}>
+          <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:2 }}>🏆 ACHIEVEMENT UNLOCKED</div>
+          <div style={{ color:"#fff", fontSize:15, fontWeight:700 }}>{newAchievement}</div>
+        </div>
+      )}
       {/* Broadcast message toast */}
       {broadcastMsg && (
         <div data-protect="1" style={{ position:"fixed", bottom: 80, left:"50%", transform:"translateX(-50%)", zIndex:600, background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:12, padding:"12px 20px", maxWidth:"min(400px,90vw)", boxShadow:"0 4px 20px rgba(0,0,0,0.5)", cursor:"pointer" }}
@@ -3188,6 +3390,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       )}
       {modal === "profile" && user && (
         <ProfileModal user={user} userData={userData} onClose={() => setModal(null)}
+          darkMode={darkMode} setDarkMode={setDarkMode} fontSize={fontSize} setFontSize={setFontSize}
           onUserDataChange={(d) => { setUserData(d); setName(d.username); try { localStorage.setItem("onetap_name", d.username); } catch {} }} />
       )}
       {(modal === "about" || modal === "updates") && <InfoModal type={modal} />}
@@ -3449,6 +3652,23 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
               Join Game →
             </button>
           </div>
+          {recentScores.length > 0 && (
+            <div style={{ width:"100%", maxWidth:460, marginBottom:16 }}>
+              <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:8 }}>📊 RECENT SCORES</div>
+              {recentScores.map((s: any, i: number) => (
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"rgba(255,255,255,0.04)", borderRadius:8, padding:"7px 12px", marginBottom:4 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ fontSize:12, color:"#6b7280" }}>{s.date}</span>
+                    <span style={{ fontSize:12, color:"#9ca3af", textTransform:"capitalize" as const }}>{s.category}</span>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <span style={{ fontSize:12, color:"#6b7280" }}>{s.correct}/{s.total}</span>
+                    <span style={{ fontWeight:700, color:"#f59e0b", fontSize:14 }}>{s.score}pts</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <LeaderboardView globalLB={globalLB} />
         </div>
       </div>
