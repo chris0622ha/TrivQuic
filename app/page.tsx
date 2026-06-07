@@ -1495,7 +1495,7 @@ export default function Home() {
       // Stop canvas effects too when switching to CSS mode... actually keep canvas, just stop CSS
     }
 
-    const root = (document.getElementById("__next") || document.documentElement) as HTMLElement;
+    const root = (document.querySelector(".trivquic-fx") || document.getElementById("__next") || document.documentElement) as HTMLElement;
 
     // ── RESET / UNDO helpers ──────────────────────────────────────────
     if (cmd === "reset" || cmd.startsWith("undo_")) {
@@ -1588,19 +1588,19 @@ export default function Home() {
     }
     if (cmd === "melt") {
       const style=Object.assign(document.createElement("style"),{id:"__melt_style"});
-      style.textContent=`@keyframes __melt{0%{filter:none;transform:none}100%{filter:blur(4px);transform:scaleY(1.3) translateY(10%);opacity:0}} #__next{animation:__melt ${(durationSec??8)}s ease-in forwards!important;}`;
+      style.textContent=`@keyframes __melt{0%{filter:none;transform:none}100%{filter:blur(4px);transform:scaleY(1.3) translateY(10%);opacity:0}} .trivquic-fx{animation:__melt ${(durationSec??8)}s ease-in forwards!important;}`;
       document.head.appendChild(style);
       effectsRef.current.push({stop:()=>{style.remove();root.style.cssText="";}});autoStop((durationSec??8)*1000);return;
     }
     if (cmd === "explode") {
       const style=Object.assign(document.createElement("style"),{id:"__explode_style"});
-      style.textContent=`@keyframes __explode{0%{transform:scale(1);opacity:1}100%{transform:scale(4);opacity:0}} #__next{animation:__explode ${Math.min(durationSec??3,5)}s ease-in forwards!important;}`;
+      style.textContent=`@keyframes __explode{0%{transform:scale(1);opacity:1}100%{transform:scale(4);opacity:0}} .trivquic-fx{animation:__explode ${Math.min(durationSec??3,5)}s ease-in forwards!important;}`;
       document.head.appendChild(style);
       effectsRef.current.push({stop:()=>{style.remove();root.style.cssText="";}});autoStop((durationSec??3)*1000);return;
     }
     if (cmd === "implode") {
       const style=Object.assign(document.createElement("style"),{id:"__implode_style"});
-      style.textContent=`@keyframes __implode{0%{transform:scale(1);opacity:1}100%{transform:scale(0);opacity:0}} #__next{animation:__implode ${Math.min(durationSec??3,5)}s ease-in forwards!important;}`;
+      style.textContent=`@keyframes __implode{0%{transform:scale(1);opacity:1}100%{transform:scale(0);opacity:0}} .trivquic-fx{animation:__implode ${Math.min(durationSec??3,5)}s ease-in forwards!important;}`;
       document.head.appendChild(style);
       effectsRef.current.push({stop:()=>{style.remove();root.style.cssText="";}});autoStop((durationSec??3)*1000);return;
     }
@@ -1732,7 +1732,7 @@ export default function Home() {
     // ── SHAKE ─────────────────────────────────────────────────────────
     if (cmd === "shake") {
       const s = Object.assign(document.createElement("style"),{id:"__shake_style"});
-      s.textContent = `@keyframes __shake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(8px,-4px)}30%{transform:translate(-6px,6px)}40%{transform:translate(6px,-2px)}50%{transform:translate(-10px,2px)}60%{transform:translate(10px,4px)}70%{transform:translate(-4px,-6px)}80%{transform:translate(4px,6px)}90%{transform:translate(-6px,-4px)}} #__next{animation:__shake 0.1s infinite;}`;
+      s.textContent = `@keyframes __shake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(8px,-4px)}30%{transform:translate(-6px,6px)}40%{transform:translate(6px,-2px)}50%{transform:translate(-10px,2px)}60%{transform:translate(10px,4px)}70%{transform:translate(-4px,-6px)}80%{transform:translate(4px,6px)}90%{transform:translate(-6px,-4px)}} .trivquic-fx{animation:__shake 0.1s infinite;}`;
       document.head.appendChild(s);
       effectsRef.current.push({stop:()=>{s.remove();}}); autoStop((durationSec??8)*1000); return;
     }
@@ -1740,7 +1740,7 @@ export default function Home() {
     // ── SPIN ──────────────────────────────────────────────────────────
     if (cmd === "spin") {
       const s = Object.assign(document.createElement("style"),{id:"__spin_style"});
-      s.textContent = `@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} #__next{animation:__spin ${durationSec??5}s linear;}`;
+      s.textContent = `@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}} .trivquic-fx{animation:__spin ${durationSec??5}s linear;}`;
       document.head.appendChild(s);
       effectsRef.current.push({stop:()=>{s.remove();}}); autoStop((durationSec??5)*1000); return;
     }
@@ -2026,7 +2026,7 @@ export default function Home() {
     if (cmd === "vhs") {
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
       const style=Object.assign(document.createElement("style"),{id:"__vhs_style"});
-      style.textContent=`@keyframes __vhstrack{0%{transform:translateY(0)}50%{transform:translateY(2px)}100%{transform:translateY(-2px)}} html{animation:__vhstrack 0.1s infinite;filter:contrast(1.1) brightness(0.95) saturate(1.2);}`;
+      style.textContent=`@keyframes __vhstrack{0%{transform:translateY(0)}50%{transform:translateY(2px)}100%{transform:translateY(-2px)}} .trivquic-fx{animation:__vhstrack 0.1s infinite;filter:contrast(1.1) brightness(0.95) saturate(1.2);}`;
       document.head.appendChild(style);
       let raf2:number;let stopped2=false;
       const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);const y=Math.random()*c.height;ctx2.fillStyle=`rgba(255,255,255,${Math.random()*0.08})`;ctx2.fillRect(0,y,c.width,Math.random()*3+1);if(Math.random()<0.1){ctx2.fillStyle=`rgba(0,255,0,0.03)`;ctx2.fillRect(0,0,c.width,c.height);}raf2=requestAnimationFrame(tick);};
@@ -2638,9 +2638,15 @@ export default function Home() {
   React.useEffect(() => {
     const s = Object.assign(document.createElement("style"), { id: "__protect_style" });
     s.textContent = `
-      [data-protect="1"], [data-protect="1"] * {
+      [data-protect="1"] {
         animation: none !important;
-        transform: none !important;
+        transform: translateZ(0) !important;
+        filter: none !important;
+        position: fixed !important;
+        will-change: transform;
+      }
+      [data-protect="1"] * {
+        animation: none !important;
         filter: none !important;
         font-size: revert !important;
         font-family: revert !important;
@@ -3043,7 +3049,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   // ── HOME ──────────────────────────────────────────────────────────────────────
   // Maintenance mode — block non-admins
   if (maintenanceMode && !userData?.isAdmin) return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 20px 20px`, color:"#fff", textAlign:"center" }}>
+    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 20px 20px`, color:"#fff", textAlign:"center" }}>
       <AuthHeader />
       <div style={{ fontSize:56, marginBottom:16 }}>🔧</div>
       <h1 style={{ fontSize:"2rem", fontWeight:900, margin:"0 0 12px" }}>Down for Maintenance</h1>
@@ -3067,7 +3073,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   ];
 
   if (screen === "home") return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
+    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
       <AuthHeader />
       {userData?.isAdmin && (
         <div data-protect="1" style={{ position:"fixed", bottom: isMobile ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "auto", top: isMobile ? "auto" : (announcement ? 86 : 48), left:"50%", transform:"translateX(-50%)", zIndex:1000, display:"flex", gap:6 }}>
@@ -3526,7 +3532,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
     const emoji = r.correct >= Math.round(r.total * 0.85) ? "🏆" : r.correct >= Math.round(r.total * 0.6) ? "🔥" : r.correct >= Math.round(r.total * 0.35) ? "👍" : "💀";
     const msg = r.correct >= Math.round(r.total * 0.85) ? "Legendary!" : r.correct >= Math.round(r.total * 0.6) ? "On Fire!" : r.correct >= Math.round(r.total * 0.35) ? "Not Bad!" : "Keep Practicing!";
     return (
-      <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
+      <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
         <AuthHeader />
         {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
           <div style={{ textAlign:"center", marginBottom:28 }}>
@@ -3555,7 +3561,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   // ── GAME ──────────────────────────────────────────────────────────────────────
   if (!q) return null;
   return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
+    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
       <AuthHeader />
       {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
       <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
