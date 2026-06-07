@@ -1793,28 +1793,35 @@ export default function Home() {
 
     // ── PIXELATE ──────────────────────────────────────────────────────
     if (cmd === "pixelate") {
-      // Canvas overlay that draws a semi-transparent pixel grid — works everywhere
       const level = parseInt(root.dataset.pixelLevel || "0") + 1;
       root.dataset.pixelLevel = String(level);
-      const blockSize = level * 12; // 12px, 24px, 36px...
+      const blockSize = level * 8;
       const c = makeCanvas(9990 + level);
       const ctx2 = c.getContext("2d")!;
-      const W = c.width, H = c.height;
-      // Sample colors from a gradient palette and fill blocks
-      for (let x = 0; x < W; x += blockSize) {
-        for (let y = 0; y < H; y += blockSize) {
-          const hue = (x / W * 360 + y / H * 120) % 360;
-          ctx2.fillStyle = `hsla(${hue},40%,10%,0.55)`;
-          ctx2.fillRect(x, y, blockSize - 1, blockSize - 1);
-        }
-      }
-      // Draw grid lines
-      ctx2.strokeStyle = "rgba(0,0,0,0.25)";
-      ctx2.lineWidth = 1;
-      for (let x = 0; x < W; x += blockSize) { ctx2.beginPath(); ctx2.moveTo(x,0); ctx2.lineTo(x,H); ctx2.stroke(); }
-      for (let y = 0; y < H; y += blockSize) { ctx2.beginPath(); ctx2.moveTo(0,y); ctx2.lineTo(W,y); ctx2.stroke(); }
+      ctx2.imageSmoothingEnabled = false;
+      let stopped2 = false;
+      // Use html2canvas to capture the page, then redraw pixelated
+      import("html2canvas").then(({ default: html2canvas }) => {
+        const tick = () => {
+          if (stopped2) return;
+          html2canvas(document.body, {
+            scale: 1 / blockSize,
+            useCORS: true,
+            logging: false,
+            ignoreElements: (el) => (el as HTMLElement).tagName === "CANVAS",
+          }).then(snap => {
+            if (stopped2) return;
+            ctx2.clearRect(0, 0, c.width, c.height);
+            ctx2.imageSmoothingEnabled = false;
+            // Draw small snapshot scaled back up = real pixelation
+            ctx2.drawImage(snap, 0, 0, c.width, c.height);
+            if (!stopped2) setTimeout(tick, 200);
+          });
+        };
+        tick();
+      });
       effectsRef.current.push({stop:()=>{
-        c.remove();
+        stopped2 = true; c.remove();
         root.dataset.pixelLevel = String(Math.max(0, parseInt(root.dataset.pixelLevel||"1")-1));
       }});
       autoStop((durationSec??15)*1000); return;
