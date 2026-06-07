@@ -1789,7 +1789,7 @@ export default function Home() {
       // Inject a style that scales the page down then back up with no smoothing
       const styleId = `__px_${level}`;
       const s = Object.assign(document.createElement("style"), { id: styleId });
-      s.textContent = `#__next { transform: scale(${factor}); transform-origin: top left; image-rendering: pixelated; width: ${invPct}%; height: ${invPct}%; overflow: hidden; } body { transform: scale(${1/factor}); transform-origin: top left; overflow: hidden; }`;
+      s.textContent = `.trivquic-fx { transform: scale(${factor}); transform-origin: top left; image-rendering: pixelated; width: ${invPct}%; height: ${invPct}%; overflow: hidden; }`;
       document.head.appendChild(s);
       effectsRef.current.push({stop:()=>{
         s.remove();
