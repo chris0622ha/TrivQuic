@@ -1436,9 +1436,14 @@ export default function Home() {
   }
 
   function autoStop(ms: number, stopper?: { stop: () => void }) {
+    // Capture the stopper immediately so later pushes dont get stopped by accident
+    const captured = stopper || effectsRef.current[effectsRef.current.length - 1];
     setTimeout(() => {
-      const s = stopper || effectsRef.current[effectsRef.current.length - 1];
-      if (s) { s.stop(); effectsRef.current = effectsRef.current.filter(e => e !== s); }
+      // Only stop if still in the active list (not already stopped by Stop/Undo)
+      if (captured && effectsRef.current.includes(captured)) {
+        captured.stop();
+        effectsRef.current = effectsRef.current.filter(e => e !== captured);
+      }
     }, ms);
   }
 
@@ -1837,7 +1842,7 @@ export default function Home() {
     // ── SUDO ──────────────────────────────────────────────────────────
     if (cmd === "sudo" || cmd === "hack") {
       const lines = cmd==="hack"
-        ? ["[INITIATING BREACH]","Locating target: trivquic.vercel.app","Bypassing firewall... OK","Injecting payload... OK","ACCESSING MAINFRAME","Decrypting user database...","192.168.1.1 > OPEN","10.0.0.254 > OPEN","Dumping credentials... ██████████ 100%","ACCESS GRANTED. Welcome, chrisha0622."]
+        ? ["[INITIATING BREACH]","Locating target: trivquic.vercel.app","Bypassing firewall... OK","Injecting payload... OK","ACCESSING MAINFRAME","Decrypting user database...","192.168.1.1 > OPEN","10.0.0.254 > OPEN","Dumping credentials... ██████████ 100%",`ACCESS GRANTED. Welcome, ${userData?.username || user?.displayName || "unknown"}.`]
         : ["$ sudo rm -rf /","Permission denied","$ sudo !!","Password: ","Sorry, try again.","Password: ","sudo: 3 incorrect password attempts","$ sudo make me a sandwich","OK."];
       const div=Object.assign(document.createElement("div"),{style:"position:fixed;bottom:20px;left:20px;background:#0f0f0f;border:1px solid #0f0;color:#0f0;font:13px monospace;padding:16px 20px;border-radius:8px;z-index:9999;max-width:420px;pointer-events:none;"});
       document.body.appendChild(div);
