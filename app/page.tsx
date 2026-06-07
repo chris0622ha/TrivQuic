@@ -3654,6 +3654,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   );
 }
 // build: Fri Jun  5 22:10:18 UTC 2026
+  );
 
   // ── AUTH HEADER ──────────────────────────────────────────────────────────────
   // Inject a permanent style to protect overlay elements from CSS effects
