@@ -2634,11 +2634,28 @@ export default function Home() {
   );
 
   // ── AUTH HEADER ──────────────────────────────────────────────────────────────
+  // Inject a permanent style to protect overlay elements from CSS effects
+  React.useEffect(() => {
+    const s = Object.assign(document.createElement("style"), { id: "__protect_style" });
+    s.textContent = `
+      [data-protect="1"], [data-protect="1"] * {
+        animation: none !important;
+        transform: none !important;
+        filter: none !important;
+        font-size: revert !important;
+        font-family: revert !important;
+        text-transform: revert !important;
+      }
+    `;
+    document.head.appendChild(s);
+    return () => s.remove();
+  }, []);
+
   const AuthHeader = () => (
     <>
       {/* Global Announcement Banner — fixed, centered, all screens */}
       {announcement && (
-        <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:490, background:"rgba(245,158,11,0.15)", borderBottom:"2px solid rgba(245,158,11,0.5)", padding:"10px 20px", backdropFilter:"blur(8px)", boxShadow:"0 2px 20px rgba(0,0,0,0.4)", textAlign:"center" as const, fontSize:16, lineHeight:1.5, pointerEvents:"none", whiteSpace:"normal" as const, wordBreak:"break-word" as const }}>
+        <div data-protect="1" style={{ position:"fixed", top:0, left:0, right:0, zIndex:490, background:"rgba(245,158,11,0.15)", borderBottom:"2px solid rgba(245,158,11,0.5)", padding:"10px 20px", backdropFilter:"blur(8px)", boxShadow:"0 2px 20px rgba(0,0,0,0.4)", textAlign:"center" as const, fontSize:16, lineHeight:1.5, pointerEvents:"none", whiteSpace:"normal" as const, wordBreak:"break-word" as const }}>
           <span style={{ color:"#f59e0b", fontWeight:700 }}>{announcement.postedBy || "admin"}: </span>
           <span style={{ color:"#e5e7eb" }}>{announcement.text}</span>
         </div>
@@ -3053,7 +3070,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
     <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
       <AuthHeader />
       {userData?.isAdmin && (
-        <div style={{ position:"fixed", top: announcement ? 86 : 48, left:"50%", transform:"translateX(-50%)", zIndex:1000, display:"flex", gap:6, transition:"top 0.2s" }}>
+        <div data-protect="1" style={{ position:"fixed", top: announcement ? 86 : 48, left:"50%", transform:"translateX(-50%)", zIndex:1000, display:"flex", gap:6, transition:"top 0.2s" }}>
           <div onClick={() => setAnnounceModal(true)}
             style={{ background:"#f59e0b", color:"#000", fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:20, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
             📢 Announcement
@@ -3375,7 +3392,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       {announceModal && (
         <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.8)", display:"flex", alignItems:"center", justifyContent:"center" }}
           onClick={() => setAnnounceModal(false)}>
-          <div onClick={e => e.stopPropagation()}
+          <div onClick={e => e.stopPropagation()} data-protect="1"
             style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"24px", width:"min(440px,92vw)", boxShadow:"0 0 40px rgba(245,158,11,0.3)" }}>
             <div style={{ fontSize:13, color:"#f59e0b", fontWeight:700, marginBottom:16 }}>📢 Post Announcement</div>
             <textarea value={announceText} onChange={e => setAnnounceText(e.target.value)}
@@ -3425,7 +3442,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       {cmdOpen && (
         <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
           onClick={() => setCmdOpen(false)}>
-          <div onClick={e => e.stopPropagation()}
+          <div onClick={e => e.stopPropagation()} data-protect="1"
             style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"16px", width:"min(480px, 95vw)", boxShadow:"0 0 40px rgba(245,158,11,0.3)", maxHeight:"85vh", display:"flex", flexDirection:"column" as const }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10, flexShrink:0 }}>
               <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em" }}>⚡ COMMAND PALETTE</div>
