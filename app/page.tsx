@@ -1414,6 +1414,7 @@ export default function Home() {
   }
   const [showUsernamePicker, setShowUsernamePicker] = useState(false);
   const [modal, setModal] = useState<"about"|"updates"|"profile"|"search"|null>(null);
+  const [updatesSub, setUpdatesSub] = useState<"updates"|"admin">("updates");
   const [cmdOpen, setCmdOpen] = useState(false);
   const [announceModal, setAnnounceModal] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState<{text:string;from:string}|null>(null);
@@ -2626,46 +2627,55 @@ export default function Home() {
           </div>
         </>)}
         {type === "updates" && (<>
-          {[
-            { version:"v0.9.0 — Sunday, June 7, 2026", date:"Sunday, June 7, 2026", items:[
+          <div style={{ display:"flex", gap:6, marginBottom:16 }}>
+            <div onClick={() => setUpdatesSub("updates")}
+              style={{ padding:"5px 14px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer",
+                background: updatesSub === "updates" ? "#f59e0b" : "rgba(255,255,255,0.06)",
+                color: updatesSub === "updates" ? "#000" : "#9ca3af" }}>
+              📋 Updates
+            </div>
+            {userData?.isAdmin && (
+              <div onClick={() => setUpdatesSub("admin")}
+                style={{ padding:"5px 14px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer",
+                  background: updatesSub === "admin" ? "#f59e0b" : "rgba(255,255,255,0.06)",
+                  color: updatesSub === "admin" ? "#000" : "#9ca3af" }}>
+                👑 Admin
+              </div>
+            )}
+          </div>
+          {updatesSub === "updates" && [
+            { version:"v0.9.0 — Sunday, June 7, 2026", items:[
               "⚡ Command palette (admin only) — 50+ effects, broadcast to everyone or individuals",
               "📢 Announcement system — real-time messages visible on all screens",
-              "🎯 Effects now respect duration input and stack properly",
+              "🎯 Effects respect duration input and stack properly",
               "🐛 Various bug fixes and mobile improvements",
             ] },
-          ].map(({ version, date, items }) => (
+          ].map(({ version, items }) => (
             <div key={version} style={{ marginBottom:16 }}>
-              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
-                <span style={{ color:"#f59e0b", fontWeight:800, fontSize:14 }}>{version}</span>
-              </div>
+              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
               {items.map(item => (
                 <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid #2d2d44", marginBottom:3 }}>{item}</div>
               ))}
             </div>
           ))}
-          {userData?.isAdmin && (<>
-            <div style={{ borderTop:"1px solid #2d2d44", marginTop:4, paddingTop:12 }}>
-              <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>👑 ADMIN UPDATES</div>
-              {[
-                { version:"v0.9.0 — Sunday, June 7, 2026", items:[
-                  "🎮 Sessions panel — see who's playing in real time",
-                  "📣 Broadcast panel — popup messages to all online users",
-                  "📝 User Notes panel — private notes per user",
-                  "❓ Question Editor — add custom questions per category",
-                  "👤 Target one specific user in cmd palette",
-                  "🐛 Fixed: effects no longer re-run when another command fires",
-                  "🐛 Fixed: Stop/Undo properly clear Firebase",
-                ] },
-              ].map(({ version, items }) => (
-                <div key={version} style={{ marginBottom:16 }}>
-                  <div style={{ color:"#f59e0b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
-                  {items.map(item => (
-                    <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid rgba(245,158,11,0.3)", marginBottom:3 }}>{item}</div>
-                  ))}
-                </div>
+          {updatesSub === "admin" && userData?.isAdmin && [
+            { version:"v0.9.0 — Sunday, June 7, 2026", items:[
+              "🎮 Sessions panel — see who's playing in real time",
+              "📣 Broadcast panel — popup messages to all online users",
+              "📝 User Notes panel — private notes per user",
+              "❓ Question Editor — add custom questions per category",
+              "👤 Target one specific user in cmd palette",
+              "🐛 Fixed: effects no longer re-run when another command fires",
+              "🐛 Fixed: Stop/Undo properly clear Firebase",
+            ] },
+          ].map(({ version, items }) => (
+            <div key={version} style={{ marginBottom:16 }}>
+              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
+              {items.map(item => (
+                <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid rgba(245,158,11,0.3)", marginBottom:3 }}>{item}</div>
               ))}
             </div>
-          </>)}
+          ))}
         </>)}
         </div>
       </div>
