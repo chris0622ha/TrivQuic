@@ -2618,7 +2618,7 @@ export default function Home() {
   "🐛 Fixed: admin System panel crash on mobile",
   "🐛 Fixed: push notification duplicate (New notification from TrivQuic)",
   "🐛 Fixed: effects no longer move the command palette or announcement banner",
-  "🐛 Fixed: announcement updates in real-time for all users",",
+  "🐛 Fixed: announcement updates in real-time for all users",
   "Duration field for every command — set how long effects last before auto-stopping",
   "Command palette mobile-friendly — fits phone screens, columns stack vertically",
   "Ban screen shows admin username instead of 'TrivQuic Admin'",
