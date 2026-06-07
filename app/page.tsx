@@ -1422,6 +1422,7 @@ export default function Home() {
   const [cmdInput, setCmdInput] = useState("");
   const [globalAudience, setGlobalAudience] = useState<"all"|"crown"|"gold"|"silver"|"bronze">("all");
   const [expandedCmd, setExpandedCmd] = useState<string|null>(null);
+  const [cmdTargetUser, setCmdTargetUser] = useState<string>("");
   const [cmdDuration, setCmdDuration] = useState<number>(10); // seconds
 
   // ── Effects canvas manager
@@ -1457,7 +1458,12 @@ export default function Home() {
       const updates: Record<string, any> = {};
       Object.entries(usersSnap.val() as Record<string, any>).forEach(([uid, u]) => {
         if (uid === user?.uid) return; // skip self
-        if (audience === "all" || u.badge === audience) {
+        const targetUsername = audience.startsWith("user:") ? audience.slice(5).toLowerCase() : null;
+        if (targetUsername) {
+          if ((u.username || "").toLowerCase() === targetUsername) {
+            updates[`users/${uid}/pendingCmd`] = { cmd, sentAt: Date.now(), duration };
+          }
+        } else if (audience === "all" || u.badge === audience) {
           updates[`users/${uid}/pendingCmd`] = { cmd, sentAt: Date.now(), duration };
         }
       });
@@ -1465,7 +1471,7 @@ export default function Home() {
         await update(ref(db), updates);
       }
       // Persist to activeEffects so late joiners get it (only for "all" audience)
-      if (audience === "all" && duration > 0) {
+      if (audience === "all" && duration > 0 && !audience.startsWith("user:")) {
         const effectKey = `${cmd}_${Date.now()}`;
         await set(ref(db, `config/activeEffects/${effectKey}`), { cmd, durationSec: duration, startedAt: Date.now() });
         setTimeout(() => remove(ref(db, `config/activeEffects/${effectKey}`)).catch(()=>{}), duration * 1000 + 2000);
@@ -3496,7 +3502,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                             style={{ width:52, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:5, color:"#fff", fontSize:12, padding:"2px 6px", textAlign:"center" as const }} />
                           <span style={{ color:"#6b7280", fontSize:11 }}>sec</span>
                         </div>
-                        <div style={{ display:"flex", gap:4, flexWrap:"wrap" as const }}>
+                        <div style={{ display:"flex", gap:4, flexWrap:"wrap" as const, marginBottom:6 }}>
                           {([ ["🙋 Me","just_me"],["🌐 Everyone","all"],["👑 Crown","crown"],["🥇 Gold","gold"],["🥈 Silver","silver"],["🥉 Bronze","bronze"] ] as [string,string][]).map(([lbl, aud]) => (
                             <div key={aud} onClick={async (e) => { e.stopPropagation(); runCommand(cmd, cmdDuration); if (aud !== "just_me") await broadcastCmd(cmd, aud as any, cmdDuration); setExpandedCmd(null); }}
                               style={{ padding:"3px 8px", borderRadius:6, background:"rgba(16,185,129,0.15)", color:"#10b981", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(16,185,129,0.3)" }}
@@ -3505,6 +3511,23 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                               {lbl}
                             </div>
                           ))}
+                        </div>
+                        <div style={{ display:"flex", gap:4, alignItems:"center" }}>
+                          <input value={cmdTargetUser} onChange={e => setCmdTargetUser(e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                            placeholder="username..."
+                            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:5, color:"#fff", fontSize:12, padding:"3px 8px", outline:"none" }} />
+                          <div onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!cmdTargetUser.trim()) return;
+                              await broadcastCmd(cmd, `user:${cmdTargetUser.trim()}`, cmdDuration);
+                              setExpandedCmd(null); setCmdTargetUser("");
+                            }}
+                            style={{ padding:"3px 10px", borderRadius:6, background:"rgba(139,92,246,0.2)", color:"#a78bfa", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(139,92,246,0.4)", whiteSpace:"nowrap" as const }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "rgba(139,92,246,0.4)")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "rgba(139,92,246,0.2)")}>
+                            👤 Send
+                          </div>
                         </div>
                       </div>
                     )}
