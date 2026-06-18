@@ -1514,6 +1514,7 @@ function ReportModal({ target, reporter, onClose }: { target: any; reporter: { u
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const isEmbed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("embed") === "1";
   const [screen, setScreen] = useState("home");
   const [questions, setQuestions] = useState<any[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -2619,7 +2620,7 @@ export default function Home() {
           correct: finalCorrect, total: finalTotal, category: finalCat,
           difficulty: difficulty,
         });
-        await saveToGlobalLB(user.uid, currentName, userData.username, finalScore, finalBest, finalCat, finalRounds, finalTimer);
+        if (!isEmbed) await saveToGlobalLB(user.uid, currentName, userData.username, finalScore, finalBest, finalCat, finalRounds, finalTimer);
         // Check achievements inline
         const updatedUser = await loadUserData(user.uid);
         if (updatedUser && user) {
@@ -2650,6 +2651,7 @@ export default function Home() {
       } else if (!user) {
         const lbName = name || "Anonymous";
         try {
+          if (!isEmbed) {
           const now = new Date();
           const entryKey = `anon_${lbName.replace(/[.#$[\]]/g, "_")}_${finalCat}_${finalRounds}_${finalTimer}`;
           const lbRef = ref(db, `leaderboard/${entryKey}`);
@@ -2663,6 +2665,7 @@ export default function Home() {
               ts: now.getTime(),
             });
           }
+          } // end !isEmbed
         } catch {}
       }
 
