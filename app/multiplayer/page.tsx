@@ -11,6 +11,7 @@ import { history } from "../data/history";
 import { sports } from "../data/sports";
 import { entertainment } from "../data/entertainment";
 import { math } from "../data/math";
+import { useBlockUnder13Redirect, AgeGateBlockedScreen } from "../lib/ageGate";
 
 const ALL_QUESTIONS = [...geography, ...science, ...history, ...sports, ...entertainment, ...math];
 const CATEGORY_MAP: Record<string, any[]> = {
@@ -67,6 +68,7 @@ const s = {
 };
 
 export default function MultiplayerPage() {
+  const { checked, blocked } = useBlockUnder13Redirect();
   const [view, setView] = useState<"home"|"host-setup"|"lobby"|"game"|"results">("home");
   const [playerName, setPlayerName] = useState("");
   const [gameId, setGameId] = useState("");
@@ -267,6 +269,8 @@ export default function MultiplayerPage() {
   }
 
   // ---- HOME ----
+  if (blocked) return <AgeGateBlockedScreen />;
+
   if (view === "home") return (
     <div style={s.page}>
       <div style={{ ...s.card }}>

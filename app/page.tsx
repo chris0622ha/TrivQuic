@@ -1515,6 +1515,26 @@ function ReportModal({ target, reporter, onClose }: { target: any; reporter: { u
 
 export default function Home() {
   const isEmbed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("embed") === "1";
+  // Neutral age gate: collects birth year only (never sent anywhere, never stored
+  // beyond this browser tab). No labeled "Yes/No" buttons that tip off the
+  // age-restricted path — same plain number input regardless of what's typed.
+  // Until a verified 13-plus birth year is entered, the session is treated as
+  // restricted by default (fail-closed), per COPPA's no-skip/no-assume-adult rule.
+  const [ageGateYear, setAgeGateYear] = useState<number|null>(null);
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("tq_age_gate_year");
+      if (stored) {
+        const y = parseInt(stored, 10);
+        if (!Number.isNaN(y)) setAgeGateYear(y);
+      }
+    } catch {}
+  }, []);
+  const currentYear = new Date().getFullYear();
+  const age = ageGateYear != null ? currentYear - ageGateYear : null;
+  const ageGateAnswered = ageGateYear != null;
+  // Fail closed: anything other than a confirmed 13-plus year is restricted.
+  const isUnder13 = !(ageGateAnswered && age != null && age >= 13);
   const [screen, setScreen] = useState("home");
   const [questions, setQuestions] = useState<any[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -2651,7 +2671,7 @@ export default function Home() {
       } else if (!user) {
         const lbName = name || "Anonymous";
         try {
-          if (!isEmbed) {
+          if (!isEmbed && !isUnder13) {
           const now = new Date();
           const entryKey = `anon_${lbName.replace(/[.#$[\]]/g, "_")}_${finalCat}_${finalRounds}_${finalTimer}`;
           const lbRef = ref(db, `leaderboard/${entryKey}`);
@@ -3026,7 +3046,11 @@ export default function Home() {
               Sign out
             </button>
           </div>
-        ) : (
+        ) : isUnder13 ? (
+          <div style={{ background:"rgba(255,255,255,0.06)", border:"1px solid #2d2d44", borderRadius:8, color:"#6b7280", fontSize:11, fontWeight:600, padding:"7px 12px", maxWidth:180, textAlign:"center" }}>
+            Accounts aren't available under 13. You can still play below.
+          </div>
+        ) : isEmbed ? null : (
           <button onClick={async () => { try { await signInWithPopup(auth, googleProvider); } catch {} }}
             style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:8, color:"#1f2937", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}>
             <svg width="16" height="16" viewBox="0 0 48 48">
@@ -3349,6 +3373,32 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
     ["earthquake","🌍 earthquake"],["blackout","⬛ blackout"],["strobe","⚡ strobe"],["upsidedown","🙃 upside down"],["oldtv","📺 old tv"],["windows","🪟 windows xp"],["bsod","💙 bsod"],["loading","⏳ loading"],
   ];
 
+  if (!ageGateAnswered && !isEmbed) {
+    const years: number[] = [];
+    for (let y = currentYear; y >= currentYear - 100; y--) years.push(y);
+    return (
+      <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px 16px", color:"#fff", textAlign:"center" }}>
+        <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
+        <h1 style={{ fontSize:"2.2rem", fontWeight:900, letterSpacing:"-0.03em", margin:"0 0 8px", background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrivQuic</h1>
+        <p style={{ color:"#9ca3af", fontSize:"1rem", marginBottom:8, maxWidth:380 }}>What year were you born?</p>
+        <p style={{ color:"#4b5563", fontSize:12, marginBottom:24, maxWidth:380 }}>This isn't saved or sent anywhere — it only stays in this browser tab.</p>
+        <select
+          defaultValue=""
+          onChange={(e) => {
+            const y = parseInt(e.target.value, 10);
+            if (Number.isNaN(y)) return;
+            try { sessionStorage.setItem("tq_age_gate_year", String(y)); } catch {}
+            setAgeGateYear(y);
+          }}
+          style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#fff", fontSize:"1.1rem", fontWeight:700, padding:"14px 24px", outline:"none", minWidth:200, textAlign:"center" }}
+        >
+          <option value="" disabled>Select a year</option>
+          {years.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+    );
+  }
+
   if (screen === "home") return (
     <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
       <AuthHeader />
@@ -3618,6 +3668,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           </button>
 
           {/* Duels — big green button below solo on desktop, above multiplayer on mobile */}
+          {!isUnder13 && (
           <a href="/duels" style={{
             display:"flex", alignItems:"center", justifyContent:"center", gap:10,
             background:"linear-gradient(135deg, #10b981, #059669)",
@@ -3631,7 +3682,9 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             <span>Duels</span>
             <span style={{ fontSize:12, fontWeight:600, opacity:0.8, background:"rgba(0,0,0,0.2)", borderRadius:99, padding:"2px 8px" }}>1v1</span>
           </a>
+          )}
 
+          {!isUnder13 && (
           <button onClick={() => setModal("search")} style={{
             display:"flex", alignItems:"center", justifyContent:"center", gap:8,
             width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid #2d2d44",
@@ -3640,10 +3693,12 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           }}>
             🔍 Search Users
           </button>
+          )}
         </div>
 
         {/* RIGHT — Multiplayer + Leaderboard */}
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          {!isUnder13 && (<>
           <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 Multiplayer</div>
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
             <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>🎮 Host a Game</a>
@@ -3655,6 +3710,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
               Join Game →
             </button>
           </div>
+          </>)}
           {recentScores.length > 0 && (
             <div style={{ width:"100%", maxWidth:460, marginBottom:16 }}>
               <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:8 }}>📊 RECENT SCORES</div>

@@ -6,6 +6,7 @@ import { db, auth, googleProvider } from "../lib/firebase";
 import { ref, get, set, update, onValue, off, remove, onDisconnect } from "firebase/database";
 import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
+import { useBlockUnder13Redirect, AgeGateBlockedScreen } from "../lib/ageGate";
 
 import { geography } from "../data/geography";
 import { science } from "../data/science";
@@ -119,6 +120,7 @@ function ChallengeFriendModal({user,userData,settings,onClose}:{user:User;userDa
 }
 
 export default function DuelsPage() {
+  const { checked, blocked } = useBlockUnder13Redirect();
   const [user,setUser] = useState<User|null>(null);
   const [userData,setUserData] = useState<any>(null);
   const [authLoading,setAuthLoading] = useState(true);
@@ -478,6 +480,7 @@ export default function DuelsPage() {
     </button>
   );
 
+  if (blocked) return <AgeGateBlockedScreen />;
   if(authLoading) return <div style={{minHeight:"100vh",background:"#0f0f1a",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:"#6b7280"}}>Loading…</div></div>;
 
   if(!user) return (
