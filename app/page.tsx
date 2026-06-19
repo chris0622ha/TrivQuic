@@ -2254,6 +2254,28 @@ export default function Home() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
+      // If this browser already has a signed-in Firebase session but the
+      // current tab's age gate is under-13 (or unanswered — fail closed),
+      // sign out immediately. This closes the gap where a previously
+      // signed-in adult account would otherwise stay active on a shared
+      // device after a child selects an under-13 birth year.
+      if (u) {
+        let restricted = true;
+        try {
+          const stored = sessionStorage.getItem("tq_age_gate_year");
+          if (stored) {
+            const y = parseInt(stored, 10);
+            const age = new Date().getFullYear() - y;
+            restricted = !(!Number.isNaN(age) && age >= 13);
+          }
+        } catch {}
+        if (restricted) {
+          try { await signOut(auth); } catch {}
+          setUser(null);
+          setAuthLoading(false);
+          return;
+        }
+      }
       setUser(u);
       setAuthLoading(false);
       if (u) {
@@ -2362,6 +2384,17 @@ export default function Home() {
       if (unsubWarn) { unsubWarn(); unsubWarn = null; }
       if (unsubBan) { unsubBan(); unsubBan = null; }
       if (!u) return;
+
+      let restricted = true;
+      try {
+        const stored = sessionStorage.getItem("tq_age_gate_year");
+        if (stored) {
+          const y = parseInt(stored, 10);
+          const age = new Date().getFullYear() - y;
+          restricted = !(!Number.isNaN(age) && age >= 13);
+        }
+      } catch {}
+      if (restricted) return; // sign-out is in flight from the other listener; don't subscribe
 
       unsubWarn = onValue(ref(db, `users/${u.uid}/pendingWarn`), (snap) => {
         if (!snap.exists()) return;
