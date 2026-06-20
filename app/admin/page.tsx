@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { db, auth, googleProvider } from "../lib/firebase";
-import { ref, get, set, update, remove, onValue, off, push } from "firebase/database";
+import { ref, get, set, update, remove, onValue, off, push, query, orderByChild, equalTo } from "firebase/database";
 import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 
@@ -466,10 +466,10 @@ function LoginHistory({ uid }: { uid: string }) {
 
 // ── USERS PANEL ───────────────────────────────────────────────────────────────
 function UsersPanel() {
-  const [users, setUsers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [userSort, setUserSort] = useState<"score"|"warned"|"banned">("score");
-  const [loading, setLoading] = useState(true);
+  const [userSort, setUserSort] = useState<"warned"|"banned"|null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any>(null);
   const { msg, flash } = useFlash();
@@ -480,18 +480,28 @@ function UsersPanel() {
   const [editChangesLeft, setEditChangesLeft] = useState("");
   const [editGames, setEditGames] = useState("");
 
-  useEffect(() => {
-    get(ref(db, "users")).then(snap => {
-      if (!snap.exists()) { setLoading(false); return; }
-      const list = Object.entries(snap.val()).map(([uid,d]:any) => ({ uid, ...d }));
-      setUsers(list.sort((a,b) => (b.bestScore||0)-(a.bestScore||0)));
-      setAllUsers(list);
-      setLoading(false);
-    });
-  }, []);
+  // COPPA: this used to fetch and display every user's full profile by
+  // default on mount, with no search term required — that's broad standing
+  // visibility into data that may include children, which isn't covered by
+  // any COPPA exception (the security/internal-operations exceptions only
+  // cover a bare persistent identifier, not a full profile, and explicitly
+  // can't be used to "amass a profile on a specific individual"). Moderation
+  // still needs to work, so this now only fetches once an admin has an
+  // actual reason: a search term, or a sort tied to an existing moderation
+  // signal (already warned / already banned) rather than "show me everyone."
+  async function loadAllUsers() {
+    if (loaded) return;
+    setLoading(true);
+    const snap = await get(ref(db, "users"));
+    if (!snap.exists()) { setLoading(false); setLoaded(true); return; }
+    const list = Object.entries(snap.val()).map(([uid,d]:any) => ({ uid, ...d }));
+    setAllUsers(list);
+    setLoaded(true);
+    setLoading(false);
+  }
 
   const patchUser = (uid: string, patch: any) => {
-    setUsers(u => u.map(x => x.uid===uid ? { ...x, ...patch } : x));
+    setAllUsers(u => u.map(x => x.uid===uid ? { ...x, ...patch } : x));
     setSelected((s: any) => s?.uid===uid ? { ...s, ...patch } : s);
   };
 
@@ -620,29 +630,40 @@ function UsersPanel() {
     flash(`Admin ${!current?"granted":"revoked"}`);
   }
 
-  const filtered = users.filter(u => !search || u.username?.toLowerCase().includes(search.toLowerCase()) || u.uid.includes(search));
+  // Filtered/sorted view only ever shows something once an admin has taken
+  // an action with an actual purpose — searched for a specific account, or
+  // selected a moderation-relevant sort (already warned / already banned).
+  // There's no default "show everyone" state anymore.
+  const filtered = !loaded ? [] : (search.trim()
+    ? allUsers.filter(u => u.username?.toLowerCase().includes(search.toLowerCase()) || u.uid.includes(search))
+    : userSort === "warned" ? [...allUsers].filter(u=>u.lastWarnedAt).sort((a,b)=>(b.lastWarnedAt||0)-(a.lastWarnedAt||0))
+    : userSort === "banned" ? [...allUsers].filter(u=>u.lastBannedAt).sort((a,b)=>(b.lastBannedAt||0)-(a.lastBannedAt||0))
+    : []);
 
   return (
     <div>
-      <h1 style={c.h1}>👥 Users ({users.length})</h1>
+      <h1 style={c.h1}>👥 Users</h1>
       <Flash msg={msg} />
       <div style={{ display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" as const }}>
-        {(["score","warned","banned"] as const).map(s=>(
-          <button key={s} onClick={()=>{
-            setUserSort(s);
-            if(s==="score") setUsers([...allUsers].sort((a,b)=>(b.bestScore||0)-(a.bestScore||0)));
-            if(s==="warned") setUsers([...allUsers].sort((a,b)=>(b.lastWarnedAt||0)-(a.lastWarnedAt||0)));
-            if(s==="banned") setUsers([...allUsers].sort((a,b)=>(b.lastBannedAt||0)-(a.lastBannedAt||0)));
-          }} style={{ ...btn(userSort===s?"y":""), fontSize:12, opacity:userSort===s?1:0.6 }}>
-            {s==="score"?"🏆 Top Score":s==="warned"?"⚠️ Recently Warned":"🔨 Recently Banned"}
+        {(["warned","banned"] as const).map(s=>(
+          <button key={s} onClick={()=>{ setUserSort(s); setSearch(""); loadAllUsers(); }} style={{ ...btn(userSort===s&&!search?"y":""), fontSize:12, opacity:userSort===s&&!search?1:0.6 }}>
+            {s==="warned"?"⚠️ Recently Warned":"🔨 Recently Banned"}
           </button>
         ))}
       </div>
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by username or UID…" style={c.input} />
+      <input value={search} onChange={e=>{ setSearch(e.target.value); if(e.target.value.trim()) { setUserSort(null); loadAllUsers(); } }} placeholder="Search by username or UID — required to view any account…" style={c.input} />
 
       <div style={{ display:"grid", gridTemplateColumns:selected?"1fr 360px":"1fr", gap:20 }}>
         <div style={c.card}>
           {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
+            !search.trim() && !userSort ? (
+              <div style={{ color:"#4b5563", fontSize:13, padding:"12px 4px", lineHeight:1.6 }}>
+                Search for a specific account, or pick a moderation view above. There's no default list of every user here on purpose.
+              </div>
+            ) :
+            filtered.length === 0 ? (
+              <div style={{ color:"#4b5563", fontSize:13, padding:"12px 4px" }}>No matching accounts.</div>
+            ) :
             filtered.map(u => (
               <div key={u.uid} onClick={() => setSelected(selected?.uid===u.uid?null:u)}
                 style={{ ...c.row, cursor:"pointer", background:selected?.uid===u.uid?"rgba(245,158,11,0.05)":"transparent", borderRadius:8, padding:"10px 8px" }}>
@@ -915,6 +936,7 @@ function ReportsPanel() {
 function BansPanel({ initUid }: { initUid?:string }) {
   const [bans, setBans] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
   const [banUid, setBanUid] = useState(initUid||"");
   const [banReason, setBanReason] = useState("");
   const [banType, setBanType] = useState<"permanent"|"temp">("temp");
@@ -927,14 +949,26 @@ function BansPanel({ initUid }: { initUid?:string }) {
   const [sortBy, setSortBy] = useState<"recent"|"warned"|"banned">("recent");
   const { msg, flash } = useFlash();
 
+  // Bans themselves are already a moderation-relevant view (everyone shown
+  // already has an active ban), so loading that list is fine on mount. The
+  // full user directory, though, was being fetched unconditionally too,
+  // purely to support typing a username/UID into the ban form — that's
+  // broader access than the action requires. Now it's only fetched lazily,
+  // the first time an admin actually tries to look someone up to ban them.
   useEffect(() => {
-    Promise.all([get(ref(db,"bans")),get(ref(db,"users"))]).then(([bSnap,uSnap])=>{
+    get(ref(db,"bans")).then(bSnap=>{
       if(bSnap.exists()) setBans(Object.entries(bSnap.val()).map(([uid,d]:any)=>({uid,...d})));
-      if(uSnap.exists()) setUsers(Object.entries(uSnap.val()).map(([uid,d]:any)=>({uid,...d})));
     });
   }, []);
 
-  useEffect(() => { if(initUid) setBanUid(initUid); }, [initUid]);
+  async function ensureUsersLoaded() {
+    if (usersLoaded) return;
+    const uSnap = await get(ref(db,"users"));
+    if(uSnap.exists()) setUsers(Object.entries(uSnap.val()).map(([uid,d]:any)=>({uid,...d})));
+    setUsersLoaded(true);
+  }
+
+  useEffect(() => { if(initUid) { setBanUid(initUid); ensureUsersLoaded(); } }, [initUid]);
 
   const resolveUser = (input: string) => users.find(u=>u.uid===input.trim()) || users.find(u=>u.username?.toLowerCase()===input.trim().toLowerCase());
 
@@ -1030,7 +1064,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
       <div style={c.card}>
         <div style={c.h2}>Issue Ban</div>
         <label style={c.label}>Username or UID</label>
-        <input value={banUid} onChange={e=>setBanUid(e.target.value)} placeholder="username or full UID" style={c.input} />
+        <input value={banUid} onChange={e=>{ setBanUid(e.target.value); ensureUsersLoaded(); }} placeholder="username or full UID" style={c.input} />
         {target && (
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12, padding:"8px 12px", background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.2)", borderRadius:8 }}>
             <Avatar src={target.photoURL} name={target.username} size={32} />
@@ -1671,11 +1705,10 @@ function SystemPanel() {
       get(ref(db,"users")),
       get(ref(db,"leaderboard")),
       get(ref(db,"duels")),
-      get(ref(db,"chats")),
       get(ref(db,"bans")),
       get(ref(db,"adminLog")),
       get(ref(db,"notifHistory")),
-    ]).then(([u,lb,d,ch,b,al,nh]) => {
+    ]).then(([u,lb,d,b,al,nh]) => {
       const users = u.exists() ? Object.values(u.val() as any) : [];
       const lbEntries = lb.exists() ? Object.values(lb.val() as any) : [];
       // Suspicious scores: perfect score (score = roundSize) in very short time, or score > possible
@@ -1694,7 +1727,6 @@ function SystemPanel() {
         users: users.length,
         lbEntries: lbEntries.length,
         duels: d.exists() ? Object.keys(d.val()).length : 0,
-        chats: ch.exists() ? Object.keys(ch.val()).length : 0,
         bans: b.exists() ? Object.keys(b.val()).length : 0,
         adminActions: al.exists() ? Object.keys(al.val()).length : 0,
         notifsSent: nh.exists() ? Object.keys(nh.val()).length : 0,
@@ -1734,7 +1766,6 @@ function SystemPanel() {
             ["Users",stats.users,"#e5e7eb"],
             ["LB Entries",stats.lbEntries,"#f59e0b"],
             ["Duels",stats.duels,"#6366f1"],
-            ["Chat Threads",stats.chats,"#10b981"],
             ["Active Bans",stats.bans,"#ef4444"],
             ["Admin Actions",stats.adminActions,"#a855f7"],
             ["Notifs Sent",stats.notifsSent,"#60a5fa"],
@@ -1987,6 +2018,7 @@ function DuelsAdminPanel() {
 function WarnsPanel() {
   const [warns, setWarns] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [warnUid, setWarnUid] = useState("");
@@ -1995,29 +2027,49 @@ function WarnsPanel() {
   const [sortBy, setSortBy] = useState<"recent"|"most">("recent");
   const { msg, flash } = useFlash();
 
+  // warns/ itself is already moderation-scoped (everyone in it has actually
+  // been warned), so loading it is fine. The full user directory was being
+  // fetched too, just to attach a username label to each warn — that's
+  // resolved per-warn below instead of pulling everyone. The full directory
+  // is still loaded lazily, but only once an admin starts typing a new warn
+  // target, same pattern as BansPanel.
   useEffect(() => {
-    Promise.all([get(ref(db,"warns")), get(ref(db,"users"))]).then(([wSnap, uSnap]) => {
-      const userMap: Record<string,any> = {};
-      if (uSnap.exists()) {
-        Object.entries(uSnap.val() as any).forEach(([uid,u]:any) => { userMap[uid] = {...u, uid}; });
-        setUsers(Object.values(userMap));
-      }
-      if (wSnap.exists()) {
-        const list: any[] = [];
-        Object.entries(wSnap.val() as any).forEach(([uid, warnObj]:any) => {
-          const warnList = Object.entries(warnObj).map(([key, w]:any) => ({
-            uid, key, username: userMap[uid]?.username||uid, ...w
-          }));
-          list.push(...warnList);
-        });
-        list.sort((a,b) => b.warnedAt - a.warnedAt);
-        setWarns(list);
-      }
+    get(ref(db,"warns")).then(async (wSnap) => {
+      if (!wSnap.exists()) { setLoading(false); return; }
+      const uidList = Object.keys(wSnap.val());
+      // Resolve just the usernames for UIDs that actually appear in warns —
+      // one lookup per warned account, not the entire users collection.
+      const usernameMap: Record<string,string> = {};
+      await Promise.all(uidList.map(async (uid) => {
+        const uSnap = await get(ref(db, `users/${uid}/username`));
+        usernameMap[uid] = uSnap.exists() ? uSnap.val() : uid;
+      }));
+      const list: any[] = [];
+      Object.entries(wSnap.val() as any).forEach(([uid, warnObj]:any) => {
+        const warnList = Object.entries(warnObj).map(([key, w]:any) => ({
+          uid, key, username: usernameMap[uid]||uid, ...w
+        }));
+        list.push(...warnList);
+      });
+      list.sort((a,b) => b.warnedAt - a.warnedAt);
+      setWarns(list);
       setLoading(false);
     });
   }, []);
 
+  async function ensureUsersLoaded() {
+    if (usersLoaded) return;
+    const uSnap = await get(ref(db,"users"));
+    const userMap: Record<string,any> = {};
+    if (uSnap.exists()) {
+      Object.entries(uSnap.val() as any).forEach(([uid,u]:any) => { userMap[uid] = {...u, uid}; });
+      setUsers(Object.values(userMap));
+    }
+    setUsersLoaded(true);
+  }
+
   async function issueWarn() {
+    await ensureUsersLoaded();
     const target = users.find(u=>u.uid===warnUid.trim()||u.username?.toLowerCase()===warnUid.trim().toLowerCase());
     if (!target) { flash("User not found","error"); return; }
     const finalReason = warnReason.trim() || "No reason given";
@@ -2297,12 +2349,18 @@ function SessionsPanel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onValue(ref(db, "users"), snap => {
+    // Previously streamed the ENTIRE users collection to the browser just to
+    // filter for the handful currently in a game — that's continuous broad
+    // visibility into everyone's data for a feature that only needs a tiny
+    // slice of it. orderByChild lets the database do the filtering instead,
+    // so only users actually matching currentScreen === "game" are ever sent.
+    const usersRef = query(ref(db, "users"), orderByChild("currentScreen"), equalTo("game"));
+    const unsub = onValue(usersRef, snap => {
       if (!snap.exists()) { setSessions([]); setLoading(false); return; }
       const now = Date.now();
       const active: any[] = [];
       Object.entries(snap.val()).forEach(([uid, u]: [string, any]) => {
-        if (u.currentScreen === "game" && u.gameStartedAt && now - u.gameStartedAt < 3600000) {
+        if (u.gameStartedAt && now - u.gameStartedAt < 3600000) {
           active.push({ uid, username: u.username, gameStartedAt: u.gameStartedAt, badge: u.badge });
         }
       });
@@ -2409,18 +2467,21 @@ function UserNotesPanel() {
   
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    get(ref(db, "users")).then(snap => {
-      if (!snap.exists()) return;
-      setUsers(Object.entries(snap.val()).map(([uid, u]: [string, any]) => ({ uid, ...u })));
-    });
-  }, []);
+  // Same fix as UsersPanel: don't load the entire directory by default,
+  // only once an admin actually searches for someone.
+  async function loadAllUsers() {
+    if (loaded) return;
+    const snap = await get(ref(db, "users"));
+    if (snap.exists()) setUsers(Object.entries(snap.val()).map(([uid, u]: [string, any]) => ({ uid, ...u })));
+    setLoaded(true);
+  }
 
-  const filtered = users.filter(u => !search || (u.username||"").toLowerCase().includes(search.toLowerCase()));
+  const filtered = !loaded || !search.trim() ? [] : users.filter(u => (u.username||"").toLowerCase().includes(search.toLowerCase()));
 
   const loadNote = async (u: any) => {
     setSelected(u);
@@ -2440,7 +2501,7 @@ function UserNotesPanel() {
       <h1 style={c.h1}>📝 User Notes</h1>
       <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}}>
         <div style={c.card}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users…"
+          <input value={search} onChange={e => { setSearch(e.target.value); if(e.target.value.trim()) loadAllUsers(); }} placeholder="Search users…"
             style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"8px 10px",boxSizing:"border-box" as const,marginBottom:10}} />
           <div style={{maxHeight:400,overflowY:"auto" as const}}>
             {filtered.map(u => (
