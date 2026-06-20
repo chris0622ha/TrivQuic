@@ -3053,7 +3053,7 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                     <span style={{ fontSize: i < 3 ? 18 : 12, fontWeight:800, color: rankColor, width:28, textAlign:"right", flexShrink:0 }}>{rankLabel}</span>
                     <div>
-                      <span onClick={() => e.uid && setViewedUser(e.uid)} style={{ color:"#e5e7eb", fontWeight:600, fontSize:14, cursor: e.uid ? "pointer" : "default" }}>{e.name}</span>
+                      <span onClick={() => e.uid && !isUnder13 && setViewedUser(e.uid)} style={{ color:"#e5e7eb", fontWeight:600, fontSize:14, cursor: (e.uid && !isUnder13) ? "pointer" : "default" }}>{e.name}</span>
                       <BadgeIcon badge={e.badge} size={13} />
                       <div style={{ fontSize:10, color:"#4b5563" }}>
                         {CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}
