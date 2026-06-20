@@ -564,13 +564,20 @@ function UsersPanel() {
   // currently logged in. This does NOT delete the account; it stops further
   // collection going forward and removes existing public-facing data, which
   // is what the law actually requires once knowledge is obtained.
+  //
+  // Requires a typed reason (not just a confirm click) so this power is
+  // always tied to a documented justification in the activity log, rather
+  // than something an admin can use casually while just browsing the user
+  // list — looking someone up should still require an actual signal.
   async function handleMarkAsChild(uid: string, username: string) {
-    if (!confirm(`Mark @${username} as a known child account? This immediately restricts the account (no leaderboard, no public profile, forced sign-out) and cannot be easily undone from here. Use this once you have a real signal the account belongs to someone under 13.`)) return;
+    const reason = prompt(`Why is @${username} being marked as a known child account? (e.g. "parent emailed support", "username/feedback revealed age"). This is logged.`);
+    if (!reason || !reason.trim()) { flash("A reason is required — not marked", "error"); return; }
     const now = Date.now();
     await update(ref(db, `users/${uid}`), {
       knownChild: true,
       knownChildAt: now,
       knownChildBy: _adminUsername || "admin",
+      knownChildReason: reason.trim(),
     });
     // Strip existing public-facing identifiers the same way the age gate
     // would have prevented from being created in the first place.
@@ -585,7 +592,7 @@ function UsersPanel() {
     }
     if (Object.keys(updates).length) await update(ref(db), updates);
     patchUser(uid, { knownChild: true });
-    logAdminAction("MARK_KNOWN_CHILD", uid, username);
+    logAdminAction("MARK_KNOWN_CHILD", uid, `${username} — ${reason.trim()}`);
     flash(`@${username} marked as known child — restricted and removed from leaderboard`);
   }
 
