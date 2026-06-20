@@ -2318,6 +2318,12 @@ export default function Home() {
 
   // ── Request notifications on first visit (logged in or not) ─────────────────
   useEffect(() => {
+    // Only prompt for notification permission once someone is actually
+    // signed in — a restricted (under-13) session never reaches this point
+    // since `user` is forced null, but even for a signed-out 13+ visitor
+    // there's no use generating a device token or registering a service
+    // worker before there's an account to attach it to.
+    if (!user) return;
     // Check if we already asked — use localStorage so it persists across sessions
     const asked = localStorage.getItem("notif_asked");
     if (asked) return;
@@ -2361,7 +2367,7 @@ export default function Home() {
       } catch {}
     }, 1500);
     return () => clearTimeout(timer);
-  }, []); // fires once on mount regardless of login state
+  }, [user]); // only runs once a user is signed in
 
   useEffect(() => {
     const handler = (e: Event) => setModal((e as CustomEvent).detail);
@@ -2431,12 +2437,20 @@ export default function Home() {
     return () => { off(reqRef); off(chalRef); };
   }, [user?.uid]);
 
-  // Register service worker
+  // Register service worker (only useful once signed in — it exists purely
+  // to receive push notifications tied to an account)
   useEffect(() => {
+    if (!user) return;
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/api/sw").catch(() => {});
     }
-    // Restore language from cookie on mount
+  }, [user]);
+
+  // Restore language from cookie on mount. This runs regardless of sign-in
+  // state, but the cookie itself only ever gets set after the age gate
+  // confirms 13-plus (see TranslateInit in layout.tsx) and never for embed
+  // sessions, so there's nothing here that bypasses that gate.
+  useEffect(() => {
     const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
     if (match) {
       const lang = match[1];
