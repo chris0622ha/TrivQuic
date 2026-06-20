@@ -451,7 +451,6 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
-  const [chatFriend, setChatFriend] = useState<any>(null);
   const [deleteStep, setDeleteStep] = useState<0|1|2>(0); // 0=none 1=warning 2=confirm
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -1102,8 +1101,8 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                 No friends yet — send a request above!
               </div>
             ) : friendProfiles.map(fp => (
-              <div key={fp.uid} onClick={() => setChatFriend(fp)} style={{ display:"flex", alignItems:"center", gap:10,
-                padding:"10px 0", borderBottom:"1px solid #2d2d44", cursor:"pointer" }}>
+              <div key={fp.uid} style={{ display:"flex", alignItems:"center", gap:10,
+                padding:"10px 0", borderBottom:"1px solid #2d2d44" }}>
                 {fp.photoURL ? (
                   <img src={fp.photoURL} alt="" width={36} height={36}
                     style={{ borderRadius:"50%", border:"2px solid #2d2d44", flexShrink:0 }} />
@@ -1128,11 +1127,6 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                   </div>
                 </div>
                 <div style={{ display:"flex", gap:6, flexShrink:0 }}>
-                  <button onClick={() => setChatFriend(fp)} style={{
-                    background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.4)",
-                    borderRadius:8, color:"#a5b4fc", fontSize:11, fontWeight:700, padding:"5px 10px",
-                    cursor:"pointer",
-                  }}>💬</button>
                   <button onClick={async () => {
                     const isMuted = mutedUids.includes(fp.uid);
                     const newMuted = isMuted ? mutedUids.filter(id=>id!==fp.uid) : [...mutedUids, fp.uid];
@@ -1145,7 +1139,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                     borderRadius:8, color: mutedUids.includes(fp.uid) ? "#f59e0b" : "#6b7280", fontSize:11, padding:"5px 10px",
                     cursor:"pointer",
                   }}>{mutedUids.includes(fp.uid) ? "🔕" : "🔔"}</button>
-                  <button onClick={e => { e.stopPropagation(); removeFriend(fp.uid); }} style={{
+                  <button onClick={() => removeFriend(fp.uid)} style={{
                     background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
                     borderRadius:8, color:"#ef4444", fontSize:11, padding:"5px 10px",
                     cursor:"pointer",
@@ -1157,162 +1151,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
         </div>
       </div>
     </div>
-    {chatFriend && user && (
-      <ChatModal
-        myUid={user.uid}
-        myName={userData?.username || user.displayName?.split(" ")[0] || "Me"}
-        friend={chatFriend}
-        onClose={() => setChatFriend(null)}
-      />
-    )}
     </>
-  );
-}
-
-// ── Chat Modal ────────────────────────────────────────────────────────────────
-function ChatModal({ myUid, myName, friend, onClose }: { myUid:string; myName:string; friend:any; onClose:()=>void }) {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [text, setText] = useState("");
-  const [reportedKey, setReportedKey] = useState<string|null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const chatKey = [myUid, friend.uid].sort().join("_");
-
-  async function reportMessage(m: any, msgKey: string) {
-    if (reportedKey === msgKey) return;
-    await set(ref(db, `chatReports/${Date.now()}_${myUid.slice(0,6)}`), {
-      chatKey,
-      msgKey,
-      senderUid: m.senderUid,
-      senderName: m.senderName,
-      reporterUid: myUid,
-      reporterName: myName,
-      text: m.text,
-      ts: m.ts,
-      reportedAt: Date.now(),
-      reportedAtStr: new Date().toLocaleString("en-US", { timeZone:"America/New_York", month:"numeric", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true }) + " ET",
-    });
-    setReportedKey(msgKey);
-    setTimeout(() => setReportedKey(null), 3000);
-  }
-
-  useEffect(() => {
-    const msgRef = ref(db, `chats/${chatKey}/messages`);
-    let prevCount = 0;
-    const unsub = onValue(msgRef, snap => {
-      if (!snap.exists()) { setMessages([]); prevCount = 0; return; }
-      const list = (Object.values(snap.val() as any) as any[]).sort((a,b) => a.ts-b.ts);
-      // Fire browser notif if new message from other person arrived while modal open
-      if (list.length > prevCount && prevCount > 0) {
-        const newest = list[list.length - 1];
-        if (newest.senderUid !== myUid && "Notification" in window && Notification.permission === "granted") {
-          try { new Notification(`💬 ${newest.senderName}`, { body: newest.text, icon: "/favicon.ico" }); } catch {}
-        }
-      }
-      prevCount = list.length;
-      setMessages(list);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior:"smooth" }), 50);
-    });
-    // Mark as read
-    set(ref(db, `chats/${chatKey}/unread/${myUid}`), 0);
-    return () => off(msgRef);
-  }, [chatKey, myUid]);
-
-  async function send() {
-    const msg = text.trim();
-    if (!msg) return;
-    setText("");
-    const msgKey = Date.now().toString();
-    await set(ref(db, `chats/${chatKey}/messages/${msgKey}`), {
-      senderUid: myUid, senderName: myName, text: msg, ts: Date.now(),
-    });
-    // Bump unread for the other person
-    const theirUnread = (await get(ref(db, `chats/${chatKey}/unread/${friend.uid}`))).val() || 0;
-    await set(ref(db, `chats/${chatKey}/unread/${friend.uid}`), theirUnread + 1);
-    // Send push notification
-    try {
-      const tokenSnap = await get(ref(db, `users/${friend.uid}/fcmToken`));
-      const mutedSnap = await get(ref(db, `users/${friend.uid}/mutedUids`));
-      const muted: string[] = mutedSnap.exists() ? Object.values(mutedSnap.val()) : [];
-      const statusSnap = await get(ref(db, `users/${friend.uid}/status`));
-      const theirStatus = statusSnap.exists() ? statusSnap.val() : null;
-      const notifAllowed = !theirStatus || theirStatus.notif !== false;
-      if (tokenSnap.exists() && !muted.includes(myUid) && notifAllowed) {
-        await fetch("/api/send-notification", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: tokenSnap.val(), title: `💬 ${myName}`, body: msg, url: "/", sender: myName }),
-        });
-      }
-    } catch {}
-  }
-
-  return (
-    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, width:"100%", maxWidth:420, height:"min(600px,85vh)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
-        {/* Header */}
-        <div style={{ padding:"14px 18px", borderBottom:"1px solid #2d2d44", display:"flex", alignItems:"center", gap:10 }}>
-          {friend.photoURL ? (
-            <img src={friend.photoURL} alt="" width={36} height={36} style={{ borderRadius:"50%", border:"2px solid #6366f1" }} />
-          ) : (
-            <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(99,102,241,0.2)", border:"2px solid #6366f1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:900, color:"#a5b4fc" }}>
-              {(friend.username||"?")[0].toUpperCase()}
-            </div>
-          )}
-          <div style={{ flex:1 }}>
-            <div style={{ fontWeight:700, color:"#fff" }}>{friend.username}</div>
-            {friend.status?.preset && friend.status.preset !== "online" && (
-              <div style={{ fontSize:11, color:"#6b7280", marginTop:1 }}>
-                {friend.status.preset === "dnd"     && "⛔ Do Not Disturb"}
-                {friend.status.preset === "sleeping" && "😴 Sleeping"}
-                {friend.status.preset === "focused"  && "🎯 Focused"}
-                {friend.status.preset === "custom"   && friend.status.custom && `✏️ ${friend.status.custom}`}
-              </div>
-            )}
-          </div>
-          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
-        </div>
-        {/* Messages */}
-        <div style={{ flex:1, overflowY:"auto", padding:"12px 16px", display:"flex", flexDirection:"column", gap:8 }}>
-          {messages.length === 0 && (
-            <div style={{ color:"#4b5563", fontSize:13, textAlign:"center", marginTop:40 }}>No messages yet. Say hi!</div>
-          )}
-          {messages.map((m:any, i) => {
-            const isMe = m.senderUid === myUid;
-            const msgKey = String(m.ts) + "_" + i;
-            const justReported = reportedKey === msgKey;
-            return (
-              <div key={i} style={{ display:"flex", justifyContent: isMe?"flex-end":"flex-start", alignItems:"flex-end", gap:4 }}>
-                {!isMe && (
-                  <button onClick={() => reportMessage(m, msgKey)} title="Report message"
-                    style={{ background:"transparent", border:"none", color: justReported?"#10b981":"#2d2d44", fontSize:11, cursor:"pointer", padding:"0 2px", flexShrink:0, lineHeight:1, alignSelf:"center" }}>
-                    {justReported ? "✓" : "🚩"}
-                  </button>
-                )}
-                <div style={{ maxWidth:"75%", background: isMe?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.06)", border:`1px solid ${isMe?"rgba(245,158,11,0.4)":"#2d2d44"}`, borderRadius: isMe?"14px 14px 2px 14px":"14px 14px 14px 2px", padding:"8px 12px" }}>
-                  <div style={{ color:"#e5e7eb", fontSize:14, lineHeight:1.5 }}>{m.text}</div>
-                  <div style={{ color:"#4b5563", fontSize:10, marginTop:2, textAlign:"right" }}>
-                    {new Date(m.ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={bottomRef} />
-        </div>
-        {/* Input */}
-        <div style={{ padding:"10px 14px", borderTop:"1px solid #2d2d44", display:"flex", gap:8 }}>
-          <input
-            value={text} onChange={e=>setText(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&send()}
-            placeholder="Message…"
-            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none" }}
-          />
-          <button onClick={send} style={{ background:"linear-gradient(135deg,#6366f1,#a855f7)", border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:14, padding:"10px 16px", cursor:"pointer" }}>
-            Send
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -2576,24 +2415,12 @@ export default function Home() {
 
   // Live incoming friend request count for badge
   const [pendingCount, setPendingCount] = useState(0);
-  const [unreadChats, setUnreadChats] = useState(0);
   const [duelChallenges, setDuelChallenges] = useState<any[]>([]);
   useEffect(() => {
-    if (!user) { setPendingCount(0); setUnreadChats(0); setDuelChallenges([]); return; }
+    if (!user) { setPendingCount(0); setDuelChallenges([]); return; }
     const reqRef = ref(db, `friendRequests/${user.uid}`);
     const unsub1 = onValue(reqRef, snap => {
       setPendingCount(snap.exists() ? Object.keys(snap.val()).length : 0);
-    });
-    const chatRef = ref(db, "chats");
-    const unsub2 = onValue(chatRef, snap => {
-      if (!snap.exists()) { setUnreadChats(0); return; }
-      let total = 0;
-      Object.entries(snap.val()).forEach(([key, chat]: [string, any]) => {
-        if (key.includes(user.uid) && chat.unread?.[user.uid]) {
-          total += chat.unread[user.uid];
-        }
-      });
-      setUnreadChats(total);
     });
     const chalRef = ref(db, `duelChallenges/${user.uid}`);
     const unsub3 = onValue(chalRef, snap => {
@@ -2601,7 +2428,7 @@ export default function Home() {
       const list = Object.entries(snap.val()).map(([fromUid, d]: [string, any]) => ({ fromUid, ...d }));
       setDuelChallenges(list.filter((c: any) => Date.now() - c.sentAt < 300000));
     });
-    return () => { off(reqRef); off(chatRef); off(chalRef); };
+    return () => { off(reqRef); off(chalRef); };
   }, [user?.uid]);
 
   // Register service worker
@@ -3042,12 +2869,12 @@ export default function Home() {
                     {(userData?.username || user.email || "?")[0].toUpperCase()}
                   </div>
                 )}
-                {(pendingCount + unreadChats) > 0 && (
+                {pendingCount > 0 && (
                   <div style={{ position:"absolute", top:-3, right:-3, width:16, height:16,
                     borderRadius:"50%", background:"#ef4444", border:"2px solid #0f0f1a",
                     display:"flex", alignItems:"center", justifyContent:"center",
                     fontSize:9, fontWeight:900, color:"#fff", lineHeight:1 }}>
-                    {(pendingCount + unreadChats) > 9 ? "9+" : (pendingCount + unreadChats)}
+                    {pendingCount > 9 ? "9+" : pendingCount}
                   </div>
                 )}
               </div>
@@ -3056,24 +2883,6 @@ export default function Home() {
                 <BadgeIcon badge={userData?.badge} size={12} />
               </span>
             </button>
-            {(pendingCount + unreadChats) > 0 && (
-              <button onClick={async () => {
-                if (!user) return;
-                try {
-                  const snap = await get(ref(db, "chats"));
-                  if (snap.exists()) {
-                    const updates: any = {};
-                    Object.keys(snap.val()).forEach(key => {
-                      if (key.includes(user.uid)) updates[`chats/${key}/unread/${user.uid}`] = 0;
-                    });
-                    if (Object.keys(updates).length) await update(ref(db), updates);
-                  }
-                } catch {}
-              }} title="Clear all notifications"
-                style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#ef4444", fontSize:12, fontWeight:700, padding:"5px 10px", cursor:"pointer" }}>
-                🔔 Clear
-              </button>
-            )}
             <button onClick={() => setShowSignOutConfirm(true)}
               style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
               Sign out
@@ -3413,8 +3222,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px 16px", color:"#fff", textAlign:"center" }}>
         <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
         <h1 style={{ fontSize:"2.2rem", fontWeight:900, letterSpacing:"-0.03em", margin:"0 0 8px", background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrivQuic</h1>
-        <p style={{ color:"#9ca3af", fontSize:"1rem", marginBottom:8, maxWidth:380 }}>What year were you born?</p>
-        <p style={{ color:"#4b5563", fontSize:12, marginBottom:24, maxWidth:380 }}>This isn't saved or sent anywhere — it only stays in this browser tab.</p>
+        <p style={{ color:"#9ca3af", fontSize:"1rem", marginBottom:24, maxWidth:380 }}>What year were you born?</p>
         <select
           defaultValue=""
           onChange={(e) => {
@@ -3428,6 +3236,10 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           <option value="" disabled>Select a year</option>
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
+        <div style={{ position:"fixed", bottom:18, display:"flex", gap:18 }}>
+          <a href="/privacy" style={{ color:"#3f4452", fontSize:11, textDecoration:"underline" }}>Privacy Policy</a>
+          <a href="/childrens-privacy" style={{ color:"#3f4452", fontSize:11, textDecoration:"underline" }}>Children's Privacy</a>
+        </div>
       </div>
     );
   }
@@ -3607,19 +3419,21 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
 
       <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, background:"#1a1a2e", borderRadius:16, padding:"16px 24px", marginBottom:16 }}>
         <div style={{ fontSize:12, color:"#6b7280", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase" }}>
-          {user ? "Name for this round" : "Your name"}
+          {isUnder13 ? "Player name" : user ? "Name for this round" : "Your name"}
         </div>
         <input
-          value={name}
+          value={isUnder13 ? "Player" : name}
+          disabled={isUnder13}
           onChange={(e) => {
+            if (isUnder13) return;
             setNameError("");
             setName(e.target.value);
             try { localStorage.setItem("onetap_name", e.target.value); } catch {}
           }}
           placeholder={userData?.username || "Enter your name..."}
-          style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box" }}
+          style={{ width:"100%", background: isUnder13 ? "#0a0a12" : "#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color: isUnder13 ? "#6b7280" : "#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box", cursor: isUnder13 ? "not-allowed" : "text" }}
         />
-        {nameError && <div style={{ fontSize:12, color:"#ef4444", marginTop:6 }}>{nameError}</div>}
+        {nameError && !isUnder13 && <div style={{ fontSize:12, color:"#ef4444", marginTop:6 }}>{nameError}</div>}
         {!nameError && user && userData?.username && name && name.toLowerCase() !== userData.username.toLowerCase() && (
           <div style={{ fontSize:11, color:"#6b7280", marginTop:6 }}>
             Will show as <span style={{ color:"#f59e0b" }}>{name}({userData.username})</span> on the leaderboard
