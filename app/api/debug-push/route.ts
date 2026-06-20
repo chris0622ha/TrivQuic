@@ -38,7 +38,12 @@ async function getAccessToken(): Promise<{ token: string | null; error: string |
   }
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const checks: Record<string, any> = {};
   checks.hasServiceAccountKey = !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   checks.hasVapidKey = !!process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
