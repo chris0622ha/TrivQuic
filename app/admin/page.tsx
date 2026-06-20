@@ -1844,9 +1844,8 @@ function LinksPanel() {
     { label:"Firebase Database", desc:"Browse and edit data directly", icon:"🗄️", color:"#f59e0b", url:"https://console.firebase.google.com/project/onetap-trivia/database/onetap-trivia-default-rtdb/data" },
     { label:"Firebase Auth", desc:"View and manage users", icon:"🔐", color:"#6366f1", url:"https://console.firebase.google.com/project/onetap-trivia/authentication/users" },
     { label:"Firebase Cloud Messaging", desc:"Push notification settings, VAPID keys", icon:"🔔", color:"#10b981", url:"https://console.firebase.google.com/project/onetap-trivia/settings/cloudmessaging" },
-    { label:"Vercel Dashboard", desc:"Deployments, env vars, domains", icon:"▲", color:"#fff", url:"https://vercel.com/chris0622has-projects/quictriv" },
-    { label:"Vercel Environment Variables", desc:"FIREBASE_API_KEY, VAPID_KEY, etc.", icon:"⚙️", color:"#9ca3af", url:"https://vercel.com/chris0622has-projects/quictriv/settings/environment-variables" },
-    { label:"GitHub Repository", desc:"Source code, commits, branches", icon:"🐙", color:"#a5b4fc", url:"https://github.com/chris0622ha/onetap-trivia" },
+    { label:"Vercel Dashboard", desc:"Deployments, env vars, domains", icon:"▲", color:"#fff", url:"https://vercel.com/chris0622ha-s-projects" },
+    { label:"GitHub Repository", desc:"Source code, commits, branches", icon:"🐙", color:"#a5b4fc", url:"https://github.com/chris0622ha/TrivQuic" },
     { label:"TrivQuic Live Site", desc:"trivquic.vercel.app", icon:"⚡", color:"#f59e0b", url:"https://trivquic.vercel.app" },
     { label:"Google Cloud Console", desc:"Service accounts, IAM, APIs", icon:"☁️", color:"#60a5fa", url:"https://console.cloud.google.com/iam-admin/serviceaccounts?project=onetap-trivia" },
   ];
