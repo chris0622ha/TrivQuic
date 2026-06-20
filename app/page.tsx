@@ -5,6 +5,7 @@ import { db, auth, googleProvider } from "./lib/firebase";
 import { ref, get, set, update, remove, onValue, off, query, orderByChild, equalTo } from "firebase/database";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
+import { t, type LangCode } from "./translations";
 
 import { geography } from "./data/geography";
 import { science } from "./data/science";
@@ -1174,69 +1175,11 @@ const LANGUAGES = [
   { code:"tl",    label:"Filipino",   flag:"🇵🇭", native:"Filipino" },
 ];
 
-let _translateInterval: any = null;
-
-function initGoogleTranslate(langCode: string) {
-  // Set cookie
-  document.cookie = `googtrans=/en/${langCode}; path=/`;
-  document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
-
-  // Inject hidden widget container
-  if (!document.getElementById("google_translate_element")) {
-    const el = document.createElement("div");
-    el.id = "google_translate_element";
-    el.style.cssText = "position:fixed;bottom:-9999px;left:-9999px;visibility:hidden;";
-    document.body.appendChild(el);
-  }
-
-  const doTranslate = () => {
-    const select = document.querySelector(".goog-te-combo") as HTMLSelectElement;
-    if (select && select.value !== langCode) {
-      select.value = langCode;
-      select.dispatchEvent(new Event("change"));
-    }
-  };
-
-  if ((window as any).google?.translate?.TranslateElement) {
-    doTranslate();
-  } else {
-    (window as any).googleTranslateElementInit = () => {
-      new (window as any).google.translate.TranslateElement(
-        { pageLanguage: "en", autoDisplay: false },
-        "google_translate_element"
-      );
-      setTimeout(doTranslate, 600);
-    };
-    if (!document.querySelector('script[src*="translate.google.com"]')) {
-      const script = document.createElement("script");
-      script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      document.body.appendChild(script);
-    }
-  }
-
-  // Keep retranslating after React re-renders using MutationObserver
-  if (_translateInterval) clearInterval(_translateInterval);
-  _translateInterval = setInterval(doTranslate, 800);
-}
-
-function applyGoogleTranslate(langCode: string) {
-  if (langCode === "en") {
-    if (_translateInterval) { clearInterval(_translateInterval); _translateInterval = null; }
-    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-    window.location.reload();
-    return;
-  }
-  initGoogleTranslate(langCode);
-}
-
-function triggerTranslate(_langCode: string) { /* kept for compat */ }
-
 function LangModal({ currentLang, onSelect, onClose }: {
   currentLang: string; onSelect: (lang: string) => void; onClose: () => void;
 }) {
   function choose(code: string) {
-    applyGoogleTranslate(code);
+    try { localStorage.setItem("tq_lang", code); } catch {}
     onSelect(code);
   }
 
@@ -2462,16 +2405,15 @@ export default function Home() {
   }, [user]);
 
   // Restore language from cookie on mount. This runs regardless of sign-in
-  // state, but the cookie itself only ever gets set after the age gate
-  // confirms 13-plus (see TranslateInit in layout.tsx) and never for embed
-  // sessions, so there's nothing here that bypasses that gate.
+  // Restore the chosen display language from localStorage on mount. This
+  // used to read a googtrans cookie and re-initialize the Google Translate
+  // widget here - replaced with a plain localStorage read since there's no
+  // widget to restore anymore, just a language code to look up strings by.
   useEffect(() => {
-    const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
-    if (match) {
-      const lang = match[1];
-      setCurrentLang(lang);
-      initGoogleTranslate(lang);
-    }
+    try {
+      const saved = localStorage.getItem("tq_lang");
+      if (saved && saved !== "en") setCurrentLang(saved);
+    } catch {}
   }, []);
 
   // Browser notification helper
@@ -3567,7 +3509,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             borderRadius:14, color:"#9ca3af", fontSize:"1rem", fontWeight:700,
             padding:"14px", cursor:"pointer", boxSizing:"border-box" as const,
           }}>
-            🔍 Search Users
+            🔍 {t("searchUsers", currentLang as LangCode)}
           </button>
           )}
         </div>
@@ -3575,7 +3517,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
         {/* RIGHT — Multiplayer + Leaderboard */}
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           {!isUnder13 && (<>
-          <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 Multiplayer</div>
+          <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 {t("multiplayer", currentLang as LangCode)}</div>
           <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
             <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>🎮 Host a Game</a>
             <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", letterSpacing:"0.05em" }}>— or join with a code —</div>
