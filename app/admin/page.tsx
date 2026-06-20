@@ -556,6 +556,39 @@ function UsersPanel() {
     flash(`Games played → ${val}`); setEditGames("");
   }
 
+  // COPPA: if a report, support message, or any other signal later reveals
+  // that an existing account belongs to someone under 13 — the "actual
+  // knowledge after the fact" scenario — this is how an admin acts on it.
+  // Marking the account immediately and permanently restricts it the same
+  // way the age gate would have, and forces a sign-out everywhere it's
+  // currently logged in. This does NOT delete the account; it stops further
+  // collection going forward and removes existing public-facing data, which
+  // is what the law actually requires once knowledge is obtained.
+  async function handleMarkAsChild(uid: string, username: string) {
+    if (!confirm(`Mark @${username} as a known child account? This immediately restricts the account (no leaderboard, no public profile, forced sign-out) and cannot be easily undone from here. Use this once you have a real signal the account belongs to someone under 13.`)) return;
+    const now = Date.now();
+    await update(ref(db, `users/${uid}`), {
+      knownChild: true,
+      knownChildAt: now,
+      knownChildBy: _adminUsername || "admin",
+    });
+    // Strip existing public-facing identifiers the same way the age gate
+    // would have prevented from being created in the first place.
+    const updates: Record<string, any> = {};
+    updates[`users/${uid}/photoURL`] = null;
+    // Remove any leaderboard entries tied to this account.
+    const lbSnap = await get(ref(db, "leaderboard"));
+    if (lbSnap.exists()) {
+      Object.entries(lbSnap.val() as Record<string, any>).forEach(([key, v]: [string, any]) => {
+        if (key.startsWith(uid + "_") || v?.uid === uid) updates[`leaderboard/${key}`] = null;
+      });
+    }
+    if (Object.keys(updates).length) await update(ref(db), updates);
+    patchUser(uid, { knownChild: true });
+    logAdminAction("MARK_KNOWN_CHILD", uid, username);
+    flash(`@${username} marked as known child — restricted and removed from leaderboard`);
+  }
+
   async function handleWipeStats(uid: string) {
     if (!confirm(`Wipe all stats for ${selected?.username}? This cannot be undone.`)) return;
     await update(ref(db, `users/${uid}`), { bestScore:0, bestStreak:0, gamesPlayed:0, totalScore:0, totalCorrect:0, totalQuestions:0, categoryBests:{} });
@@ -696,6 +729,15 @@ function UsersPanel() {
               <button onClick={()=>handleToggleAdmin(selected.uid,selected.isAdmin)} style={btn(selected.isAdmin?"r":"y",true)}>
                 {selected.isAdmin?"Revoke admin":"Grant admin"}
               </button>
+              {!selected.knownChild ? (
+                <button onClick={()=>handleMarkAsChild(selected.uid, selected.username)} style={btn("y",true)} title="Use this if a report or other signal reveals this account belongs to someone under 13">
+                  🧒 Mark as known child
+                </button>
+              ) : (
+                <div style={{ ...btn("y",true), cursor:"default", textAlign:"center" as const }}>
+                  🧒 Marked as known child — restricted
+                </div>
+              )}
               <a href={`/admin?tab=bans&uid=${selected.uid}`} style={{ ...btn("r",true), textAlign:"center" as const, textDecoration:"none", display:"block" }}>
                 Ban this user →
               </a>

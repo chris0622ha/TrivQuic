@@ -2149,6 +2149,17 @@ export default function Home() {
           }
         } catch {}
         const data = await loadUserData(u.uid);
+        // COPPA: if this account was flagged by an admin as belonging to a
+        // known child (see handleMarkAsChild in the admin panel — this is
+        // how the app reacts once "actual knowledge" is obtained after the
+        // fact, e.g. via a parent's report), force a sign-out the same way
+        // the age gate does for a session that starts out restricted.
+        if (data?.knownChild) {
+          try { await signOut(auth); } catch {}
+          setUser(null);
+          setUserData(null);
+          return;
+        }
         if (!data || !data.username) {
           setShowUsernamePicker(true);
         } else {
@@ -2203,7 +2214,11 @@ export default function Home() {
           if (loginKey && loginUid && loginTs) {
             const duration = Math.max(1, Math.round((Date.now() - parseInt(loginTs)) / 60000));
             await update(ref(db, `users/${loginUid}/loginHistory/${loginKey}`), { durationMin: duration });
-            sessionStorage.clear();
+            // Only remove the login-tracking keys this block owns — sessionStorage.clear()
+            // was wiping the age gate answer too, causing it to reappear after every sign-out.
+            sessionStorage.removeItem("loginKey");
+            sessionStorage.removeItem("loginUid");
+            sessionStorage.removeItem("loginTs");
           }
         } catch {}
         setUserData(null);
