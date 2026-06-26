@@ -20,8 +20,9 @@ jobs:
           echo "Commits since last notify: $COUNT"
           if [ "$COUNT" -ge 2 ]; then
             export MSG=$(git log -1 --pretty=format:"%s" | head -c 100)
-            export BODY=$(git log -1 --pretty=format:"%b" | tr '\n' ' ' | head -c 300)
             export SHA=$(git rev-parse --short HEAD)
+            export BODY=$(git log -1 --pretty=format:"%b" | grep -i '^changelog:' | sed 's/^[Cc]hangelog:[[:space:]]*//' | head -c 280)
+            if [ -z "$BODY" ]; then export BODY="$MSG"; fi
             git config user.email "bot@trivquic"
             git config user.name "Notify Bot"
             git tag "studio-notified-$(date +%s)"
