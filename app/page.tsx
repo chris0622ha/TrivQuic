@@ -2014,6 +2014,14 @@ export default function Home() {
 
   const [category, setCategory] = useState("all");
   const [roundSize, setRoundSize] = useState(20);
+  // When true (default), a wrong answer resets your streak and costs the
+  // points it normally would. When false, wrong answers are purely
+  // informational - you still see the correct answer highlighted, but your
+  // streak and score are unaffected, for people who want a lower-pressure
+  // practice mode.
+  const [strictMode, setStrictMode] = useState(() => {
+    try { return localStorage.getItem("onetap_strict") !== "0"; } catch { return true; }
+  });
   const [timerDuration, setTimerDuration] = useState(3);
   const [difficulty, setDifficulty] = useState<"easy"|"medium"|"hard"|"mixed">("mixed");
 
@@ -2537,8 +2545,12 @@ export default function Home() {
       setSelected(ans);
       const { streak: curStreak, score: curScore, correct: curCorrect, total: curTotal, bestStreak: curBest, category: curCat } = gameStateRef.current;
       const isCorrect = ans === qs[idx].a;
-      const newStreak = isCorrect ? curStreak + 1 : 0;
-      const newScore = isCorrect ? curScore + 10 + Math.min(newStreak, 5) * 10 : curScore;
+      // In non-strict mode, a wrong answer doesn't break the streak or
+      // withhold points - it's purely informational (still shows the
+      // correct answer highlighted), for a lower-pressure practice feel.
+      const treatAsCorrect = isCorrect || !strictMode;
+      const newStreak = treatAsCorrect ? curStreak + 1 : 0;
+      const newScore = treatAsCorrect ? curScore + 10 + Math.min(newStreak, 5) * 10 : curScore;
       const newCorrect = isCorrect ? curCorrect + 1 : curCorrect;
       const newTotal = curTotal + 1;
       const newBest = Math.max(newStreak, curBest);
@@ -2564,7 +2576,7 @@ export default function Home() {
         }
       }, 800);
     },
-    [endGame]
+    [endGame, strictMode]
   );
 
   useEffect(() => {
@@ -3462,6 +3474,22 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                 style={{ background: timerDuration === 0 ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${timerDuration === 0 ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af", fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0 }}>
                 ∞
               </button>
+            </div>
+          </div>
+          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Wrong Answers</div>
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={() => { setStrictMode(true); try { localStorage.setItem("onetap_strict", "1"); } catch {} }}
+                style={{ flex:1, background: strictMode ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${strictMode ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: strictMode ? "#f59e0b" : "#9ca3af", fontSize:13, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
+                Count
+              </button>
+              <button onClick={() => { setStrictMode(false); try { localStorage.setItem("onetap_strict", "0"); } catch {} }}
+                style={{ flex:1, background: !strictMode ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${!strictMode ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: !strictMode ? "#f59e0b" : "#9ca3af", fontSize:13, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
+                Just Practice
+              </button>
+            </div>
+            <div style={{ fontSize:11, color:"#4b5563", marginTop:8 }}>
+              {strictMode ? "Wrong answers reset your streak and cost points." : "Wrong answers don't hurt your score or streak — for low-pressure practice."}
             </div>
           </div>
           {/* Difficulty picker */}
