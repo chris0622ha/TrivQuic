@@ -1305,7 +1305,10 @@ export default function Home() {
   const [ageGateYear, setAgeGateYear] = useState<number|null>(null);
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem("tq_age_gate_year");
+      // Use localStorage so the age gate only shows once per device,
+      // not on every single new session - sessionStorage was clearing
+      // it on every tab close, forcing the gate every visit.
+      const stored = localStorage.getItem("tq_age_gate_year");
       if (stored) {
         const y = parseInt(stored, 10);
         if (!Number.isNaN(y)) setAgeGateYear(y);
@@ -2052,7 +2055,7 @@ export default function Home() {
       if (u) {
         let restricted = true;
         try {
-          const stored = sessionStorage.getItem("tq_age_gate_year");
+          const stored = localStorage.getItem("tq_age_gate_year");
           if (stored) {
             const y = parseInt(stored, 10);
             const age = new Date().getFullYear() - y;
@@ -2192,7 +2195,7 @@ export default function Home() {
 
       let restricted = true;
       try {
-        const stored = sessionStorage.getItem("tq_age_gate_year");
+        const stored = localStorage.getItem("tq_age_gate_year");
         if (stored) {
           const y = parseInt(stored, 10);
           const age = new Date().getFullYear() - y;
@@ -3211,7 +3214,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           onChange={(e) => {
             const y = parseInt(e.target.value, 10);
             if (Number.isNaN(y)) return;
-            try { sessionStorage.setItem("tq_age_gate_year", String(y)); } catch {}
+            try { localStorage.setItem("tq_age_gate_year", String(y)); } catch {}
             setAgeGateYear(y);
           }}
           style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#fff", fontSize:"1.1rem", fontWeight:700, padding:"14px 24px", outline:"none", minWidth:200, textAlign:"center" }}
@@ -3474,22 +3477,6 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                 style={{ background: timerDuration === 0 ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${timerDuration === 0 ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af", fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0 }}>
                 ∞
               </button>
-            </div>
-          </div>
-          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
-            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Wrong Answers</div>
-            <div style={{ display:"flex", gap:8 }}>
-              <button onClick={() => { setStrictMode(true); try { localStorage.setItem("onetap_strict", "1"); } catch {} }}
-                style={{ flex:1, background: strictMode ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${strictMode ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: strictMode ? "#f59e0b" : "#9ca3af", fontSize:13, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
-                Count
-              </button>
-              <button onClick={() => { setStrictMode(false); try { localStorage.setItem("onetap_strict", "0"); } catch {} }}
-                style={{ flex:1, background: !strictMode ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${!strictMode ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: !strictMode ? "#f59e0b" : "#9ca3af", fontSize:13, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
-                Just Practice
-              </button>
-            </div>
-            <div style={{ fontSize:11, color:"#4b5563", marginTop:8 }}>
-              {strictMode ? "Wrong answers reset your streak and cost points." : "Wrong answers don't hurt your score or streak — for low-pressure practice."}
             </div>
           </div>
           {/* Difficulty picker */}
