@@ -10,15 +10,29 @@ function badgeFromLevel(level: number): string | null {
   return level <= 0 ? null : BADGE_LEVELS[level] || null;
 }
 
+// The Firebase Realtime Database legacy secret authenticates server-side
+// REST calls without requiring a user session. This is stored in Vercel's
+// env vars as FIREBASE_DB_SECRET. The cron previously used unauthenticated
+// REST calls which broke when real security rules replaced Test Mode.
+function authParam() {
+  const secret = process.env.FIREBASE_DB_SECRET;
+  return secret ? `?auth=${secret}` : "";
+}
+
 async function dbGet(path: string) {
-  const res = await fetch(`${DB}/${path}.json`);
-  return res.ok ? res.json() : null;
+  const res = await fetch(`${DB}/${path}.json${authParam()}`);
+  if (!res.ok) {
+    console.error(`dbGet failed: ${path} → ${res.status} ${res.statusText}`);
+    return null;
+  }
+  return res.json();
 }
 async function dbPatch(path: string, data: any) {
-  await fetch(`${DB}/${path}.json`, {
+  const res = await fetch(`${DB}/${path}.json${authParam()}`, {
     method: "PATCH", body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
   });
+  if (!res.ok) console.error(`dbPatch failed: ${path} → ${res.status}`);
 }
 
 export async function GET(req: NextRequest) {
