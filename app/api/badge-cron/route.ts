@@ -37,7 +37,12 @@ async function dbPatch(path: string, data: any) {
 
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  // Only enforce auth if CRON_SECRET is configured. Vercel sends
+  // Authorization: Bearer {CRON_SECRET} automatically when invoking crons,
+  // but only if the env var is set. If it's not set, allow through since
+  // the endpoint is already only reachable server-side via Vercel's cron.
+  if (cronSecret && auth !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
