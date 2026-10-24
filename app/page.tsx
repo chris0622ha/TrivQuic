@@ -2682,7 +2682,7 @@ export default function Home() {
           <div style={{ borderTop:"1px solid #3a2760", paddingTop:16, fontSize:13, color:"#7d6f9f", lineHeight:1.9 }}>
             <div>By: <span style={{ color:"#f3eeff" }}>Chris</span></div>
             <div>Made in: <span style={{ color:"#f3eeff" }}>2026</span></div>
-            <div>Email: <a href="mailto:chris0622ha@gmail.com" style={{ color:"#ff4f8b", textDecoration:"none" }}>chris0622ha@gmail.com</a></div>
+            <div>Email: <a href="mailto:tqaksupport@gmail.com" style={{ color:"#ff4f8b", textDecoration:"none" }}>tqaksupport@gmail.com</a></div>
           </div>
         </>)}
         {type === "updates" && (<>
@@ -3380,7 +3380,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             <div style={{ fontSize:14, color:"#e6defa", lineHeight:1.7 }}>{warnModal.reason || "No reason given"}</div>
           </div>
           <div style={{ fontSize:12, color:"#7d6f9f" }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
-          <div style={{ fontSize:11, color:"#3a2760", marginTop:40 }}>If you believe this is a mistake, contact <a href="mailto:chris0622ha@gmail.com" style={{ color:"#3a2760" }}>chris0622ha@gmail.com</a></div>
+          <div style={{ fontSize:11, color:"#3a2760", marginTop:40 }}>If you believe this is a mistake, contact <a href="mailto:tqaksupport@gmail.com" style={{ color:"#3a2760" }}>tqaksupport@gmail.com</a></div>
         </div>
       )}
 

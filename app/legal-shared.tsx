@@ -1,5 +1,5 @@
 import Link from 'next/link';
-export const CONTACT = 'chris0622ha@gmail.com';
+export const CONTACT = 'tqaksupport@gmail.com';
 export const UPDATED = 'October 24, 2026';
 export type Sec = { h: string; p?: string[]; ul?: string[] };
 export default function Legal({ title, intro, sections }: { title: string; intro: string; sections: Sec[] }) {
