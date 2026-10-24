@@ -173,14 +173,21 @@ export default function MultiplayerPage() {
     setError("");
     const id = makeGameId();
     const qs = shuffle(CATEGORY_MAP[category]).slice(0, 20).map(q => ({ q: q.q, a: q.a, w: q.w }));
-    await set(ref(db, `games/${id}`), {
-      id, hostId: playerId, phase: "lobby",
-      category, maxPlayers, timerDuration, timerEnabled: timerDuration > 0,
-      currentQuestion: 0, questions: qs,
-      players: { [playerId]: { name, score: 0, streak: 0, answered: false, isHost: true } },
-      bannedNames: [],
-      createdAt: Date.now(),
-    });
+    try {
+      await set(ref(db, `games/${id}`), {
+        id, hostId: playerId, phase: "lobby",
+        category, maxPlayers, timerDuration, timerEnabled: timerDuration > 0,
+        currentQuestion: 0, questions: qs,
+        players: { [playerId]: { name, score: 0, streak: 0, answered: false, isHost: true } },
+        bannedNames: [],
+        createdAt: Date.now(),
+      });
+    } catch (e: any) {
+      setError(String(e?.message || e).includes("PERMISSION_DENIED")
+        ? "Couldn't create the room: the database refused the write (check Firebase rules for games/)."
+        : "Couldn't create the room. Please try again.");
+      return;
+    }
     setGameId(id);
     setIsHost(true);
     setPlayerName(name);
