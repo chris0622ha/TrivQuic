@@ -30,7 +30,7 @@ const ROUND_COUNT_OPTIONS = [3,4,5,6,7,8,9,10];
 type Screen = "home"|"settings"|"searching"|"countdown"|"game"|"break"|"result"|"abandoned";
 type Slot = "p1"|"p2";
 
-function Avatar({src,name,size=40,color="#f59e0b"}:{src?:string|null;name:string;size?:number;color?:string}) {
+function Avatar({src,name,size=40,color="#ff4f8b"}:{src?:string|null;name:string;size?:number;color?:string}) {
   return src ? (
     <img src={src} alt="" width={size} height={size} style={{borderRadius:"50%",border:`3px solid ${color}`,display:"block",objectFit:"cover",flexShrink:0}}/>
   ):(
@@ -45,7 +45,7 @@ function Badge({badge}:{badge?:string}) {
   if(badge==="star")   return <span title="Loyal Player" style={{fontSize:13}}>⭐</span>;
   if(badge==="check")  return <span title="Verified" style={{fontSize:12,color:"#3b82f6",fontWeight:900}}>✓</span>;
   if(badge==="crown")  return <span title="Champion" style={{fontSize:13}}>👑</span>;
-  if(badge==="tester") return <span title="Tester" style={{fontSize:11,background:"#ca8a04",color:"#fff",borderRadius:4,padding:"1px 5px",fontWeight:900,fontFamily:"monospace"}}>T</span>;
+  if(badge==="tester") return <span title="Tester" style={{fontSize:11,background:"#ca8a04",color:"#fff",borderRadius:8,padding:"1px 5px",fontWeight:900,fontFamily:"monospace"}}>T</span>;
   if(badge==="gold")   return <span title="Gold Medal" style={{fontSize:13}}>🥇</span>;
   if(badge==="silver") return <span title="Silver Medal" style={{fontSize:13}}>🥈</span>;
   if(badge==="bronze") return <span title="Bronze Medal" style={{fontSize:13}}>🥉</span>;
@@ -55,15 +55,15 @@ function Badge({badge}:{badge?:string}) {
 function PlayerStrip({name,score,photo,badge,isMe,total}:{name:string;score:number;photo?:string|null;badge?:string;isMe:boolean;total:number}) {
   return (
     <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-      <Avatar src={photo} name={name} size={40} color={isMe?"#f59e0b":"#6366f1"} />
+      <Avatar src={photo} name={name} size={40} color={isMe?"#ff4f8b":"#6366f1"} />
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" as const}}>
           {name} <Badge badge={badge} />
-          {isMe && <span style={{fontSize:10,color:"#6b7280"}}>(you)</span>}
+          {isMe && <span style={{fontSize:10,color:"#a094c4"}}>(you)</span>}
         </div>
-        <div style={{fontSize:11,color:"#6b7280"}}>{score}/{total} correct</div>
+        <div style={{fontSize:11,color:"#a094c4"}}>{score}/{total} correct</div>
       </div>
-      <div style={{fontSize:26,fontWeight:900,color:isMe?"#f59e0b":"#6366f1",flexShrink:0}}>{score}</div>
+      <div style={{fontSize:26,fontWeight:900,color:isMe?"#ff4f8b":"#6366f1",flexShrink:0}}>{score}</div>
     </div>
   );
 }
@@ -92,23 +92,23 @@ function ChallengeFriendModal({user,userData,settings,onClose}:{user:User;userDa
 
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:20,width:"100%",maxWidth:380,padding:"24px",color:"#fff",maxHeight:"85vh",overflowY:"auto"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:28,width:"100%",maxWidth:380,padding:"24px",color:"#fff",maxHeight:"85vh",overflowY:"auto"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div style={{fontSize:"1.1rem",fontWeight:900}}>⚔️ Challenge a Friend</div>
-          <button onClick={onClose} style={{background:"transparent",border:"none",color:"#6b7280",fontSize:20,cursor:"pointer"}}>×</button>
+          <button onClick={onClose} style={{background:"transparent",border:"none",color:"#a094c4",fontSize:20,cursor:"pointer"}}>×</button>
         </div>
-        <div style={{fontSize:12,color:"#6b7280",marginBottom:16}}>{settings.rounds} rounds · {settings.questionsPerRound}Q each · {settings.breakTime}s break</div>
-        {loading ? <div style={{color:"#6b7280",textAlign:"center",padding:"20px 0"}}>Loading friends…</div> :
-          friends.length===0 ? <div style={{color:"#4b5563",textAlign:"center",padding:"20px 0"}}>No friends yet.</div> :
+        <div style={{fontSize:12,color:"#a094c4",marginBottom:16}}>{settings.rounds} rounds · {settings.questionsPerRound}Q each · {settings.breakTime}s break</div>
+        {loading ? <div style={{color:"#a094c4",textAlign:"center",padding:"20px 0"}}>Loading friends…</div> :
+          friends.length===0 ? <div style={{color:"#7d6f9f",textAlign:"center",padding:"20px 0"}}>No friends yet.</div> :
           friends.map(fp=>(
-            <div key={fp.uid} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #2d2d44"}}>
+            <div key={fp.uid} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid #3a2760"}}>
               <Avatar src={fp.photoURL} name={fp.username||"?"} size={36} color="#6366f1"/>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:4}}>{fp.username}<Badge badge={fp.badge}/></div>
-                <div style={{fontSize:11,color:"#6b7280"}}>Best: {fp.bestScore??0}</div>
+                <div style={{fontSize:11,color:"#a094c4"}}>Best: {fp.bestScore??0}</div>
               </div>
               <button onClick={()=>challenge(fp)} disabled={sent===fp.uid}
-                style={{background:sent===fp.uid?"rgba(16,185,129,0.15)":"rgba(99,102,241,0.2)",border:`1px solid ${sent===fp.uid?"rgba(16,185,129,0.5)":"rgba(99,102,241,0.5)"}`,borderRadius:8,color:sent===fp.uid?"#10b981":"#a5b4fc",fontWeight:700,fontSize:12,padding:"6px 12px",cursor:sent===fp.uid?"default":"pointer"}}>
+                style={{background:sent===fp.uid?"rgba(16,185,129,0.15)":"rgba(99,102,241,0.2)",border:`1px solid ${sent===fp.uid?"rgba(16,185,129,0.5)":"rgba(99,102,241,0.5)"}`,borderRadius:12,color:sent===fp.uid?"#10b981":"#a5b4fc",fontWeight:700,fontSize:12,padding:"6px 12px",cursor:sent===fp.uid?"default":"pointer"}}>
                 {sent===fp.uid?"Sent ✓":"Challenge"}
               </button>
             </div>
@@ -475,31 +475,31 @@ export default function DuelsPage() {
   const q=duel?.rounds?.[currentRound]?.questions?.[qIndex];
 
   const SettingPill=({label,active,onClick}:{label:string;active:boolean;onClick:()=>void})=>(
-    <button onClick={onClick} style={{background:active?"rgba(99,102,241,0.25)":"rgba(255,255,255,0.04)",border:`1px solid ${active?"#6366f1":"#2d2d44"}`,borderRadius:99,color:active?"#a5b4fc":"#6b7280",fontSize:13,fontWeight:700,padding:"7px 14px",cursor:"pointer",whiteSpace:"nowrap" as const,flexShrink:0}}>
+    <button onClick={onClick} style={{background:active?"rgba(99,102,241,0.25)":"rgba(255,255,255,0.04)",border:`1px solid ${active?"#6366f1":"#3a2760"}`,borderRadius:99,color:active?"#a5b4fc":"#a094c4",fontSize:13,fontWeight:700,padding:"7px 14px",cursor:"pointer",whiteSpace:"nowrap" as const,flexShrink:0}}>
       {label}
     </button>
   );
 
   if (blocked) return <AgeGateBlockedScreen />;
-  if(authLoading) return <div style={{minHeight:"100vh",background:"#0f0f1a",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:"#6b7280"}}>Loading…</div></div>;
+  if(authLoading) return <div style={{minHeight:"100vh",background:"#130a24",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:"#a094c4"}}>Loading…</div></div>;
 
   if(!user) return (
-    <div style={{minHeight:"100vh",background:"#0f0f1a",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:20,padding:"32px 28px",maxWidth:360,textAlign:"center" as const,color:"#fff"}}>
+    <div style={{minHeight:"100vh",background:"#130a24",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:28,padding:"32px 28px",maxWidth:360,textAlign:"center" as const,color:"#fff"}}>
         <div style={{fontSize:40,marginBottom:12}}>⚔️</div>
         <div style={{fontSize:"1.3rem",fontWeight:900,marginBottom:8}}>Duels</div>
-        <div style={{color:"#6b7280",fontSize:14,marginBottom:24}}>Sign in to challenge other players</div>
+        <div style={{color:"#a094c4",fontSize:14,marginBottom:24}}>Sign in to challenge other players</div>
         <button onClick={()=>signInWithPopup(auth,googleProvider)}
-          style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"none",borderRadius:10,color:"#1f2937",fontSize:14,fontWeight:700,padding:"10px 20px",cursor:"pointer",margin:"0 auto"}}>
+          style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"none",borderRadius:16,color:"#2a1c47",fontSize:14,fontWeight:700,padding:"10px 20px",cursor:"pointer",margin:"0 auto"}}>
           Sign in with Google
         </button>
-        <a href="/" style={{display:"block",marginTop:16,color:"#6b7280",fontSize:13}}>← Back to TrivQuic</a>
+        <a href="/" style={{display:"block",marginTop:16,color:"#a094c4",fontSize:13}}>← Back to TrivQuic</a>
       </div>
     </div>
   );
 
   return (
-    <div style={{minHeight:"100vh",background:"#0f0f1a",color:"#fff",display:"flex",flexDirection:"column",alignItems:"center",padding:"24px 16px"}}>
+    <div style={{minHeight:"100vh",background:"#130a24",color:"#fff",display:"flex",flexDirection:"column",alignItems:"center",padding:"24px 16px"}}>
 
       {showChallenge&&user&&userData&&(
         <ChallengeFriendModal user={user} userData={userData} settings={{rounds,questionsPerRound,breakTime,difficulty}} onClose={()=>setShowChallenge(false)}/>
@@ -508,13 +508,13 @@ export default function DuelsPage() {
       {incomingChallenges.length>0&&screen==="home"&&(
         <div style={{width:"100%",maxWidth:480,marginBottom:16}}>
           {incomingChallenges.map(ch=>(
-            <div key={ch.fromUid} style={{background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.4)",borderRadius:14,padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12}}>
+            <div key={ch.fromUid} style={{background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.4)",borderRadius:20,padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:700,fontSize:14}}>{ch.fromName} challenged you!</div>
-                <div style={{fontSize:12,color:"#6b7280"}}>{ch.settings?.rounds}R · {ch.settings?.questionsPerRound}Q · {ch.settings?.breakTime}s break</div>
+                <div style={{fontSize:12,color:"#a094c4"}}>{ch.settings?.rounds}R · {ch.settings?.questionsPerRound}Q · {ch.settings?.breakTime}s break</div>
               </div>
-              <button onClick={()=>acceptChallenge(ch)} style={{background:"linear-gradient(135deg,#10b981,#059669)",border:"none",borderRadius:8,color:"#fff",fontWeight:800,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Accept</button>
-              <button onClick={()=>declineChallenge(ch)} style={{background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:8,color:"#ef4444",fontWeight:700,fontSize:13,padding:"8px 12px",cursor:"pointer"}}>✕</button>
+              <button onClick={()=>acceptChallenge(ch)} style={{background:"linear-gradient(135deg,#10b981,#059669)",border:"none",borderRadius:12,color:"#fff",fontWeight:800,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Accept</button>
+              <button onClick={()=>declineChallenge(ch)} style={{background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:12,color:"#ef4444",fontWeight:700,fontSize:13,padding:"8px 12px",cursor:"pointer"}}>✕</button>
             </div>
           ))}
         </div>
@@ -523,26 +523,26 @@ export default function DuelsPage() {
       {/* HOME */}
       {screen==="home"&&(
         <div style={{width:"100%",maxWidth:480,textAlign:"center"}}>
-          <a href="/" style={{display:"block",color:"#6b7280",fontSize:13,marginBottom:24,textDecoration:"none"}}>← Back</a>
+          <a href="/" style={{display:"block",color:"#a094c4",fontSize:13,marginBottom:24,textDecoration:"none"}}>← Back</a>
           <div style={{fontSize:48,marginBottom:12}}>⚔️</div>
           <h1 style={{fontSize:"2rem",fontWeight:900,margin:"0 0 8px",background:"linear-gradient(135deg,#6366f1,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Duels</h1>
-          <p style={{color:"#6b7280",marginBottom:32}}>1v1 real-time trivia. Matched by skill.</p>
+          <p style={{color:"#a094c4",marginBottom:32}}>1v1 real-time trivia. Matched by skill.</p>
           {userData&&(
-            <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"16px 20px",marginBottom:24}}>
+            <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"16px 20px",marginBottom:24}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
-                {[["Played",userData.duelsPlayed||0,"#e5e7eb"],["Wins",userData.duelWins||0,"#10b981"],["Losses",userData.duelLosses||0,"#ef4444"],["Draws",userData.duelDraws||0,"#6b7280"]].map(([l,v,col])=>(
+                {[["Played",userData.duelsPlayed||0,"#f3eeff"],["Wins",userData.duelWins||0,"#10b981"],["Losses",userData.duelLosses||0,"#ef4444"],["Draws",userData.duelDraws||0,"#a094c4"]].map(([l,v,col])=>(
                   <div key={l as string} style={{textAlign:"center"}}>
                     <div style={{fontSize:22,fontWeight:900,color:col as string}}>{v as number}</div>
-                    <div style={{fontSize:10,color:"#4b5563",textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
+                    <div style={{fontSize:10,color:"#7d6f9f",textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-          <button onClick={()=>setScreen("settings")} style={{width:"100%",background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:14,color:"#fff",fontSize:"1.1rem",fontWeight:900,padding:"18px",cursor:"pointer",marginBottom:12}}>
+          <button onClick={()=>setScreen("settings")} style={{width:"100%",background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:20,color:"#fff",fontSize:"1.1rem",fontWeight:900,padding:"18px",cursor:"pointer",marginBottom:12}}>
             Find a Match ⚔️
           </button>
-          <button onClick={()=>{setScreen("settings");setTimeout(()=>setShowChallenge(true),100);}} style={{width:"100%",background:"rgba(99,102,241,0.15)",border:"1px solid rgba(99,102,241,0.4)",borderRadius:14,color:"#a5b4fc",fontSize:"1rem",fontWeight:700,padding:"14px",cursor:"pointer"}}>
+          <button onClick={()=>{setScreen("settings");setTimeout(()=>setShowChallenge(true),100);}} style={{width:"100%",background:"rgba(99,102,241,0.15)",border:"1px solid rgba(99,102,241,0.4)",borderRadius:20,color:"#a5b4fc",fontSize:"1rem",fontWeight:700,padding:"14px",cursor:"pointer"}}>
             Challenge a Friend 👥
           </button>
         </div>
@@ -551,40 +551,40 @@ export default function DuelsPage() {
       {/* SETTINGS */}
       {screen==="settings"&&(
         <div style={{width:"100%",maxWidth:480}}>
-          <button onClick={()=>setScreen("home")} style={{background:"transparent",border:"none",color:"#6b7280",fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>← Back</button>
+          <button onClick={()=>setScreen("home")} style={{background:"transparent",border:"none",color:"#a094c4",fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>← Back</button>
           <h2 style={{fontSize:"1.4rem",fontWeight:900,marginBottom:20,textAlign:"center"}}>⚔️ Duel Settings</h2>
-          <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
-            <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Matchmaking mode</div>
+          <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"18px 20px",marginBottom:14}}>
+            <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Matchmaking mode</div>
             <div style={{display:"flex",gap:8}}><SettingPill label="🎯 Custom" active={!isRandom} onClick={()=>setIsRandom(false)}/><SettingPill label="🎲 Random" active={isRandom} onClick={()=>setIsRandom(true)}/></div>
-            {isRandom&&<div style={{fontSize:12,color:"#4b5563",marginTop:8}}>Random matches anyone regardless of settings.</div>}
+            {isRandom&&<div style={{fontSize:12,color:"#7d6f9f",marginTop:8}}>Random matches anyone regardless of settings.</div>}
           </div>
           {!isRandom&&(<>
-            <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
-              <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Difficulty</div>
+            <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"18px 20px",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Difficulty</div>
               <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>
-                {([["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#f59e0b"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col])=>(
-                  <button key={d} onClick={()=>setDifficulty(d)} style={{flex:1,background:difficulty===d?`rgba(${d==="easy"?"16,185,129":d==="medium"?"245,158,11":d==="hard"?"239,68,68":"168,85,247"},0.2)`:"rgba(255,255,255,0.04)",border:`1px solid ${difficulty===d?col:"#2d2d44"}`,borderRadius:10,color:difficulty===d?col:"#6b7280",fontSize:12,fontWeight:700,padding:"8px 4px",cursor:"pointer",whiteSpace:"nowrap" as const}}>
+                {([["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#fbbf24"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col])=>(
+                  <button key={d} onClick={()=>setDifficulty(d)} style={{flex:1,background:difficulty===d?`rgba(${d==="easy"?"16,185,129":d==="medium"?"251,191,36":d==="hard"?"239,68,68":"168,85,247"},0.2)`:"rgba(255,255,255,0.04)",border:`1px solid ${difficulty===d?col:"#3a2760"}`,borderRadius:16,color:difficulty===d?col:"#a094c4",fontSize:12,fontWeight:700,padding:"8px 4px",cursor:"pointer",whiteSpace:"nowrap" as const}}>
                     {label}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
-              <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Rounds (3–10)</div>
+            <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"18px 20px",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Rounds (3–10)</div>
               <div style={{display:"flex",gap:6,flexWrap:"wrap" as const}}>{ROUND_COUNT_OPTIONS.map(r=><SettingPill key={r} label={`${r}`} active={rounds===r} onClick={()=>setRounds(r)}/>)}</div>
             </div>
-            <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
-              <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Questions per round</div>
+            <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"18px 20px",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Questions per round</div>
               <div style={{display:"flex",gap:6}}>{ROUND_OPTIONS.map(r=><SettingPill key={r} label={`${r}Q`} active={questionsPerRound===r} onClick={()=>setQuestionsPerRound(r)}/>)}</div>
             </div>
-            <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"18px 20px",marginBottom:14}}>
-              <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Break between rounds</div>
+            <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"18px 20px",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>Break between rounds</div>
               <div style={{display:"flex",gap:6}}>{BREAK_OPTIONS.map(b=><SettingPill key={b} label={`${b}s`} active={breakTime===b} onClick={()=>setBreakTime(b)}/>)}</div>
             </div>
           </>)}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:4}}>
-            <button onClick={findMatch} style={{background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:14,color:"#fff",fontSize:"1rem",fontWeight:900,padding:"16px",cursor:"pointer"}}>Find Match ⚔️</button>
-            <button onClick={()=>setShowChallenge(true)} style={{background:"rgba(99,102,241,0.15)",border:"1px solid rgba(99,102,241,0.4)",borderRadius:14,color:"#a5b4fc",fontSize:"1rem",fontWeight:700,padding:"16px",cursor:"pointer"}}>Challenge Friend 👥</button>
+            <button onClick={findMatch} style={{background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:20,color:"#fff",fontSize:"1rem",fontWeight:900,padding:"16px",cursor:"pointer"}}>Find Match ⚔️</button>
+            <button onClick={()=>setShowChallenge(true)} style={{background:"rgba(99,102,241,0.15)",border:"1px solid rgba(99,102,241,0.4)",borderRadius:20,color:"#a5b4fc",fontSize:"1rem",fontWeight:700,padding:"16px",cursor:"pointer"}}>Challenge Friend 👥</button>
           </div>
         </div>
       )}
@@ -594,13 +594,13 @@ export default function DuelsPage() {
         <div style={{textAlign:"center",marginTop:80,width:"100%",maxWidth:480}}>
           <div style={{fontSize:48,marginBottom:16}}>🔍</div>
           <div style={{fontSize:"1.3rem",fontWeight:900,marginBottom:8}}>Finding your match…</div>
-          <div style={{color:"#6b7280",marginBottom:8}}>{isRandom?"Matching with anyone available":"Looking for players with same settings"}</div>
-          {!isRandom&&<div style={{color:"#4b5563",fontSize:13,marginBottom:32}}>{rounds} rounds · {questionsPerRound}Q · {breakTime}s break</div>}
+          <div style={{color:"#a094c4",marginBottom:8}}>{isRandom?"Matching with anyone available":"Looking for players with same settings"}</div>
+          {!isRandom&&<div style={{color:"#7d6f9f",fontSize:13,marginBottom:32}}>{rounds} rounds · {questionsPerRound}Q · {breakTime}s break</div>}
           <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:32}}>
             {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#6366f1",opacity:0.4+(i*0.3)}}/>)}
           </div>
           <button onClick={()=>{if(searchTimeoutRef.current)clearTimeout(searchTimeoutRef.current);remove(ref(db,`duelQueue/${user.uid}`));setScreen("settings");}}
-            style={{background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:10,color:"#ef4444",fontWeight:700,padding:"10px 24px",cursor:"pointer"}}>
+            style={{background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:16,color:"#ef4444",fontWeight:700,padding:"10px 24px",cursor:"pointer"}}>
             Cancel
           </button>
         </div>
@@ -609,19 +609,19 @@ export default function DuelsPage() {
       {/* COUNTDOWN */}
       {screen==="countdown"&&duel&&(
         <div style={{textAlign:"center",marginTop:40,width:"100%",maxWidth:480}}>
-          <div style={{fontSize:13,color:"#6b7280",marginBottom:20,textTransform:"uppercase",letterSpacing:"0.1em"}}>{totalRounds} rounds · {qPerRound}Q each · {duel.breakTime}s break</div>
+          <div style={{fontSize:13,color:"#a094c4",marginBottom:20,textTransform:"uppercase",letterSpacing:"0.1em"}}>{totalRounds} rounds · {qPerRound}Q each · {duel.breakTime}s break</div>
           <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:isMobile?12:24,marginBottom:32}}>
             <div style={{textAlign:"center"}}>
-              <Avatar src={duel.p1.photoURL} name={duel.p1.name} size={isMobile?48:60} color={mySlot==="p1"?"#f59e0b":"#6366f1"}/>
+              <Avatar src={duel.p1.photoURL} name={duel.p1.name} size={isMobile?48:60} color={mySlot==="p1"?"#ff4f8b":"#6366f1"}/>
               <div style={{fontWeight:700,fontSize:13,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{duel.p1.name}<Badge badge={duel.p1.badge}/></div>
             </div>
-            <div style={{fontSize:72,fontWeight:900,color:"#f59e0b",minWidth:60}}>{countdown}</div>
+            <div style={{fontSize:72,fontWeight:900,color:"#ff4f8b",minWidth:60}}>{countdown}</div>
             <div style={{textAlign:"center"}}>
-              <Avatar src={duel.p2.photoURL} name={duel.p2.name} size={isMobile?48:60} color={mySlot==="p2"?"#f59e0b":"#6366f1"}/>
+              <Avatar src={duel.p2.photoURL} name={duel.p2.name} size={isMobile?48:60} color={mySlot==="p2"?"#ff4f8b":"#6366f1"}/>
               <div style={{fontWeight:700,fontSize:13,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{duel.p2.name}<Badge badge={duel.p2.badge}/></div>
             </div>
           </div>
-          <div style={{color:"#6b7280"}}>Get ready!</div>
+          <div style={{color:"#a094c4"}}>Get ready!</div>
         </div>
       )}
 
@@ -629,14 +629,14 @@ export default function DuelsPage() {
       {screen==="break"&&duel&&(
         <div style={{textAlign:"center",marginTop:40,width:"100%",maxWidth:480}}>
           <div style={{fontSize:13,color:"#a5b4fc",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Round {currentRound} Complete</div>
-          <div style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Round {currentRound+1} of {totalRounds} starts in…</div>
+          <div style={{fontSize:13,color:"#a094c4",marginBottom:24}}>Round {currentRound+1} of {totalRounds} starts in…</div>
           <div style={{fontSize:80,fontWeight:900,color:"#6366f1",marginBottom:24}}>{breakLeft}</div>
-          <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"16px 20px",marginBottom:16}}>
-            <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:12}}>Total Scores</div>
+          <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"16px 20px",marginBottom:16}}>
+            <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:12}}>Total Scores</div>
             <div style={{display:"flex",justifyContent:"space-around",alignItems:"center"}}>
-              <div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:900,color:"#f59e0b"}}>{myTotalScore}</div><div style={{fontSize:12,color:"#6b7280"}}>{myName}</div></div>
-              <div style={{fontSize:20,color:"#4b5563",fontWeight:900}}>VS</div>
-              <div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:900,color:"#6366f1"}}>{theirTotalScore}</div><div style={{fontSize:12,color:"#6b7280"}}>{theirName}</div></div>
+              <div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:900,color:"#ff4f8b"}}>{myTotalScore}</div><div style={{fontSize:12,color:"#a094c4"}}>{myName}</div></div>
+              <div style={{fontSize:20,color:"#7d6f9f",fontWeight:900}}>VS</div>
+              <div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:900,color:"#6366f1"}}>{theirTotalScore}</div><div style={{fontSize:12,color:"#a094c4"}}>{theirName}</div></div>
             </div>
           </div>
         </div>
@@ -646,13 +646,13 @@ export default function DuelsPage() {
       {screen==="abandoned"&&(
         <div style={{textAlign:"center",marginTop:80,width:"100%",maxWidth:480}}>
           <div style={{fontSize:56,marginBottom:16}}>🚪</div>
-          <h2 style={{fontSize:"1.6rem",fontWeight:900,marginBottom:12,color:"#f59e0b"}}>The opponent has left.</h2>
-          <p style={{color:"#6b7280",marginBottom:32,lineHeight:1.7}}>Your opponent disconnected from the game.</p>
+          <h2 style={{fontSize:"1.6rem",fontWeight:900,marginBottom:12,color:"#ff4f8b"}}>The opponent has left.</h2>
+          <p style={{color:"#a094c4",marginBottom:32,lineHeight:1.7}}>Your opponent disconnected from the game.</p>
           <div style={{display:"flex",gap:12,justifyContent:"center"}}>
-            <button onClick={()=>{resetDuel();setScreen("settings");}} style={{background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:12,color:"#fff",fontSize:"1rem",fontWeight:800,padding:"14px 24px",cursor:"pointer"}}>
+            <button onClick={()=>{resetDuel();setScreen("settings");}} style={{background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:18,color:"#fff",fontSize:"1rem",fontWeight:800,padding:"14px 24px",cursor:"pointer"}}>
               Find new match ⚔️
             </button>
-            <button onClick={resetDuel} style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:12,color:"#9ca3af",fontSize:"1rem",fontWeight:600,padding:"14px 24px",cursor:"pointer"}}>
+            <button onClick={resetDuel} style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:18,color:"#c4b8e0",fontSize:"1rem",fontWeight:600,padding:"14px 24px",cursor:"pointer"}}>
               Home
             </button>
           </div>
@@ -662,46 +662,46 @@ export default function DuelsPage() {
       {/* GAME */}
       {screen==="game"&&duel&&q&&q.q&&(
         <div style={{width:"100%",maxWidth:480}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,fontSize:12,color:"#6b7280"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,fontSize:12,color:"#a094c4"}}>
             <span>Round {currentRound+1}/{totalRounds}</span>
             <span>Q {qIndex+1}/{qPerRound}</span>
           </div>
-          <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+          <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:20,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
             <PlayerStrip name={myName} score={myRoundScore} photo={mySlot&&duel[mySlot]?.photoURL} badge={mySlot&&duel[mySlot]?.badge} isMe={true} total={qIndex}/>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
               <div style={{position:"relative",width:44,height:44}}>
                 <svg width="44" height="44" style={{transform:"rotate(-90deg)"}}>
-                  <circle cx="22" cy="22" r="18" fill="none" stroke="#0f0f1a" strokeWidth="4"/>
-                  <circle cx="22" cy="22" r="18" fill="none" stroke={timeLeft<=2?"#ef4444":timeLeft<=4?"#f59e0b":"#10b981"} strokeWidth="4" strokeDasharray={113} strokeDashoffset={113*(1-timeLeft/TIMER_PER_Q)} style={{transition:"stroke-dashoffset 1s linear,stroke 0.3s"}}/>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="#130a24" strokeWidth="4"/>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke={timeLeft<=2?"#ef4444":timeLeft<=4?"#ff4f8b":"#10b981"} strokeWidth="4" strokeDasharray={113} strokeDashoffset={113*(1-timeLeft/TIMER_PER_Q)} style={{transition:"stroke-dashoffset 1s linear,stroke 0.3s"}}/>
                 </svg>
                 <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900}}>{selected?"✓":timeLeft}</div>
               </div>
-              <div style={{fontSize:10,color:"#4b5563",textTransform:"uppercase",letterSpacing:"0.05em"}}>VS</div>
+              <div style={{fontSize:10,color:"#7d6f9f",textTransform:"uppercase",letterSpacing:"0.05em"}}>VS</div>
             </div>
             <PlayerStrip name={theirName} score={theirRoundScore} photo={theirSlot&&duel[theirSlot]?.photoURL} badge={theirSlot&&duel[theirSlot]?.badge} isMe={false} total={qIndex}/>
           </div>
-          <div style={{width:"100%",height:3,background:"#1a1a2e",borderRadius:2,marginBottom:16,overflow:"hidden"}}>
+          <div style={{width:"100%",height:3,background:"#1e1236",borderRadius:2,marginBottom:16,overflow:"hidden"}}>
             <div style={{height:"100%",width:`${(qIndex/qPerRound)*100}%`,background:"linear-gradient(90deg,#6366f1,#a855f7)",borderRadius:2,transition:"width 0.3s"}}/>
           </div>
-          <div style={{background:"#1a1a2e",borderRadius:20,padding:"22px 20px",marginBottom:14,textAlign:"center" as const}}>
+          <div style={{background:"#1e1236",borderRadius:28,padding:"22px 20px",marginBottom:14,textAlign:"center" as const}}>
             {(duel?.settings?.difficulty==="mixed"||duel?.difficulty==="mixed") && q.d && (
               <div style={{marginBottom:8}}>
                 <span style={{fontSize:11,fontWeight:700,borderRadius:99,padding:"3px 10px",
-                  background:q.d===1?"rgba(16,185,129,0.15)":q.d===3?"rgba(239,68,68,0.15)":"rgba(245,158,11,0.15)",
-                  color:q.d===1?"#10b981":q.d===3?"#ef4444":"#f59e0b",
-                  border:`1px solid ${q.d===1?"rgba(16,185,129,0.3)":q.d===3?"rgba(239,68,68,0.3)":"rgba(245,158,11,0.3)"}`,
+                  background:q.d===1?"rgba(16,185,129,0.15)":q.d===3?"rgba(239,68,68,0.15)":"rgba(255,79,139,0.15)",
+                  color:q.d===1?"#10b981":q.d===3?"#ef4444":"#ff4f8b",
+                  border:`1px solid ${q.d===1?"rgba(16,185,129,0.3)":q.d===3?"rgba(239,68,68,0.3)":"rgba(255,79,139,0.3)"}`,
                 }}>{q.d===1?"🟢 Easy":q.d===3?"🔴 Hard":"🟡 Medium"}</span>
               </div>
             )}
             <div style={{fontSize:"1.15rem",fontWeight:700,lineHeight:1.4}}>{q.q}</div>
           </div>
-          {duel[`${mySlot}RoundDone_${currentRound}`]&&<div style={{textAlign:"center",color:"#6b7280",fontSize:14,marginBottom:14}}>Waiting for {theirName}…</div>}
+          {duel[`${mySlot}RoundDone_${currentRound}`]&&<div style={{textAlign:"center",color:"#a094c4",fontSize:14,marginBottom:14}}>Waiting for {theirName}…</div>}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {options.map((opt,i)=>{
               const isCorrect=opt===q.a; const isWrong=selected===opt&&!isCorrect; const show=selected!==null;
               return(
                 <button key={i} onClick={()=>handleAnswer(opt)} disabled={!!selected||!!duel[`${mySlot}RoundDone_${currentRound}`]}
-                  style={{background:show&&isCorrect?"#064e3b":show&&isWrong?"#450a0a":"#1a1a2e",border:`2px solid ${show&&isCorrect?"#10b981":show&&isWrong?"#ef4444":"#2d2d44"}`,borderRadius:14,color:show&&isCorrect?"#10b981":show&&isWrong?"#ef4444":"#e5e7eb",fontSize:"0.95rem",fontWeight:700,padding:isMobile?"16px 12px":"18px 14px",cursor:selected?"default":"pointer",transition:"all 0.2s",lineHeight:1.3}}>
+                  style={{background:show&&isCorrect?"#064e3b":show&&isWrong?"#450a0a":"#1e1236",border:`2px solid ${show&&isCorrect?"#10b981":show&&isWrong?"#ef4444":"#3a2760"}`,borderRadius:20,color:show&&isCorrect?"#10b981":show&&isWrong?"#ef4444":"#f3eeff",fontSize:"0.95rem",fontWeight:700,padding:isMobile?"16px 12px":"18px 14px",cursor:selected?"default":"pointer",transition:"all 0.2s",lineHeight:1.3}}>
                   {opt}
                 </button>
               );
@@ -720,19 +720,19 @@ export default function DuelsPage() {
             const win=myFinal>theirFinal; const draw=myFinal===theirFinal;
             return(<>
               <div style={{fontSize:64,marginBottom:8}}>{win?"🏆":draw?"🤝":"💀"}</div>
-              <h2 style={{fontSize:"2rem",fontWeight:900,margin:"0 0 24px",color:win?"#f59e0b":draw?"#6b7280":"#ef4444"}}>{win?"You Win!":draw?"Draw!":"You Lost"}</h2>
-              <div style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:16,padding:"16px 20px",marginBottom:24}}>
-                <div style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:12}}>Final Score</div>
+              <h2 style={{fontSize:"2rem",fontWeight:900,margin:"0 0 24px",color:win?"#ff4f8b":draw?"#a094c4":"#ef4444"}}>{win?"You Win!":draw?"Draw!":"You Lost"}</h2>
+              <div style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:24,padding:"16px 20px",marginBottom:24}}>
+                <div style={{fontSize:11,color:"#a094c4",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:12}}>Final Score</div>
                 <div style={{display:"flex",justifyContent:"space-around",alignItems:"center"}}>
-                  <div><Avatar src={duel[mySlot].photoURL} name={duel[mySlot].name} size={48} color="#f59e0b"/><div style={{fontSize:28,fontWeight:900,color:"#f59e0b",marginTop:8}}>{myFinal}</div><div style={{fontSize:12,color:"#6b7280"}}>{duel[mySlot].name}</div></div>
-                  <div style={{fontSize:20,color:"#4b5563",fontWeight:900}}>VS</div>
-                  <div><Avatar src={duel[theirSlot].photoURL} name={duel[theirSlot].name} size={48} color="#6366f1"/><div style={{fontSize:28,fontWeight:900,color:"#6366f1",marginTop:8}}>{theirFinal}</div><div style={{fontSize:12,color:"#6b7280"}}>{duel[theirSlot].name}</div></div>
+                  <div><Avatar src={duel[mySlot].photoURL} name={duel[mySlot].name} size={48} color="#ff4f8b"/><div style={{fontSize:28,fontWeight:900,color:"#ff4f8b",marginTop:8}}>{myFinal}</div><div style={{fontSize:12,color:"#a094c4"}}>{duel[mySlot].name}</div></div>
+                  <div style={{fontSize:20,color:"#7d6f9f",fontWeight:900}}>VS</div>
+                  <div><Avatar src={duel[theirSlot].photoURL} name={duel[theirSlot].name} size={48} color="#6366f1"/><div style={{fontSize:28,fontWeight:900,color:"#6366f1",marginTop:8}}>{theirFinal}</div><div style={{fontSize:12,color:"#a094c4"}}>{duel[theirSlot].name}</div></div>
                 </div>
-                <div style={{fontSize:12,color:"#4b5563",marginTop:12}}>{totalRounds} rounds · {qPerRound}Q each</div>
+                <div style={{fontSize:12,color:"#7d6f9f",marginTop:12}}>{totalRounds} rounds · {qPerRound}Q each</div>
               </div>
               <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap" as const}}>
-                <button onClick={()=>{resetDuel();setScreen("settings");}} style={{background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:12,color:"#fff",fontSize:"1rem",fontWeight:800,padding:"14px 22px",cursor:"pointer"}}>Play Again ⚔️</button>
-                <button onClick={resetDuel} style={{background:"#1a1a2e",border:"1px solid #2d2d44",borderRadius:12,color:"#9ca3af",fontSize:"1rem",fontWeight:600,padding:"14px 22px",cursor:"pointer"}}>Home</button>
+                <button onClick={()=>{resetDuel();setScreen("settings");}} style={{background:"linear-gradient(135deg,#6366f1,#a855f7)",border:"none",borderRadius:18,color:"#fff",fontSize:"1rem",fontWeight:800,padding:"14px 22px",cursor:"pointer"}}>Play Again ⚔️</button>
+                <button onClick={resetDuel} style={{background:"#1e1236",border:"1px solid #3a2760",borderRadius:18,color:"#c4b8e0",fontSize:"1rem",fontWeight:600,padding:"14px 22px",cursor:"pointer"}}>Home</button>
               </div>
             </>);
           })()}

@@ -34,7 +34,7 @@ export function useBlockUnder13Redirect() {
 
 export function AgeGateBlockedScreen() {
   return (
-    <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", alignItems:"center", justifyContent:"center", color:"#9ca3af" }}>
+    <div style={{ minHeight:"100vh", background:"#130a24", display:"flex", alignItems:"center", justifyContent:"center", color:"#c4b8e0" }}>
       Redirecting…
     </div>
   );

@@ -46,23 +46,23 @@ function makePlayerId() {
 }
 
 const s = {
-  page: { minHeight:"100vh", background:"#0f0f1a", color:"#fff", fontFamily:"system-ui,sans-serif", display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:"20px" },
-  card: { width:"100%", maxWidth:460, background:"#1a1a2e", borderRadius:16, padding:"28px 24px" },
-  title: { fontSize:"2rem", fontWeight:900, background:"linear-gradient(135deg,#f59e0b,#ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:4, textAlign:"center" as const },
-  sub: { color:"#6b7280", fontSize:"0.9rem", textAlign:"center" as const, marginBottom:24 },
-  label: { fontSize:12, color:"#6b7280", textTransform:"uppercase" as const, letterSpacing:"0.05em", marginBottom:6, display:"block" },
-  input: { width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:15, padding:"11px 14px", outline:"none", marginBottom:14 },
-  btn: (color="#f59e0b") => ({ background:`linear-gradient(135deg,${color},${color=="#f59e0b"?"#ef4444":"#dc2626"})`, border:"none", borderRadius:10, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px 24px", cursor:"pointer", width:"100%", marginBottom:10 }),
-  ghostBtn: { background:"transparent", border:"1px solid #2d2d44", borderRadius:10, color:"#9ca3af", fontSize:"0.9rem", fontWeight:600, padding:"11px 20px", cursor:"pointer", width:"100%" },
-  toggle: (on: boolean) => ({ background: on ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${on?"#f59e0b":"#2d2d44"}`, borderRadius:8, color: on ? "#f59e0b" : "#9ca3af", fontSize:13, padding:"8px 14px", cursor:"pointer", transition:"all 0.2s" }),
-  sectionLabel: { fontSize:12, color:"#f59e0b", textTransform:"uppercase" as const, letterSpacing:"0.1em", fontWeight:700, marginBottom:10 },
-  playerRow: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:"rgba(255,255,255,0.04)", borderRadius:8, marginBottom:6 },
-  kickBtn: { background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:6, color:"#ef4444", fontSize:11, padding:"4px 10px", cursor:"pointer" },
-  qBox: { background:"#1a1a2e", borderRadius:16, padding:"24px 20px", marginBottom:16, textAlign:"center" as const, width:"100%", maxWidth:480 },
+  page: { minHeight:"100vh", background:"#130a24", color:"#fff", fontFamily:"system-ui,sans-serif", display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:"20px" },
+  card: { width:"100%", maxWidth:460, background:"#1e1236", borderRadius:24, padding:"28px 24px" },
+  title: { fontSize:"2rem", fontWeight:900, background:"linear-gradient(135deg,#ff4f8b,#8b5cf6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:4, textAlign:"center" as const },
+  sub: { color:"#a094c4", fontSize:"0.9rem", textAlign:"center" as const, marginBottom:24 },
+  label: { fontSize:12, color:"#a094c4", textTransform:"uppercase" as const, letterSpacing:"0.05em", marginBottom:6, display:"block" },
+  input: { width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:16, color:"#fff", fontSize:15, padding:"11px 14px", outline:"none", marginBottom:14 },
+  btn: (color="#ff4f8b") => ({ background:`linear-gradient(135deg,${color},${color=="#ff4f8b"?"#ef4444":"#dc2626"})`, border:"none", borderRadius:16, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px 24px", cursor:"pointer", width:"100%", marginBottom:10 }),
+  ghostBtn: { background:"transparent", border:"1px solid #3a2760", borderRadius:16, color:"#c4b8e0", fontSize:"0.9rem", fontWeight:600, padding:"11px 20px", cursor:"pointer", width:"100%" },
+  toggle: (on: boolean) => ({ background: on ? "rgba(255,79,139,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${on?"#ff4f8b":"#3a2760"}`, borderRadius:12, color: on ? "#ff4f8b" : "#c4b8e0", fontSize:13, padding:"8px 14px", cursor:"pointer", transition:"all 0.2s" }),
+  sectionLabel: { fontSize:12, color:"#ff4f8b", textTransform:"uppercase" as const, letterSpacing:"0.1em", fontWeight:700, marginBottom:10 },
+  playerRow: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:"rgba(255,255,255,0.04)", borderRadius:12, marginBottom:6 },
+  kickBtn: { background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:10, color:"#ef4444", fontSize:11, padding:"4px 10px", cursor:"pointer" },
+  qBox: { background:"#1e1236", borderRadius:24, padding:"24px 20px", marginBottom:16, textAlign:"center" as const, width:"100%", maxWidth:480 },
   ansBtn: (state: "default"|"correct"|"wrong") => ({
-    background: state==="correct" ? "#064e3b" : state==="wrong" ? "#450a0a" : "#1a1a2e",
-    border:`2px solid ${state==="correct"?"#10b981":state==="wrong"?"#ef4444":"#2d2d44"}`,
-    borderRadius:12, color: state==="correct" ? "#10b981" : state==="wrong" ? "#ef4444" : "#e5e7eb",
+    background: state==="correct" ? "#064e3b" : state==="wrong" ? "#450a0a" : "#1e1236",
+    border:`2px solid ${state==="correct"?"#10b981":state==="wrong"?"#ef4444":"#3a2760"}`,
+    borderRadius:18, color: state==="correct" ? "#10b981" : state==="wrong" ? "#ef4444" : "#f3eeff",
     fontSize:"0.95rem", fontWeight:700, padding:"16px 14px", cursor:state==="default"?"pointer":"default", lineHeight:1.3, transition:"all 0.2s"
   }),
 };
@@ -276,18 +276,18 @@ export default function MultiplayerPage() {
       <div style={{ ...s.card }}>
         <div style={s.title}>⚡ QuicTriv</div>
         <div style={s.sub}>Multiplayer Mode</div>
-        {error && <div style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, padding:"10px 14px", color:"#f87171", fontSize:13, marginBottom:14 }}>{error}</div>}
+        {error && <div style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:12, padding:"10px 14px", color:"#f87171", fontSize:13, marginBottom:14 }}>{error}</div>}
 
         <label style={s.label}>Your Name (max 15 chars)</label>
         <div style={{ display:"flex", gap:8, marginBottom:14 }}>
           <input style={{ ...s.input, marginBottom:0, flex:1 }} value={playerName} maxLength={15} onChange={e => { setPlayerName(e.target.value); try { localStorage.setItem("onetap_name", e.target.value); } catch {} }} placeholder="Enter your name…" />
           <button onClick={() => { const n = FUNNY_NAMES[Math.floor(Math.random()*FUNNY_NAMES.length)]; setPlayerName(n); try { localStorage.setItem("onetap_name", n); } catch {}; }}
-            style={{ background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)", borderRadius:10, color:"#f59e0b", fontSize:"1.2rem", padding:"0 14px", cursor:"pointer", flexShrink:0 }} title="Generate random name">🎲</button>
+            style={{ background:"rgba(255,79,139,0.15)", border:"1px solid rgba(255,79,139,0.4)", borderRadius:16, color:"#ff4f8b", fontSize:"1.2rem", padding:"0 14px", cursor:"pointer", flexShrink:0 }} title="Generate random name">🎲</button>
         </div>
 
         <button style={s.btn()} onClick={() => { setError(""); setView("host-setup"); }}>🎮 Host a Game</button>
 
-        <div style={{ margin:"16px 0 10px", borderTop:"1px solid #2d2d44", paddingTop:16 }}>
+        <div style={{ margin:"16px 0 10px", borderTop:"1px solid #3a2760", paddingTop:16 }}>
           <label style={s.label}>Join with Game Code</label>
           <input style={{ ...s.input, textTransform:"uppercase", letterSpacing:"0.3em", fontSize:20, fontWeight:700, textAlign:"center" }}
             value={joinCode} maxLength={6} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder="ABC123" />
@@ -303,20 +303,20 @@ export default function MultiplayerPage() {
     <div style={s.page}>
       <div style={s.card}>
         <div style={{ ...s.title, fontSize:"1.5rem", marginBottom:20 }}>🎮 Host Settings</div>
-        {error && <div style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, padding:"10px 14px", color:"#f87171", fontSize:13, marginBottom:14 }}>{error}</div>}
+        {error && <div style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:12, padding:"10px 14px", color:"#f87171", fontSize:13, marginBottom:14 }}>{error}</div>}
 
         <label style={s.label}>Your Name</label>
         <div style={{ display:"flex", gap:8, marginBottom:14 }}>
           <input style={{ ...s.input, marginBottom:0, flex:1 }} value={playerName} maxLength={15} onChange={e => setPlayerName(e.target.value)} placeholder="Enter your name…" />
           <button onClick={() => { const n = FUNNY_NAMES[Math.floor(Math.random()*FUNNY_NAMES.length)]; setPlayerName(n); }}
-            style={{ background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)", borderRadius:10, color:"#f59e0b", fontSize:"1.2rem", padding:"0 14px", cursor:"pointer", flexShrink:0 }} title="Generate random name">🎲</button>
+            style={{ background:"rgba(255,79,139,0.15)", border:"1px solid rgba(255,79,139,0.4)", borderRadius:16, color:"#ff4f8b", fontSize:"1.2rem", padding:"0 14px", cursor:"pointer", flexShrink:0 }} title="Generate random name">🎲</button>
         </div>
 
         <label style={s.label}>Category</label>
         <select value={category} onChange={e => setCategory(e.target.value)}
           style={{ ...s.input, marginBottom:14 }}>
           {[["all","🌎 All Categories"],["geography","🗺️ Geography"],["science","🔬 Science"],["history","📜 History"],["sports","⚽ Sports"],["entertainment","🎬 Entertainment"],["math","🔢 Math"]].map(([v,l]) => (
-            <option key={v} value={v} style={{ background:"#1a1a2e" }}>{l}</option>
+            <option key={v} value={v} style={{ background:"#1e1236" }}>{l}</option>
           ))}
         </select>
 
@@ -342,8 +342,8 @@ export default function MultiplayerPage() {
             }}
             style={{ ...s.input, marginBottom:0, flex:1, fontSize:18, fontWeight:700, textAlign:"center",
               opacity: timerDuration === 0 ? 0.4 : 1,
-              border: `1px solid ${timerDuration === 0 ? "#2d2d44" : "#f59e0b"}`,
-              color: timerDuration === 0 ? "#4b5563" : "#fff",
+              border: `1px solid ${timerDuration === 0 ? "#3a2760" : "#ff4f8b"}`,
+              color: timerDuration === 0 ? "#7d6f9f" : "#fff",
             }}
           />
           <button
@@ -372,9 +372,9 @@ export default function MultiplayerPage() {
       <div style={s.page}>
         <div style={s.card}>
           <div style={{ textAlign:"center", marginBottom:20 }}>
-            <div style={{ fontSize:13, color:"#6b7280", letterSpacing:"0.1em", textTransform:"uppercase" }}>Game Code</div>
-            <div style={{ fontSize:"3rem", fontWeight:900, letterSpacing:"0.3em", color:"#f59e0b", lineHeight:1 }}>{gameId}</div>
-            <div style={{ fontSize:12, color:"#4b5563", marginTop:4 }}>Share this code with friends</div>
+            <div style={{ fontSize:13, color:"#a094c4", letterSpacing:"0.1em", textTransform:"uppercase" }}>Game Code</div>
+            <div style={{ fontSize:"3rem", fontWeight:900, letterSpacing:"0.3em", color:"#ff4f8b", lineHeight:1 }}>{gameId}</div>
+            <div style={{ fontSize:12, color:"#7d6f9f", marginTop:4 }}>Share this code with friends</div>
           </div>
 
           <div style={s.sectionLabel}>Players ({players.length}/{game?.maxPlayers || 10})</div>
@@ -382,8 +382,8 @@ export default function MultiplayerPage() {
             <div key={pid} style={s.playerRow}>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <span style={{ fontSize:16 }}>{p.isHost ? "👑" : "🎮"}</span>
-                <span style={{ fontWeight:600, color: pid === playerId ? "#f59e0b" : "#e5e7eb" }}>{p.name}</span>
-                {pid === playerId && <span style={{ fontSize:11, color:"#6b7280" }}>(you)</span>}
+                <span style={{ fontWeight:600, color: pid === playerId ? "#ff4f8b" : "#f3eeff" }}>{p.name}</span>
+                {pid === playerId && <span style={{ fontSize:11, color:"#a094c4" }}>(you)</span>}
               </div>
               {isHost && pid !== playerId && (
                 <button style={s.kickBtn} onClick={() => kickPlayer(pid, p.name)}>Kick</button>
@@ -393,13 +393,13 @@ export default function MultiplayerPage() {
 
           {isHost ? (
             <>
-              <div style={{ fontSize:12, color:"#4b5563", marginTop:12, marginBottom:14 }}>
+              <div style={{ fontSize:12, color:"#7d6f9f", marginTop:12, marginBottom:14 }}>
                 Category: {game?.category} · Timer: {game?.timerDuration > 0 ? `${game.timerDuration}s` : "∞"} · 20 questions
               </div>
               <button style={s.btn()} onClick={startGame}>▶ Start Game</button>
             </>
           ) : (
-            <div style={{ textAlign:"center", color:"#6b7280", fontSize:14, marginTop:16, padding:"12px 0" }}>
+            <div style={{ textAlign:"center", color:"#a094c4", fontSize:14, marginTop:16, padding:"12px 0" }}>
               ⏳ Waiting for host to start…
             </div>
           )}
@@ -418,21 +418,21 @@ export default function MultiplayerPage() {
       <div style={{ ...s.page, justifyContent:"flex-start", paddingTop:20 }}>
         {/* HUD */}
         <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontSize:20, fontWeight:900, color:"#f59e0b" }}>{myScore}</div>
-          <div style={{ fontSize:13, color:"#6b7280" }}>{qNum} / {total}</div>
-          <div style={{ fontSize:15, fontWeight:700, color: myStreak > 0 ? "#ef4444" : "#4b5563" }}>🔥{myStreak}</div>
+          <div style={{ fontSize:20, fontWeight:900, color:"#ff4f8b" }}>{myScore}</div>
+          <div style={{ fontSize:13, color:"#a094c4" }}>{qNum} / {total}</div>
+          <div style={{ fontSize:15, fontWeight:700, color: myStreak > 0 ? "#ef4444" : "#7d6f9f" }}>🔥{myStreak}</div>
         </div>
-        <div style={{ width:"100%", maxWidth:480, height:4, background:"#1a1a2e", borderRadius:2, marginBottom:16, overflow:"hidden" }}>
-          <div style={{ height:"100%", width:`${(qNum/total)*100}%`, background:"linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius:2, transition:"width 0.3s" }} />
+        <div style={{ width:"100%", maxWidth:480, height:4, background:"#1e1236", borderRadius:2, marginBottom:16, overflow:"hidden" }}>
+          <div style={{ height:"100%", width:`${(qNum/total)*100}%`, background:"linear-gradient(90deg,#ff4f8b,#8b5cf6)", borderRadius:2, transition:"width 0.3s" }} />
         </div>
 
         {/* Timer */}
         {game?.timerEnabled && (
           <div style={{ position:"relative", width:64, height:64, marginBottom:16 }}>
             <svg width="64" height="64" style={{ transform:"rotate(-90deg)" }}>
-              <circle cx="32" cy="32" r="26" fill="none" stroke="#1a1a2e" strokeWidth="5" />
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#1e1236" strokeWidth="5" />
               <circle cx="32" cy="32" r="26" fill="none"
-                stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#f59e0b" : "#10b981"}
+                stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#ff4f8b" : "#10b981"}
                 strokeWidth="5" strokeDasharray="163.4" strokeDashoffset={163.4*(1-timeLeft/3)}
                 style={{ transition:"stroke-dashoffset 0.9s linear, stroke 0.3s" }} />
             </svg>
@@ -462,14 +462,14 @@ export default function MultiplayerPage() {
         {selected === "__timeout__" && <div style={{ color:"#ef4444", fontWeight:700 }}>⏰ Too slow! Answer: <span style={{ color:"#10b981" }}>{currentQ?.a}</span></div>}
 
         {/* Live scoreboard */}
-        <div style={{ width:"100%", maxWidth:480, background:"#1a1a2e", borderRadius:12, padding:"14px 16px" }}>
-          <div style={{ fontSize:11, color:"#f59e0b", letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700, marginBottom:10 }}>Live Scores</div>
+        <div style={{ width:"100%", maxWidth:480, background:"#1e1236", borderRadius:18, padding:"14px 16px" }}>
+          <div style={{ fontSize:11, color:"#ff4f8b", letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700, marginBottom:10 }}>Live Scores</div>
           {[...players].sort((a,b) => b.score - a.score).slice(0,5).map((p, i) => (
-            <div key={p.name} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom: i<4 ? "1px solid #2d2d44" : "none" }}>
-              <span style={{ color: p.name === (game?.players?.[playerId]?.name) ? "#f59e0b" : "#9ca3af", fontSize:13 }}>
+            <div key={p.name} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom: i<4 ? "1px solid #3a2760" : "none" }}>
+              <span style={{ color: p.name === (game?.players?.[playerId]?.name) ? "#ff4f8b" : "#c4b8e0", fontSize:13 }}>
                 {["🥇","🥈","🥉","4","5"][i]} {p.name} {p.answered ? "✓" : "…"}
               </span>
-              <span style={{ color:"#f59e0b", fontWeight:700 }}>{p.score}</span>
+              <span style={{ color:"#ff4f8b", fontWeight:700 }}>{p.score}</span>
             </div>
           ))}
         </div>
@@ -491,16 +491,16 @@ export default function MultiplayerPage() {
             <div style={{ fontSize:"1.8rem", fontWeight:900, marginTop:8 }}>
               {myRank === 1 ? "You Won!" : myRank <= 3 ? `#${myRank} Place!` : `#${myRank} Place`}
             </div>
-            <div style={{ color:"#6b7280", fontSize:14, marginTop:4 }}>Final Scores</div>
+            <div style={{ color:"#a094c4", fontSize:14, marginTop:4 }}>Final Scores</div>
           </div>
 
           {sorted.map((p, i) => (
-            <div key={p.name} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", background: p.name === (game?.players?.[playerId]?.name) ? "rgba(245,158,11,0.08)" : "rgba(255,255,255,0.03)", borderRadius:10, marginBottom:6, border: p.name === (game?.players?.[playerId]?.name) ? "1px solid rgba(245,158,11,0.3)" : "1px solid transparent" }}>
+            <div key={p.name} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", background: p.name === (game?.players?.[playerId]?.name) ? "rgba(255,79,139,0.08)" : "rgba(255,255,255,0.03)", borderRadius:16, marginBottom:6, border: p.name === (game?.players?.[playerId]?.name) ? "1px solid rgba(255,79,139,0.3)" : "1px solid transparent" }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                 <span style={{ fontSize:20 }}>{medals[i] || `${i+1}`}</span>
-                <span style={{ fontWeight:600, color:"#e5e7eb" }}>{p.name}</span>
+                <span style={{ fontWeight:600, color:"#f3eeff" }}>{p.name}</span>
               </div>
-              <span style={{ color:"#f59e0b", fontWeight:800, fontSize:18 }}>{p.score}</span>
+              <span style={{ color:"#ff4f8b", fontWeight:800, fontSize:18 }}>{p.score}</span>
             </div>
           ))}
 

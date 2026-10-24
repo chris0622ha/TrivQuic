@@ -1,6 +1,25 @@
 @import "tailwindcss";
 * { box-sizing: border-box; }
-body { margin: 0; font-family: 'Inter', system-ui, sans-serif; }
+body { margin: 0; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif !important; letter-spacing: -0.02em; }
+button, input, select, textarea { font-family: inherit; }
+::selection { background: #ff4f8b; color: #fff; }
+:focus-visible { outline: 3px solid #ff4f8b; outline-offset: 2px; }
+::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #130a24; } ::-webkit-scrollbar-thumb { background: #3a2760; border-radius: 8px; }
+
+/* Arcade depth: soft colour glows behind every screen and chunky, tactile buttons */
+.trivquic-fx {
+  background-image:
+    radial-gradient(800px 480px at 88% -8%, rgba(255,79,139,.20), transparent 60%),
+    radial-gradient(700px 520px at -8% 108%, rgba(139,92,246,.22), transparent 60%),
+    radial-gradient(rgba(255,255,255,.045) 1px, transparent 1.2px) !important;
+  background-size: auto, auto, 22px 22px !important;
+  background-attachment: fixed !important;
+}
+button { transition: transform .14s ease, box-shadow .14s ease, filter .14s ease, background .14s ease; }
+button:not(:disabled):hover { filter: brightness(1.12); transform: translateY(-2px); }
+button:not(:disabled):active { transform: translateY(1px) scale(.98); filter: brightness(.95); }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } .pop, .shake { animation: none !important; } }
 @keyframes shrink { from { width: 100%; } to { width: 0%; } }
 @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-8px)} 80%{transform:translateX(8px)} }

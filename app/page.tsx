@@ -14,12 +14,22 @@ import { math } from "./data/math";
 import { sports } from "./data/sports";
 import { entertainment } from "./data/entertainment";
 
+function LogoMark({ size = 64 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true" style={{ display:"block", filter:"drop-shadow(0 10px 24px rgba(255,79,139,0.45))" }}>
+      <defs><linearGradient id="tqg" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse"><stop stopColor="#ff4f8b" /><stop offset="1" stopColor="#8b5cf6" /></linearGradient></defs>
+      <rect x="4" y="4" width="56" height="56" rx="18" fill="url(#tqg)" />
+      <path d="M36 12 20 35h10l-3 17 17-25H34l2-15Z" fill="#fff" />
+    </svg>
+  );
+}
+
 function BadgeIcon({ badge, size=13 }: { badge?:string|null; size?:number }) {
   if (!badge) return null;
   if (badge==="star")   return <span title="Loyal Player" style={{fontSize:size}}>⭐</span>;
   if (badge==="check")  return <span title="Verified" style={{fontSize:size,color:"#3b82f6",fontWeight:900}}>✓</span>;
   if (badge==="crown")  return <span title="Champion" style={{fontSize:size}}>👑</span>;
-  if (badge==="tester") return <span title="Tester" style={{fontSize:size*0.85,background:"#ca8a04",color:"#fff",borderRadius:4,padding:"1px 5px",fontWeight:900,fontFamily:"monospace"}}>T</span>;
+  if (badge==="tester") return <span title="Tester" style={{fontSize:size*0.85,background:"#ca8a04",color:"#fff",borderRadius:8,padding:"1px 5px",fontWeight:900,fontFamily:"monospace"}}>T</span>;
   if (badge==="gold")   return <span title="Gold Medal" style={{fontSize:size}}>🥇</span>;
   if (badge==="silver") return <span title="Silver Medal" style={{fontSize:size}}>🥈</span>;
   if (badge==="bronze") return <span title="Bronze Medal" style={{fontSize:size}}>🥉</span>;
@@ -189,21 +199,21 @@ function UsernamePickerModal({ user, onDone }: { user: User; onDone: (username: 
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:500,
       display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20,
+      <div style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28,
         padding:"32px 28px", width:"100%", maxWidth:380, color:"#fff" }}>
         <div style={{ textAlign:"center", marginBottom:24 }}>
           <div style={{ fontSize:40, marginBottom:10 }}>⚡</div>
           <div style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:6 }}>Choose your username</div>
-          <div style={{ fontSize:13, color:"#6b7280", lineHeight:1.6 }}>
+          <div style={{ fontSize:13, color:"#a094c4", lineHeight:1.6 }}>
             Choose wisely — you can only change it{" "}
-            <span style={{ color:"#f59e0b", fontWeight:700 }}>3 times</span>.
+            <span style={{ color:"#ff4f8b", fontWeight:700 }}>3 times</span>.
           </div>
         </div>
 
         {user.photoURL && (
           <div style={{ textAlign:"center", marginBottom:20 }}>
             <img src={user.photoURL} alt="" width={52} height={52}
-              style={{ borderRadius:"50%", border:"3px solid #2d2d44" }} />
+              style={{ borderRadius:"50%", border:"3px solid #3a2760" }} />
           </div>
         )}
 
@@ -214,20 +224,20 @@ function UsernamePickerModal({ user, onDone }: { user: User; onDone: (username: 
           placeholder={suggested}
           onChange={e => { setValue(e.target.value.replace(/[^a-zA-Z0-9_]/g, "")); setError(""); }}
           onKeyDown={e => e.key === "Enter" && handleSubmit()}
-          style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${error ? "#ef4444" : "#2d2d44"}`,
-            borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, padding:"12px 16px",
+          style={{ width:"100%", background:"#130a24", border:`1px solid ${error ? "#ef4444" : "#3a2760"}`,
+            borderRadius:16, color:"#fff", fontSize:18, fontWeight:700, padding:"12px 16px",
             outline:"none", boxSizing:"border-box", textAlign:"center", letterSpacing:"0.05em" }}
         />
         {error && <div style={{ color:"#ef4444", fontSize:12, marginTop:6, textAlign:"center" }}>{error}</div>}
-        <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", marginTop:6 }}>
+        <div style={{ fontSize:11, color:"#7d6f9f", textAlign:"center", marginTop:6 }}>
           Letters, numbers, underscores · max 15
         </div>
 
         <button
           onClick={handleSubmit}
           disabled={loading}
-          style={{ width:"100%", background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none",
-            borderRadius:12, color:"#fff", fontSize:"1rem", fontWeight:800,
+          style={{ width:"100%", background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)", border:"none",
+            borderRadius:18, color:"#fff", fontSize:"1rem", fontWeight:800,
             padding:"14px", cursor: loading ? "default" : "pointer", marginTop:18,
             opacity: loading ? 0.6 : 1 }}
         >
@@ -302,7 +312,7 @@ const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", 
 
   if (loading) return (
     <div onClick={onClose} style={{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.85)", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ color:"#6b7280" }}>Loading…</div>
+      <div style={{ color:"#a094c4" }}>Loading…</div>
     </div>
   );
   if (!profileData) return (
@@ -315,58 +325,58 @@ const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", 
 
   return (
     <div onClick={onClose} style={{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.85)", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, width:"100%", maxWidth:400, maxHeight:"88vh", overflowY:"auto" as const, color:"#fff" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, width:"100%", maxWidth:400, maxHeight:"88vh", overflowY:"auto" as const, color:"#fff" }}>
         {/* Header */}
         <div style={{ padding:"20px 20px 0", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
           <div style={{ display:"flex", alignItems:"center", gap:14 }}>
             {p.photoURL
-              ? <img src={p.photoURL} width={56} height={56} style={{ borderRadius:"50%", border:"3px solid #f59e0b", objectFit:"cover" as const }} />
-              : <div style={{ width:56, height:56, borderRadius:"50%", background:"rgba(245,158,11,0.2)", border:"3px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:900, color:"#f59e0b" }}>{(p.username||"?")[0].toUpperCase()}</div>
+              ? <img src={p.photoURL} width={56} height={56} style={{ borderRadius:"50%", border:"3px solid #ff4f8b", objectFit:"cover" as const }} />
+              : <div style={{ width:56, height:56, borderRadius:"50%", background:"rgba(255,79,139,0.2)", border:"3px solid #ff4f8b", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:900, color:"#ff4f8b" }}>{(p.username||"?")[0].toUpperCase()}</div>
             }
             <div>
               <div style={{ fontWeight:900, fontSize:"1.1rem", display:"flex", alignItems:"center", gap:6 }}>
                 {p.username} <BadgeIcon badge={p.badge} size={15} />
               </div>
               {p.status?.preset && p.status.preset !== "online" && (
-                <div style={{ fontSize:12, color:"#6b7280" }}>
+                <div style={{ fontSize:12, color:"#a094c4" }}>
                   {p.status.preset === "dnd" && "⛔ DND"}
                   {p.status.preset === "sleeping" && "😴 Sleeping"}
                   {p.status.preset === "focused" && "🎯 Focused"}
                   {p.status.preset === "custom" && p.status.custom}
                 </div>
               )}
-              {p.bio && <div style={{ fontSize:13, color:"#9ca3af", marginTop:4, fontStyle:"italic" as const }}>"{p.bio}"</div>}
+              {p.bio && <div style={{ fontSize:13, color:"#c4b8e0", marginTop:4, fontStyle:"italic" as const }}>"{p.bio}"</div>}
             </div>
           </div>
-          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:22, cursor:"pointer" }}>×</button>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#a094c4", fontSize:22, cursor:"pointer" }}>×</button>
         </div>
 
         <div style={{ padding:"16px 20px 20px" }}>
           {/* Friend button */}
           {onSendFriendRequest && (
-            <button onClick={() => onSendFriendRequest(uid, p.username)} style={{ width:"100%", background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, color:"#f59e0b", fontWeight:700, fontSize:13, padding:"9px", cursor:"pointer", marginBottom:16 }}>
+            <button onClick={() => onSendFriendRequest(uid, p.username)} style={{ width:"100%", background:"rgba(255,79,139,0.1)", border:"1px solid rgba(255,79,139,0.3)", borderRadius:16, color:"#ff4f8b", fontWeight:700, fontSize:13, padding:"9px", cursor:"pointer", marginBottom:16 }}>
               👥 Add Friend
             </button>
           )}
 
           {/* Stats */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:16 }}>
-            {[["Best Score", p.bestScore||0, "#f59e0b"], ["Games", p.gamesPlayed||0, "#10b981"], ["Streak", p.bestStreak||0, "#ef4444"],
+            {[["Best Score", p.bestScore||0, "#ff4f8b"], ["Games", p.gamesPlayed||0, "#10b981"], ["Streak", p.bestStreak||0, "#ef4444"],
               ["Correct", p.totalCorrect||0, "#6366f1"], ["Accuracy", acc+"%", "#a855f7"], ["Duels", p.duelsPlayed||0, "#60a5fa"]].map(([l,v,col]) => (
-              <div key={l as string} style={{ background:"#0f0f1a", borderRadius:10, padding:"10px", textAlign:"center" as const }}>
+              <div key={l as string} style={{ background:"#130a24", borderRadius:16, padding:"10px", textAlign:"center" as const }}>
                 <div style={{ fontSize:18, fontWeight:900, color:col as string }}>{v as any}</div>
-                <div style={{ fontSize:10, color:"#6b7280", marginTop:2 }}>{l}</div>
+                <div style={{ fontSize:10, color:"#a094c4", marginTop:2 }}>{l}</div>
               </div>
             ))}
           </div>
 
           {/* Duel record */}
           {(p.duelsPlayed||0) > 0 && (
-            <div style={{ background:"#0f0f1a", borderRadius:12, padding:"12px 16px", marginBottom:16, display:"flex", justifyContent:"space-around" }}>
-              {[["Wins",p.duelWins||0,"#10b981"],["Losses",p.duelLosses||0,"#ef4444"],["Draws",p.duelDraws||0,"#6b7280"]].map(([l,v,col])=>(
+            <div style={{ background:"#130a24", borderRadius:18, padding:"12px 16px", marginBottom:16, display:"flex", justifyContent:"space-around" }}>
+              {[["Wins",p.duelWins||0,"#10b981"],["Losses",p.duelLosses||0,"#ef4444"],["Draws",p.duelDraws||0,"#a094c4"]].map(([l,v,col])=>(
                 <div key={l as string} style={{ textAlign:"center" as const }}>
                   <div style={{ fontSize:20, fontWeight:900, color:col as string }}>{v as number}</div>
-                  <div style={{ fontSize:11, color:"#4b5563" }}>{l}</div>
+                  <div style={{ fontSize:11, color:"#7d6f9f" }}>{l}</div>
                 </div>
               ))}
             </div>
@@ -374,12 +384,12 @@ const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", 
 
           {/* Category bests */}
           {p.categoryBests && Object.keys(p.categoryBests).length > 0 && (
-            <div style={{ background:"#0f0f1a", borderRadius:12, padding:"12px 16px" }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase" as const, letterSpacing:"0.05em", marginBottom:8 }}>Category Bests</div>
+            <div style={{ background:"#130a24", borderRadius:18, padding:"12px 16px" }}>
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase" as const, letterSpacing:"0.05em", marginBottom:8 }}>Category Bests</div>
               {Object.entries(p.categoryBests as Record<string,any>).map(([cat,data]: [string,any]) => (
-                <div key={cat} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom:"1px solid #1e1e30", fontSize:13 }}>
+                <div key={cat} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom:"1px solid #2a1c47", fontSize:13 }}>
                   <span>{CAT_EMOJI[cat]||"❓"} {cat}</span>
-                  <span style={{ color:"#f59e0b", fontWeight:700 }}>{data?.score || data}</span>
+                  <span style={{ color:"#ff4f8b", fontWeight:700 }}>{data?.score || data}</span>
                 </div>
               ))}
             </div>
@@ -632,9 +642,9 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
 
   const TabBtn = ({ id, label, badge }: { id: typeof tab; label: string; badge?: number }) => (
     <button onClick={() => setTab(id)} style={{
-      flex:1, background: tab === id ? "rgba(245,158,11,0.15)" : "transparent",
-      border:"none", borderBottom: `2px solid ${tab === id ? "#f59e0b" : "transparent"}`,
-      color: tab === id ? "#f59e0b" : "#6b7280", fontSize:13, fontWeight:700,
+      flex:1, background: tab === id ? "rgba(255,79,139,0.15)" : "transparent",
+      border:"none", borderBottom: `2px solid ${tab === id ? "#ff4f8b" : "transparent"}`,
+      color: tab === id ? "#ff4f8b" : "#a094c4", fontSize:13, fontWeight:700,
       padding:"10px 0", cursor:"pointer", transition:"all 0.15s", position:"relative",
     }}>
       {label}
@@ -651,19 +661,19 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
     <>
     <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:300,
       display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44",
-        borderRadius:20, padding:"0", width:"100%", maxWidth:400, color:"#fff", overflow:"hidden" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760",
+        borderRadius:28, padding:"0", width:"100%", maxWidth:400, color:"#fff", overflow:"hidden" }}>
 
         {/* Header */}
         <div style={{ padding:"24px 24px 16px", display:"flex", alignItems:"center", gap:14 }}>
           <div style={{ position:"relative", flexShrink:0 }}>
             {photoSrc ? (
               <img src={photoSrc} alt="" width={52} height={52}
-                style={{ borderRadius:"50%", border:"3px solid #f59e0b", display:"block" }} />
+                style={{ borderRadius:"50%", border:"3px solid #ff4f8b", display:"block" }} />
             ) : (
-              <div style={{ width:52, height:52, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
-                border:"3px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:22, fontWeight:900, color:"#f59e0b" }}>
+              <div style={{ width:52, height:52, borderRadius:"50%", background:"rgba(255,79,139,0.2)",
+                border:"3px solid #ff4f8b", display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:22, fontWeight:900, color:"#ff4f8b" }}>
                 {displayName[0]?.toUpperCase()}
               </div>
             )}
@@ -673,17 +683,17 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
               {displayName}
               <BadgeIcon badge={userData?.badge} size={16} />
             </div>
-            {userData?.bio && <div style={{ fontSize:12, color:"#9ca3af", marginTop:3, fontStyle:"italic" as const }}>"{userData.bio}"</div>}
-            <div style={{ fontSize:11, color:"#6b7280", marginTop:2 }}>
-              Friend ID: <span style={{ color:"#9ca3af", fontFamily:"monospace", fontSize:11 }}>{user.uid.slice(0,12)}…</span>
+            {userData?.bio && <div style={{ fontSize:12, color:"#c4b8e0", marginTop:3, fontStyle:"italic" as const }}>"{userData.bio}"</div>}
+            <div style={{ fontSize:11, color:"#a094c4", marginTop:2 }}>
+              Friend ID: <span style={{ color:"#c4b8e0", fontFamily:"monospace", fontSize:11 }}>{user.uid.slice(0,12)}…</span>
             </div>
           </div>
           <button onClick={onClose} style={{ background:"transparent", border:"none",
-            color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1, padding:"4px 8px" }}>×</button>
+            color:"#a094c4", fontSize:20, cursor:"pointer", lineHeight:1, padding:"4px 8px" }}>×</button>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:"flex", borderBottom:"1px solid #2d2d44" }}>
+        <div style={{ display:"flex", borderBottom:"1px solid #3a2760" }}>
           <TabBtn id="stats" label="Stats" />
           <TabBtn id="edit" label="Edit Profile" />
           <TabBtn id="status" label="Status" />
@@ -697,42 +707,42 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
           {/* STATS TAB */}
           {tab === "stats" && (
             !userData || userData.gamesPlayed === 0 ? (
-              <div style={{ textAlign:"center", color:"#6b7280", padding:"20px 0", lineHeight:1.7 }}>
+              <div style={{ textAlign:"center", color:"#a094c4", padding:"20px 0", lineHeight:1.7 }}>
                 No games played yet.<br />
-                <span style={{ color:"#f59e0b" }}>Start playing to track your stats!</span>
+                <span style={{ color:"#ff4f8b" }}>Start playing to track your stats!</span>
               </div>
             ) : (<>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:16 }}>
                 {[
-                  ["Games", userData.gamesPlayed, "#e5e7eb"],
-                  ["Best Score", userData.bestScore, "#f59e0b"],
+                  ["Games", userData.gamesPlayed, "#f3eeff"],
+                  ["Best Score", userData.bestScore, "#ff4f8b"],
                   ["Best Streak", `${userData.bestStreak}🔥`, "#ef4444"],
                   ["Accuracy", acc !== null ? `${acc}%` : "—", "#10b981"],
                 ].map(([label, val, color]) => (
-                  <div key={label as string} style={{ background:"#0f0f1a", borderRadius:12,
-                    padding:"14px 12px", textAlign:"center", border:"1px solid #2d2d44" }}>
+                  <div key={label as string} style={{ background:"#130a24", borderRadius:18,
+                    padding:"14px 12px", textAlign:"center", border:"1px solid #3a2760" }}>
                     <div style={{ fontSize:22, fontWeight:900, color: color as string }}>{val}</div>
-                    <div style={{ fontSize:10, color:"#6b7280", marginTop:4,
+                    <div style={{ fontSize:10, color:"#a094c4", marginTop:4,
                       textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
                   </div>
                 ))}
               </div>
               {userData.categoryBests && Object.keys(userData.categoryBests).length > 0 && (<>
-                <div style={{ fontSize:11, color:"#f59e0b", textTransform:"uppercase",
+                <div style={{ fontSize:11, color:"#ff4f8b", textTransform:"uppercase",
                   letterSpacing:"0.1em", fontWeight:700, marginBottom:10 }}>Category bests</div>
                 {Object.entries(userData.categoryBests)
                   .sort(([,a],[,b]) => (b as number) - (a as number))
                   .map(([cat, score]) => (
                     <div key={cat} style={{ display:"flex", justifyContent:"space-between",
-                      alignItems:"center", padding:"7px 0", borderBottom:"1px solid #2d2d44" }}>
-                      <span style={{ color:"#d1d5db", fontSize:13 }}>
+                      alignItems:"center", padding:"7px 0", borderBottom:"1px solid #3a2760" }}>
+                      <span style={{ color:"#e6defa", fontSize:13 }}>
                         {CATEGORY_MAP[cat]?.emoji} {CATEGORY_MAP[cat]?.label ?? cat}
                       </span>
-                      <span style={{ color:"#f59e0b", fontWeight:800 }}>{score as number}</span>
+                      <span style={{ color:"#ff4f8b", fontWeight:800 }}>{score as number}</span>
                     </div>
                   ))}
               </>)}
-              <div style={{ marginTop:12, fontSize:11, color:"#4b5563", textAlign:"right" }}>
+              <div style={{ marginTop:12, fontSize:11, color:"#7d6f9f", textAlign:"right" }}>
                 Last played: {userData.lastPlayed}
               </div>
             </>)
@@ -742,7 +752,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
           {tab === "edit" && (<>
             {/* Bio */}
             <div style={{ marginBottom:18 }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>
                 Bio / Description
               </div>
               <textarea
@@ -750,16 +760,16 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                 onChange={e => setNewBio(e.target.value.slice(0,150))}
                 placeholder="Tell people about yourself… (150 chars max)"
                 rows={3}
-                style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:13, padding:"11px 14px", resize:"none" as const, boxSizing:"border-box" as const, outline:"none" }}
+                style={{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:16, color:"#fff", fontSize:13, padding:"11px 14px", resize:"none" as const, boxSizing:"border-box" as const, outline:"none" }}
               />
-              <div style={{ fontSize:11, color:"#4b5563", textAlign:"right" as const, marginTop:4 }}>{newBio.length}/150</div>
+              <div style={{ fontSize:11, color:"#7d6f9f", textAlign:"right" as const, marginTop:4 }}>{newBio.length}/150</div>
             </div>
 
             <div style={{ marginBottom:18 }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase",
                 letterSpacing:"0.05em", marginBottom:8 }}>
                 Username
-                <span style={{ marginLeft:8, color: changesLeft > 0 ? "#f59e0b" : "#ef4444", fontWeight:700 }}>
+                <span style={{ marginLeft:8, color: changesLeft > 0 ? "#ff4f8b" : "#ef4444", fontWeight:700 }}>
                   {changesLeft} change{changesLeft !== 1 ? "s" : ""} left
                 </span>
               </div>
@@ -767,8 +777,8 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                 value={newUsername}
                 maxLength={15}
                 onChange={e => { setNewUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "")); setUsernameError(""); }}
-                style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${usernameError ? "#ef4444" : "#2d2d44"}`,
-                  borderRadius:10, color: changesLeft <= 0 ? "#4b5563" : "#fff",
+                style={{ width:"100%", background:"#130a24", border:`1px solid ${usernameError ? "#ef4444" : "#3a2760"}`,
+                  borderRadius:16, color: changesLeft <= 0 ? "#7d6f9f" : "#fff",
                   fontSize:15, padding:"11px 14px", outline:"none", boxSizing:"border-box" }}
               />
               {usernameError && <div style={{ color:"#ef4444", fontSize:12, marginTop:4 }}>{usernameError}</div>}
@@ -776,7 +786,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
             </div>
 
             <div style={{ marginBottom:20 }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase",
                 letterSpacing:"0.05em", marginBottom:8 }}>Profile picture</div>
 
               {/* Hidden file input — accept triggers iOS native sheet: Photo Library / Take Photo / Files */}
@@ -793,11 +803,11 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                 <div style={{ flexShrink:0 }}>
                   {newPhotoURL ? (
                     <img src={newPhotoURL} alt=""
-                      style={{ width:64, height:64, borderRadius:"50%", border:"2px solid #f59e0b", display:"block", objectFit:"cover" }} />
+                      style={{ width:64, height:64, borderRadius:"50%", border:"2px solid #ff4f8b", display:"block", objectFit:"cover" }} />
                   ) : (
                     <div style={{ width:64, height:64, borderRadius:"50%", background:"rgba(255,255,255,0.06)",
-                      border:"2px dashed #2d2d44", display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:24, color:"#4b5563" }}>
+                      border:"2px dashed #3a2760", display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:24, color:"#7d6f9f" }}>
                       👤
                     </div>
                   )}
@@ -807,8 +817,8 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={photoUploading}
-                    style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"1px solid #2d2d44",
-                      borderRadius:10, color: photoUploading ? "#6b7280" : "#e5e7eb",
+                    style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"1px solid #3a2760",
+                      borderRadius:16, color: photoUploading ? "#a094c4" : "#f3eeff",
                       fontSize:14, fontWeight:600, padding:"11px 14px", cursor: photoUploading ? "default" : "pointer",
                       textAlign:"left" as const }}
                   >
@@ -827,12 +837,12 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
               </div>
 
               {photoError && <div style={{ color:"#ef4444", fontSize:12, marginTop:8 }}>{photoError}</div>}
-              <div style={{ fontSize:11, color:"#4b5563", marginTop:6 }}>JPG, PNG, GIF · max 2 MB</div>
+              <div style={{ fontSize:11, color:"#7d6f9f", marginTop:6 }}>JPG, PNG, GIF · max 2 MB</div>
             </div>
 
             <button onClick={saveProfile} disabled={saving} style={{
-              width:"100%", background:"linear-gradient(135deg, #f59e0b, #ef4444)",
-              border:"none", borderRadius:10, color:"#fff", fontSize:"0.95rem",
+              width:"100%", background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)",
+              border:"none", borderRadius:16, color:"#fff", fontSize:"0.95rem",
               fontWeight:800, padding:"13px", cursor: saving ? "default" : "pointer",
               opacity: saving ? 0.7 : 1,
             }}>
@@ -841,38 +851,38 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
             {saveMsg && <div style={{ color:"#10b981", textAlign:"center", marginTop:8, fontWeight:700 }}>{saveMsg}</div>}
 
             {/* Delete account */}
-            <div style={{ marginTop:24, paddingTop:16, borderTop:"1px solid #2d2d44" }}>
+            <div style={{ marginTop:24, paddingTop:16, borderTop:"1px solid #3a2760" }}>
               {deleteStep === 0 && (
                 <button onClick={() => setDeleteStep(1)} style={{
                   width:"100%", background:"transparent", border:"1px solid rgba(239,68,68,0.3)",
-                  borderRadius:10, color:"#ef4444", fontSize:13, fontWeight:600,
+                  borderRadius:16, color:"#ef4444", fontSize:13, fontWeight:600,
                   padding:"10px", cursor:"pointer",
                 }}>Delete account</button>
               )}
               {deleteStep === 1 && (
-                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:12, padding:"16px" }}>
+                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:18, padding:"16px" }}>
                   <div style={{ fontSize:14, fontWeight:900, color:"#ef4444", marginBottom:8 }}>⚠️ WARNING</div>
-                  <div style={{ fontSize:13, color:"#d1d5db", lineHeight:1.7, marginBottom:16 }}>
+                  <div style={{ fontSize:13, color:"#e6defa", lineHeight:1.7, marginBottom:16 }}>
                     Are you sure you want to delete your account? It will delete all of your data.
-                    <br/><span style={{ color:"#9ca3af", fontSize:12 }}>(You can sign up again with the same Google account — it just won't keep your data.)</span>
+                    <br/><span style={{ color:"#c4b8e0", fontSize:12 }}>(You can sign up again with the same Google account — it just won't keep your data.)</span>
                   </div>
                   <div style={{ display:"flex", gap:8 }}>
-                    <button onClick={() => setDeleteStep(2)} style={{ flex:1, background:"rgba(239,68,68,0.2)", border:"1px solid #ef4444", borderRadius:8, color:"#ef4444", fontWeight:800, fontSize:13, padding:"10px", cursor:"pointer" }}>
+                    <button onClick={() => setDeleteStep(2)} style={{ flex:1, background:"rgba(239,68,68,0.2)", border:"1px solid #ef4444", borderRadius:12, color:"#ef4444", fontWeight:800, fontSize:13, padding:"10px", cursor:"pointer" }}>
                       Yes, I'm sure
                     </button>
-                    <button onClick={() => setDeleteStep(0)} style={{ flex:1, background:"rgba(255,255,255,0.06)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontWeight:600, fontSize:13, padding:"10px", cursor:"pointer" }}>
+                    <button onClick={() => setDeleteStep(0)} style={{ flex:1, background:"rgba(255,255,255,0.06)", border:"1px solid #3a2760", borderRadius:12, color:"#c4b8e0", fontWeight:600, fontSize:13, padding:"10px", cursor:"pointer" }}>
                       Cancel
                     </button>
                   </div>
                 </div>
               )}
               {deleteStep === 2 && (
-                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:12, padding:"16px" }}>
+                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:18, padding:"16px" }}>
                   <div style={{ fontSize:13, fontWeight:700, color:"#ef4444", marginBottom:12 }}>Are you absolutely sure?</div>
-                  <div style={{ fontSize:12, color:"#9ca3af", marginBottom:10 }}>Type <strong style={{ color:"#fff" }}>Yes</strong> to confirm</div>
+                  <div style={{ fontSize:12, color:"#c4b8e0", marginBottom:10 }}>Type <strong style={{ color:"#fff" }}>Yes</strong> to confirm</div>
                   <input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}
                     placeholder='Type "Yes" to confirm'
-                    style={{ width:"100%", background:"#0f0f1a", border:`1px solid ${deleteConfirmText.toLowerCase() === "yes" ? "#ef4444" : "#2d2d44"}`, borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10 }}
+                    style={{ width:"100%", background:"#130a24", border:`1px solid ${deleteConfirmText.toLowerCase() === "yes" ? "#ef4444" : "#3a2760"}`, borderRadius:12, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10 }}
                   />
                   <div style={{ display:"flex", gap:8 }}>
                     <button onClick={async () => {
@@ -892,10 +902,10 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                         await signOut(auth);
                       } catch { setDeleting(false); }
                     }} disabled={deleteConfirmText.toLowerCase() !== "yes" || deleting}
-                      style={{ flex:1, background: deleteConfirmText.toLowerCase() === "yes" ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "rgba(239,68,68,0.1)", border:"none", borderRadius:8, color: deleteConfirmText.toLowerCase() === "yes" ? "#fff" : "#6b7280", fontWeight:800, fontSize:13, padding:"10px", cursor: deleteConfirmText.toLowerCase() === "yes" ? "pointer" : "default" }}>
+                      style={{ flex:1, background: deleteConfirmText.toLowerCase() === "yes" ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "rgba(239,68,68,0.1)", border:"none", borderRadius:12, color: deleteConfirmText.toLowerCase() === "yes" ? "#fff" : "#a094c4", fontWeight:800, fontSize:13, padding:"10px", cursor: deleteConfirmText.toLowerCase() === "yes" ? "pointer" : "default" }}>
                       {deleting ? "Deleting…" : "Delete forever"}
                     </button>
-                    <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }} style={{ flex:1, background:"rgba(255,255,255,0.06)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontWeight:600, fontSize:13, padding:"10px", cursor:"pointer" }}>
+                    <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }} style={{ flex:1, background:"rgba(255,255,255,0.06)", border:"1px solid #3a2760", borderRadius:12, color:"#c4b8e0", fontWeight:600, fontSize:13, padding:"10px", cursor:"pointer" }}>
                       Cancel
                     </button>
                   </div>
@@ -907,13 +917,13 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
           {/* STATUS TAB */}
           {tab === "status" && (<>
             <div style={{ marginBottom:16 }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Status</div>
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Status</div>
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 {STATUS_PRESETS.map(s => (
                   <button key={s.id} onClick={() => setStatusPreset(s.id)} style={{
-                    background: statusPreset===s.id ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${statusPreset===s.id ? "#f59e0b" : "#2d2d44"}`,
-                    borderRadius:10, color: statusPreset===s.id ? "#f59e0b" : "#9ca3af",
+                    background: statusPreset===s.id ? "rgba(255,79,139,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${statusPreset===s.id ? "#ff4f8b" : "#3a2760"}`,
+                    borderRadius:16, color: statusPreset===s.id ? "#ff4f8b" : "#c4b8e0",
                     fontSize:14, fontWeight:600, padding:"11px 16px", cursor:"pointer",
                     textAlign:"left" as const, display:"flex", justifyContent:"space-between", alignItems:"center",
                   }}>
@@ -928,33 +938,33 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
 
             {statusPreset === "custom" && (
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Custom status text</div>
+                <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Custom status text</div>
                 <input value={customStatus} onChange={e => setCustomStatus(e.target.value.slice(0,40))}
                   placeholder="e.g. In a duel, brb" maxLength={40}
-                  style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none", boxSizing:"border-box" as const }} />
-                <div style={{ fontSize:11, color:"#4b5563", marginTop:4, textAlign:"right" as const }}>{customStatus.length}/40</div>
+                  style={{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:16, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none", boxSizing:"border-box" as const }} />
+                <div style={{ fontSize:11, color:"#7d6f9f", marginTop:4, textAlign:"right" as const }}>{customStatus.length}/40</div>
               </div>
             )}
 
             <button onClick={saveStatus} disabled={statusSaving} style={{
-              width:"100%", background:"linear-gradient(135deg,#f59e0b,#ef4444)", border:"none",
-              borderRadius:10, color:"#fff", fontWeight:800, padding:"12px", cursor:"pointer", marginBottom:16,
+              width:"100%", background:"linear-gradient(135deg,#ff4f8b,#8b5cf6)", border:"none",
+              borderRadius:16, color:"#fff", fontWeight:800, padding:"12px", cursor:"pointer", marginBottom:16,
             }}>{statusSaving ? "Saving…" : "Save Status"}</button>
             {statusMsg && <div style={{ color:"#10b981", textAlign:"center", marginBottom:12, fontWeight:700 }}>{statusMsg}</div>}
 
             {/* Muted users */}
-            <div style={{ borderTop:"1px solid #2d2d44", paddingTop:14 }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>
+            <div style={{ borderTop:"1px solid #3a2760", paddingTop:14 }}>
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>
                 Muted users ({mutedUids.length})
               </div>
               {mutedUids.length === 0 ? (
-                <div style={{ color:"#4b5563", fontSize:13 }}>No muted users</div>
+                <div style={{ color:"#7d6f9f", fontSize:13 }}>No muted users</div>
               ) : mutedUids.map(uid => {
                 const friend = friendProfiles.find(f => f.uid === uid);
                 return (
-                  <div key={uid} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #2d2d44" }}>
-                    <span style={{ color:"#d1d5db", fontSize:13 }}>{friend?.username || uid.slice(0,12)+"…"}</span>
-                    <button onClick={() => unmuteUser(uid)} style={{ background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:8, color:"#10b981", fontSize:12, fontWeight:700, padding:"4px 10px", cursor:"pointer" }}>
+                  <div key={uid} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #3a2760" }}>
+                    <span style={{ color:"#e6defa", fontSize:13 }}>{friend?.username || uid.slice(0,12)+"…"}</span>
+                    <button onClick={() => unmuteUser(uid)} style={{ background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:12, color:"#10b981", fontSize:12, fontWeight:700, padding:"4px 10px", cursor:"pointer" }}>
                       Unmute
                     </button>
                   </div>
@@ -967,14 +977,14 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
           {tab === "prefs" && (<>
             {setDarkMode && (
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:12, color:"#9ca3af", fontWeight:600, marginBottom:8 }}>🎨 Theme</div>
+                <div style={{ fontSize:12, color:"#c4b8e0", fontWeight:600, marginBottom:8 }}>🎨 Theme</div>
                 <div style={{ display:"flex", gap:8 }}>
                   {([["🌙 Dark", true],["☀️ Light", false]] as [string,boolean][]).map(([label, val]) => (
                     <div key={String(val)} onClick={() => setDarkMode(val)}
-                      style={{ flex:1, padding:"8px", borderRadius:8, textAlign:"center" as const, cursor:"pointer", fontSize:13, fontWeight:700,
-                        background: darkMode===val ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${darkMode===val?"#f59e0b":"#2d2d44"}`,
-                        color: darkMode===val ? "#f59e0b" : "#9ca3af" }}>
+                      style={{ flex:1, padding:"8px", borderRadius:12, textAlign:"center" as const, cursor:"pointer", fontSize:13, fontWeight:700,
+                        background: darkMode===val ? "rgba(255,79,139,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${darkMode===val?"#ff4f8b":"#3a2760"}`,
+                        color: darkMode===val ? "#ff4f8b" : "#c4b8e0" }}>
                       {label}
                     </div>
                   ))}
@@ -983,21 +993,21 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
             )}
             {setFontSize && (
               <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:12, color:"#9ca3af", fontWeight:600, marginBottom:8 }}>🔤 Font Size</div>
+                <div style={{ fontSize:12, color:"#c4b8e0", fontWeight:600, marginBottom:8 }}>🔤 Font Size</div>
                 <div style={{ display:"flex", gap:8 }}>
                   {(["small","normal","large"] as const).map(s => (
                     <div key={s} onClick={() => setFontSize(s)}
-                      style={{ flex:1, padding:"8px", borderRadius:8, textAlign:"center" as const, cursor:"pointer", fontSize:13, fontWeight:700,
-                        background: fontSize===s ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${fontSize===s?"#f59e0b":"#2d2d44"}`,
-                        color: fontSize===s ? "#f59e0b" : "#9ca3af", textTransform:"capitalize" as const }}>
+                      style={{ flex:1, padding:"8px", borderRadius:12, textAlign:"center" as const, cursor:"pointer", fontSize:13, fontWeight:700,
+                        background: fontSize===s ? "rgba(255,79,139,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${fontSize===s?"#ff4f8b":"#3a2760"}`,
+                        color: fontSize===s ? "#ff4f8b" : "#c4b8e0", textTransform:"capitalize" as const }}>
                       {s}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            <div style={{ color:"#4b5563", fontSize:13, textAlign:"center" as const, padding:"20px 0" }}>
+            <div style={{ color:"#7d6f9f", fontSize:13, textAlign:"center" as const, padding:"20px 0" }}>
               No preferences available yet.
             </div>
           </>)}
@@ -1009,15 +1019,15 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                 {allAchievements.map((ach) => {
                   const earned = earnedAch.includes(ach.id);
                   return (
-                    <div key={ach.id} style={{ background: earned ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.03)", border:`1px solid ${earned?"#f59e0b":"#2d2d44"}`, borderRadius:10, padding:"10px 12px", opacity: earned ? 1 : 0.45 }}>
+                    <div key={ach.id} style={{ background: earned ? "rgba(255,79,139,0.1)" : "rgba(255,255,255,0.03)", border:`1px solid ${earned?"#ff4f8b":"#3a2760"}`, borderRadius:16, padding:"10px 12px", opacity: earned ? 1 : 0.45 }}>
                       <div style={{ fontSize:22, marginBottom:4 }}>{ach.icon}</div>
-                      <div style={{ fontWeight:700, fontSize:12, color: earned?"#f59e0b":"#6b7280" }}>{ach.name}</div>
-                      <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{ach.desc}</div>
+                      <div style={{ fontWeight:700, fontSize:12, color: earned?"#ff4f8b":"#a094c4" }}>{ach.name}</div>
+                      <div style={{ fontSize:11, color:"#7d6f9f", marginTop:2 }}>{ach.desc}</div>
                     </div>
                   );
                 })}
               </div>
-              <div style={{ marginTop:12, fontSize:12, color:"#6b7280", textAlign:"center" as const }}>{earnedAch.length} / {allAchievements.length} unlocked</div>
+              <div style={{ marginTop:12, fontSize:12, color:"#a094c4", textAlign:"center" as const }}>{earnedAch.length} / {allAchievements.length} unlocked</div>
             </div>
           )}
           {tab === "friends" && (<>
@@ -1032,29 +1042,29 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                 {incomingRequests.map(req => (
                   <div key={req.fromUid} style={{ display:"flex", alignItems:"center", gap:10,
                     padding:"10px 12px", background:"rgba(16,185,129,0.06)",
-                    border:"1px solid rgba(16,185,129,0.2)", borderRadius:10, marginBottom:8 }}>
+                    border:"1px solid rgba(16,185,129,0.2)", borderRadius:16, marginBottom:8 }}>
                     {req.fromPhotoURL ? (
                       <img src={req.fromPhotoURL} alt="" width={36} height={36}
-                        style={{ borderRadius:"50%", border:"2px solid #2d2d44", flexShrink:0 }} />
+                        style={{ borderRadius:"50%", border:"2px solid #3a2760", flexShrink:0 }} />
                     ) : (
                       <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(16,185,129,0.2)",
-                        border:"2px solid #2d2d44", display:"flex", alignItems:"center", justifyContent:"center",
+                        border:"2px solid #3a2760", display:"flex", alignItems:"center", justifyContent:"center",
                         fontSize:14, fontWeight:900, color:"#10b981", flexShrink:0 }}>
                         {(req.fromUsername || "?")[0].toUpperCase()}
                       </div>
                     )}
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontWeight:700, fontSize:14 }}>{req.fromUsername}</div>
-                      <div style={{ fontSize:11, color:"#6b7280" }}>wants to be friends</div>
+                      <div style={{ fontSize:11, color:"#a094c4" }}>wants to be friends</div>
                     </div>
                     <div style={{ display:"flex", gap:6, flexShrink:0 }}>
                       <button onClick={() => acceptFriendRequest(req.fromUid, req.fromUsername)} style={{
                         background:"rgba(16,185,129,0.2)", border:"1px solid rgba(16,185,129,0.5)",
-                        borderRadius:8, color:"#10b981", fontSize:12, fontWeight:700,
+                        borderRadius:12, color:"#10b981", fontSize:12, fontWeight:700,
                         padding:"6px 12px", cursor:"pointer" }}>Accept</button>
                       <button onClick={() => declineFriendRequest(req.fromUid)} style={{
                         background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
-                        borderRadius:8, color:"#ef4444", fontSize:12, fontWeight:700,
+                        borderRadius:12, color:"#ef4444", fontSize:12, fontWeight:700,
                         padding:"6px 12px", cursor:"pointer" }}>Decline</button>
                     </div>
                   </div>
@@ -1064,7 +1074,7 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
 
             {/* Add friend */}
             <div style={{ marginBottom:16 }}>
-              <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+              <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase",
                 letterSpacing:"0.05em", marginBottom:8 }}>Add by username or Friend ID</div>
               <div style={{ display:"flex", gap:8 }}>
                 <input
@@ -1072,45 +1082,45 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                   placeholder="username or Friend ID"
                   onChange={e => { setFriendInput(e.target.value); setFriendError(""); setFriendMsg(""); }}
                   onKeyDown={e => e.key === "Enter" && sendFriendRequest()}
-                  style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44",
-                    borderRadius:10, color:"#fff", fontSize:14, padding:"10px 12px",
+                  style={{ flex:1, background:"#130a24", border:"1px solid #3a2760",
+                    borderRadius:16, color:"#fff", fontSize:14, padding:"10px 12px",
                     outline:"none", boxSizing:"border-box" as const }}
                 />
                 <button onClick={sendFriendRequest} style={{
-                  background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)",
-                  borderRadius:10, color:"#f59e0b", fontWeight:800, fontSize:14,
+                  background:"rgba(255,79,139,0.15)", border:"1px solid rgba(255,79,139,0.4)",
+                  borderRadius:16, color:"#ff4f8b", fontWeight:800, fontSize:14,
                   padding:"10px 14px", cursor:"pointer", flexShrink:0,
                 }}>Send</button>
               </div>
               {friendError && <div style={{ color:"#ef4444", fontSize:12, marginTop:6 }}>{friendError}</div>}
               {friendMsg && <div style={{ color:"#10b981", fontSize:12, marginTop:6, fontWeight:700 }}>{friendMsg}</div>}
-              <div style={{ fontSize:11, color:"#4b5563", marginTop:6 }}>
-                Your Friend ID: <span style={{ color:"#9ca3af", fontFamily:"monospace", fontSize:10 }}>{user.uid}</span>
+              <div style={{ fontSize:11, color:"#7d6f9f", marginTop:6 }}>
+                Your Friend ID: <span style={{ color:"#c4b8e0", fontFamily:"monospace", fontSize:10 }}>{user.uid}</span>
               </div>
             </div>
 
             {/* Friends list */}
-            <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase",
+            <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase",
               letterSpacing:"0.05em", marginBottom:10 }}>
               Friends ({(userData?.friendIds || []).length})
             </div>
 
             {loadingFriends ? (
-              <div style={{ color:"#6b7280", fontSize:13, textAlign:"center", padding:"12px 0" }}>Loading…</div>
+              <div style={{ color:"#a094c4", fontSize:13, textAlign:"center", padding:"12px 0" }}>Loading…</div>
             ) : friendProfiles.length === 0 ? (
-              <div style={{ color:"#4b5563", fontSize:13, textAlign:"center", padding:"12px 0" }}>
+              <div style={{ color:"#7d6f9f", fontSize:13, textAlign:"center", padding:"12px 0" }}>
                 No friends yet — send a request above!
               </div>
             ) : friendProfiles.map(fp => (
               <div key={fp.uid} style={{ display:"flex", alignItems:"center", gap:10,
-                padding:"10px 0", borderBottom:"1px solid #2d2d44" }}>
+                padding:"10px 0", borderBottom:"1px solid #3a2760" }}>
                 {fp.photoURL ? (
                   <img src={fp.photoURL} alt="" width={36} height={36}
-                    style={{ borderRadius:"50%", border:"2px solid #2d2d44", flexShrink:0 }} />
+                    style={{ borderRadius:"50%", border:"2px solid #3a2760", flexShrink:0 }} />
                 ) : (
-                  <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
-                    border:"2px solid #2d2d44", display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:14, fontWeight:900, color:"#f59e0b", flexShrink:0 }}>
+                  <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(255,79,139,0.2)",
+                    border:"2px solid #3a2760", display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:14, fontWeight:900, color:"#ff4f8b", flexShrink:0 }}>
                     {(fp.username || "?")[0].toUpperCase()}
                   </div>
                 )}
@@ -1119,10 +1129,10 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                     {fp.username}
                     <BadgeIcon badge={fp.badge} size={12} />
                   </div>
-                  <div style={{ fontSize:11, color:"#6b7280" }}>
+                  <div style={{ fontSize:11, color:"#a094c4" }}>
                     {fp.status?.preset === "dnd"      && <span style={{ color:"#ef4444" }}>⛔ Do Not Disturb · </span>}
                     {fp.status?.preset === "sleeping"  && <span style={{ color:"#6366f1" }}>😴 Sleeping · </span>}
-                    {fp.status?.preset === "focused"   && <span style={{ color:"#f59e0b" }}>🎯 Focused · </span>}
+                    {fp.status?.preset === "focused"   && <span style={{ color:"#ff4f8b" }}>🎯 Focused · </span>}
                     {fp.status?.preset === "custom" && fp.status?.custom && <span style={{ color:"#10b981" }}>✏️ {fp.status.custom} · </span>}
                     Best: {fp.bestScore ?? 0}
                   </div>
@@ -1135,14 +1145,14 @@ function ProfileModal({ user, userData, onClose, onUserDataChange, darkMode, set
                     await update(ref(db, `users/${user.uid}`), { mutedUids: newMuted });
                     onUserDataChange({ ...userData, mutedUids: newMuted });
                   }} style={{
-                    background: mutedUids.includes(fp.uid) ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                    border:`1px solid ${mutedUids.includes(fp.uid) ? "rgba(245,158,11,0.4)" : "#2d2d44"}`,
-                    borderRadius:8, color: mutedUids.includes(fp.uid) ? "#f59e0b" : "#6b7280", fontSize:11, padding:"5px 10px",
+                    background: mutedUids.includes(fp.uid) ? "rgba(255,79,139,0.15)" : "rgba(255,255,255,0.04)",
+                    border:`1px solid ${mutedUids.includes(fp.uid) ? "rgba(255,79,139,0.4)" : "#3a2760"}`,
+                    borderRadius:12, color: mutedUids.includes(fp.uid) ? "#ff4f8b" : "#a094c4", fontSize:11, padding:"5px 10px",
                     cursor:"pointer",
                   }}>{mutedUids.includes(fp.uid) ? "🔕" : "🔔"}</button>
                   <button onClick={() => removeFriend(fp.uid)} style={{
                     background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)",
-                    borderRadius:8, color:"#ef4444", fontSize:11, padding:"5px 10px",
+                    borderRadius:12, color:"#ef4444", fontSize:11, padding:"5px 10px",
                     cursor:"pointer",
                   }}>✕</button>
                 </div>
@@ -1186,36 +1196,36 @@ function LangModal({ currentLang, onSelect, onClose }: {
   return (
     <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:400,
       display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44",
-        borderRadius:20, width:"100%", maxWidth:400, maxHeight:"85vh", display:"flex", flexDirection:"column",
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760",
+        borderRadius:28, width:"100%", maxWidth:400, maxHeight:"85vh", display:"flex", flexDirection:"column",
         overflow:"hidden", color:"#fff" }}>
         {/* Header */}
-        <div style={{ padding:"18px 24px 14px", borderBottom:"1px solid #2d2d44", display:"flex",
+        <div style={{ padding:"18px 24px 14px", borderBottom:"1px solid #3a2760", display:"flex",
           alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div style={{ fontSize:"1.1rem", fontWeight:900 }}>🌐 Language</div>
-          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#a094c4", fontSize:20, cursor:"pointer" }}>×</button>
         </div>
         {/* List */}
         <div style={{ overflowY:"auto", padding:"12px 16px" }}>
           {LANGUAGES.map(lang => (
             <button key={lang.code} onClick={() => choose(lang.code)} style={{
               width:"100%", display:"flex", alignItems:"center", gap:14,
-              background: currentLang === lang.code ? "rgba(245,158,11,0.1)" : "transparent",
-              border:`1px solid ${currentLang === lang.code ? "rgba(245,158,11,0.4)" : "transparent"}`,
-              borderRadius:10, padding:"11px 14px", cursor:"pointer", marginBottom:4, textAlign:"left" as const,
+              background: currentLang === lang.code ? "rgba(255,79,139,0.1)" : "transparent",
+              border:`1px solid ${currentLang === lang.code ? "rgba(255,79,139,0.4)" : "transparent"}`,
+              borderRadius:16, padding:"11px 14px", cursor:"pointer", marginBottom:4, textAlign:"left" as const,
             }}>
               <span style={{ fontSize:24, flexShrink:0 }}>{lang.flag}</span>
               <div style={{ flex:1 }}>
-                <div style={{ fontWeight:700, fontSize:14, color: currentLang === lang.code ? "#f59e0b" : "#e5e7eb" }}>
+                <div style={{ fontWeight:700, fontSize:14, color: currentLang === lang.code ? "#ff4f8b" : "#f3eeff" }}>
                   {lang.native}
                 </div>
-                <div style={{ fontSize:11, color:"#6b7280" }}>{lang.label}</div>
+                <div style={{ fontSize:11, color:"#a094c4" }}>{lang.label}</div>
               </div>
-              {currentLang === lang.code && <span style={{ color:"#f59e0b", fontSize:16 }}>✓</span>}
+              {currentLang === lang.code && <span style={{ color:"#ff4f8b", fontSize:16 }}>✓</span>}
             </button>
           ))}
         </div>
-        <div style={{ padding:"10px 20px 16px", fontSize:11, color:"#4b5563", textAlign:"center" as const, flexShrink:0 }}>
+        <div style={{ padding:"10px 20px 16px", fontSize:11, color:"#7d6f9f", textAlign:"center" as const, flexShrink:0 }}>
           Powered by Google Translate
         </div>
       </div>
@@ -1259,32 +1269,32 @@ function ReportModal({ target, reporter, onClose }: { target: any; reporter: { u
 
   return (
     <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:380, color:"#fff" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, padding:"28px 24px", width:"100%", maxWidth:380, color:"#fff" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <div style={{ fontSize:"1.1rem", fontWeight:900 }}>🚩 Report Score</div>
-          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer" }}>×</button>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#a094c4", fontSize:20, cursor:"pointer" }}>×</button>
         </div>
         {sent ? (
           <div style={{ textAlign:"center", padding:"20px 0" }}>
             <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
             <div style={{ fontWeight:700, marginBottom:6 }}>Report submitted</div>
-            <div style={{ color:"#6b7280", fontSize:13 }}>An admin will review this.</div>
-            <button onClick={onClose} style={{ marginTop:16, background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)", borderRadius:10, color:"#f59e0b", fontWeight:700, padding:"10px 24px", cursor:"pointer" }}>Close</button>
+            <div style={{ color:"#a094c4", fontSize:13 }}>An admin will review this.</div>
+            <button onClick={onClose} style={{ marginTop:16, background:"rgba(255,79,139,0.15)", border:"1px solid rgba(255,79,139,0.4)", borderRadius:16, color:"#ff4f8b", fontWeight:700, padding:"10px 24px", cursor:"pointer" }}>Close</button>
           </div>
         ) : (<>
-          <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13 }}>
-            <span style={{ color:"#e5e7eb", fontWeight:700 }}>{target.name}</span>
-            <span style={{ color:"#f59e0b", fontWeight:800, marginLeft:10 }}>{target.score} pts</span>
-            <div style={{ color:"#4b5563", fontSize:11, marginTop:2 }}>{target.category} · {target.roundSize}Q · {target.timerDuration === 0 ? "∞" : `${target.timerDuration}s`}</div>
+          <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:16, padding:"10px 14px", marginBottom:16, fontSize:13 }}>
+            <span style={{ color:"#f3eeff", fontWeight:700 }}>{target.name}</span>
+            <span style={{ color:"#ff4f8b", fontWeight:800, marginLeft:10 }}>{target.score} pts</span>
+            <div style={{ color:"#7d6f9f", fontSize:11, marginTop:2 }}>{target.category} · {target.roundSize}Q · {target.timerDuration === 0 ? "∞" : `${target.timerDuration}s`}</div>
           </div>
-          <div style={{ fontSize:11, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Reason</div>
+          <div style={{ fontSize:11, color:"#a094c4", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Reason</div>
           {REASONS.map(r => (
-            <button key={r} onClick={() => setReason(r)} style={{ display:"block", width:"100%", background: reason===r ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${reason===r?"#ef4444":"#2d2d44"}`, borderRadius:8, color: reason===r ? "#ef4444" : "#9ca3af", fontWeight:600, fontSize:13, padding:"9px 14px", cursor:"pointer", marginBottom:6, textAlign:"left" }}>
+            <button key={r} onClick={() => setReason(r)} style={{ display:"block", width:"100%", background: reason===r ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${reason===r?"#ef4444":"#3a2760"}`, borderRadius:12, color: reason===r ? "#ef4444" : "#c4b8e0", fontWeight:600, fontSize:13, padding:"9px 14px", cursor:"pointer", marginBottom:6, textAlign:"left" }}>
               {r}
             </button>
           ))}
-          <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Additional notes (optional)" style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:13, padding:"9px 12px", outline:"none", boxSizing:"border-box", resize:"vertical", minHeight:60, marginTop:4, marginBottom:12 }} />
-          <button onClick={submit} disabled={!reason||saving} style={{ width:"100%", background: reason ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "#1a1a2e", border:"none", borderRadius:10, color: reason ? "#fff" : "#4b5563", fontWeight:800, fontSize:"0.95rem", padding:"12px", cursor: reason ? "pointer" : "default" }}>
+          <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Additional notes (optional)" style={{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:12, color:"#fff", fontSize:13, padding:"9px 12px", outline:"none", boxSizing:"border-box", resize:"vertical", minHeight:60, marginTop:4, marginBottom:12 }} />
+          <button onClick={submit} disabled={!reason||saving} style={{ width:"100%", background: reason ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "#1e1236", border:"none", borderRadius:16, color: reason ? "#fff" : "#7d6f9f", fontWeight:800, fontSize:"0.95rem", padding:"12px", cursor: reason ? "pointer" : "default" }}>
             {saving ? "Submitting…" : "Submit Report"}
           </button>
         </>)}
@@ -1512,7 +1522,7 @@ export default function Home() {
     if (cmd === "hypno") {
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
       let angle=0;let raf2:number;let stopped2=false;
-      const tick=()=>{if(stopped2)return;angle+=0.015;ctx2.clearRect(0,0,c.width,c.height);const cx=c.width/2,cy=c.height/2;for(let i=20;i>0;i--){ctx2.beginPath();ctx2.arc(cx,cy,i*Math.min(cx,cy)/20,angle+(i%2)*Math.PI,angle+(i%2)*Math.PI+Math.PI);ctx2.fillStyle=i%2===0?"rgba(245,158,11,0.3)":"rgba(15,15,26,0.6)";ctx2.fill();}raf2=requestAnimationFrame(tick);};
+      const tick=()=>{if(stopped2)return;angle+=0.015;ctx2.clearRect(0,0,c.width,c.height);const cx=c.width/2,cy=c.height/2;for(let i=20;i>0;i--){ctx2.beginPath();ctx2.arc(cx,cy,i*Math.min(cx,cy)/20,angle+(i%2)*Math.PI,angle+(i%2)*Math.PI+Math.PI);ctx2.fillStyle=i%2===0?"rgba(255,79,139,0.3)":"rgba(15,15,26,0.6)";ctx2.fill();}raf2=requestAnimationFrame(tick);};
       tick();effectsRef.current.push({stop:()=>{stopped2=true;cancelAnimationFrame(raf2);c.remove();}});autoStop((durationSec??15)*1000);return;
     }
     if (cmd === "pulse") {
@@ -1558,7 +1568,7 @@ export default function Home() {
     }
     if (cmd === "balloons") {
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      const colors=["#ef4444","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4","#f97316"];
+      const colors=["#ef4444","#3b82f6","#10b981","#ff4f8b","#8b5cf6","#ec4899","#06b6d4","#f97316"];
       type Balloon={x:number;y:number;r:number;color:string;speed:number;sway:number;t:number};
       const bals:Balloon[]=Array.from({length:20},(_,i)=>({x:Math.random()*c.width,y:c.height+100,r:Math.random()*25+15,color:colors[i%colors.length],speed:Math.random()*1.5+0.5,sway:Math.random()*2+1,t:Math.random()*Math.PI*2}));
       let raf2:number;let stopped2=false;
@@ -1571,7 +1581,7 @@ export default function Home() {
       d.style.cssText="position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;pointer-events:none";
       document.body.appendChild(d);
       let n=start;
-      const show=()=>{d.innerHTML=n>0?`<div style="font-size:min(40vw,300px);font-weight:900;color:#f59e0b;text-shadow:0 0 40px rgba(245,158,11,0.8);animation:__cdpop 0.3s ease-out">${n}</div>`:`<div style="font-size:min(15vw,120px);font-weight:900;color:#10b981;text-shadow:0 0 40px rgba(16,185,129,0.8)">GO!</div>`;};
+      const show=()=>{d.innerHTML=n>0?`<div style="font-size:min(40vw,300px);font-weight:900;color:#ff4f8b;text-shadow:0 0 40px rgba(255,79,139,0.8);animation:__cdpop 0.3s ease-out">${n}</div>`:`<div style="font-size:min(15vw,120px);font-weight:900;color:#10b981;text-shadow:0 0 40px rgba(16,185,129,0.8)">GO!</div>`;};
       const style=Object.assign(document.createElement("style"),{id:"__cd_style"});
       style.textContent="@keyframes __cdpop{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}";
       document.head.appendChild(style);show();
@@ -1635,7 +1645,7 @@ export default function Home() {
       const d=document.createElement("div");
       d.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px";
       const spinner=document.createElement("div");
-      spinner.style.cssText="width:56px;height:56px;border:5px solid rgba(255,255,255,0.2);border-top-color:#f59e0b;border-radius:50%;animation:__spin 0.8s linear infinite";
+      spinner.style.cssText="width:56px;height:56px;border:5px solid rgba(255,255,255,0.2);border-top-color:#ff4f8b;border-radius:50%;animation:__spin 0.8s linear infinite";
       const style=document.createElement("style");style.textContent="@keyframes __spin{to{transform:rotate(360deg)}}";
       const txt=document.createElement("div");txt.style.cssText="color:#fff;font-size:18px;font-weight:700";txt.textContent="Loading...";
       document.head.appendChild(style);d.appendChild(spinner);d.appendChild(txt);document.body.appendChild(d);
@@ -1806,7 +1816,7 @@ export default function Home() {
       const lines = cmd==="hack"
         ? ["[INITIATING BREACH]","Locating target: trivquic.vercel.app","Bypassing firewall... OK","Injecting payload... OK","ACCESSING MAINFRAME","Decrypting user database...","192.168.1.1 > OPEN","10.0.0.254 > OPEN","Dumping credentials... ██████████ 100%",`ACCESS GRANTED. Welcome, ${userData?.username || user?.displayName || "unknown"}.`]
         : ["$ sudo rm -rf /","Permission denied","$ sudo !!","Password: ","Sorry, try again.","Password: ","sudo: 3 incorrect password attempts","$ sudo make me a sandwich","OK."];
-      const div=Object.assign(document.createElement("div"),{style:"position:fixed;bottom:20px;left:20px;background:#0f0f0f;border:1px solid #0f0;color:#0f0;font:13px monospace;padding:16px 20px;border-radius:8px;z-index:9999;max-width:420px;pointer-events:none;"});
+      const div=Object.assign(document.createElement("div"),{style:"position:fixed;bottom:20px;left:20px;background:#0b0614;border:1px solid #0f0;color:#0f0;font:13px monospace;padding:16px 20px;border-radius:8px;z-index:9999;max-width:420px;pointer-events:none;"});
       document.body.appendChild(div);
       let i=0;
       const iv=setInterval(()=>{if(i>=lines.length){clearInterval(iv);setTimeout(()=>div.remove(),2000);return;}div.innerHTML+=lines[i++]+"<br>";},400);
@@ -1816,8 +1826,8 @@ export default function Home() {
 
     // ── 404 ───────────────────────────────────────────────────────────
     if (cmd === "404") {
-      const div=Object.assign(document.createElement("div"),{style:"position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;"});
-      div.innerHTML=`<div style="font-size:96px;font-weight:900;color:#ef4444">404</div><div style="font-size:20px;margin-bottom:8px">Page Not Found</div><div style="font-size:13px;color:#4b5563">This is fine.</div>`;
+      const div=Object.assign(document.createElement("div"),{style:"position:fixed;inset:0;z-index:9999;background:#130a24;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;"});
+      div.innerHTML=`<div style="font-size:96px;font-weight:900;color:#ef4444">404</div><div style="font-size:20px;margin-bottom:8px">Page Not Found</div><div style="font-size:13px;color:#7d6f9f">This is fine.</div>`;
       document.body.appendChild(div);
       effectsRef.current.push({stop:()=>div.remove()}); autoStop((durationSec??4)*1000); return;
     }
@@ -1862,7 +1872,7 @@ export default function Home() {
       // confetti + rainbow
       let hue=0; let raf2:number; let stopped2=false;
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
-      const colors2=["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fbbf24","#34d399"];
+      const colors2=["#ff4f8b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fbbf24","#34d399"];
       type P2={x:number;y:number;vx:number;vy:number;rot:number;vrot:number;color:string;w:number;h:number};
       const pieces:P2[]=Array.from({length:200},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height,vx:(Math.random()-0.5)*3,vy:Math.random()*3+2,rot:Math.random()*360,vrot:(Math.random()-0.5)*8,color:colors2[Math.floor(Math.random()*colors2.length)],w:Math.random()*10+6,h:Math.random()*6+4}));
       const tick=()=>{if(stopped2)return;hue=(hue+1)%360;root.style.filter=`hue-rotate(${hue}deg)`;
@@ -1894,7 +1904,7 @@ export default function Home() {
     if (cmd === "friday") {
       const day = new Date().getDay();
       if (day !== 5) {
-        const div=Object.assign(document.createElement("div"),{style:"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1a1a2e;border:1px solid #f59e0b;border-radius:14px;padding:24px 32px;color:#fff;font-size:18px;font-weight:700;text-align:center;pointer-events:none;"});
+        const div=Object.assign(document.createElement("div"),{style:"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1e1236;border:1px solid #ff4f8b;border-radius:14px;padding:24px 32px;color:#fff;font-size:18px;font-weight:700;text-align:center;pointer-events:none;"});
         div.textContent="❌ This command only works on Fridays.";document.body.appendChild(div);setTimeout(()=>div.remove(),2500);return;
       }
       runCommand("party"); return;
@@ -1904,7 +1914,7 @@ export default function Home() {
     if (cmd === "midnight") {
       const now=new Date(); const mins=now.getHours()*60+now.getMinutes();
       if(mins>2&&mins<1438){
-        const div=Object.assign(document.createElement("div"),{style:"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1a1a2e;border:1px solid #f59e0b;border-radius:14px;padding:24px 32px;color:#fff;font-size:16px;font-weight:700;text-align:center;pointer-events:none;"});
+        const div=Object.assign(document.createElement("div"),{style:"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1e1236;border:1px solid #ff4f8b;border-radius:14px;padding:24px 32px;color:#fff;font-size:16px;font-weight:700;text-align:center;pointer-events:none;"});
         div.textContent="🌙 Come back at midnight.";document.body.appendChild(div);setTimeout(()=>div.remove(),2500);return;
       }
       runCommand("fireworks"); return;
@@ -1914,7 +1924,7 @@ export default function Home() {
     if (cmd === "newyear") {
       const d=new Date();
       if(d.getMonth()!==11||d.getDate()!==31){
-        const div=Object.assign(document.createElement("div"),{style:"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1a1a2e;border:1px solid #f59e0b;border-radius:14px;padding:24px 32px;color:#fff;font-size:16px;font-weight:700;text-align:center;pointer-events:none;"});
+        const div=Object.assign(document.createElement("div"),{style:"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1e1236;border:1px solid #ff4f8b;border-radius:14px;padding:24px 32px;color:#fff;font-size:16px;font-weight:700;text-align:center;pointer-events:none;"});
         div.textContent=`🎄 Come back December 31st. (${d.getMonth()+1}/${d.getDate()} rn)`;document.body.appendChild(div);setTimeout(()=>div.remove(),2500);return;
       }
       runCommand("fireworks"); return;
@@ -1924,7 +1934,7 @@ export default function Home() {
     if (cmd === "fireworks") {
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
       type FP={x:number;y:number;vx:number;vy:number;alpha:number;color:string;size:number};
-      const particles:FP[]=[]; const colors=["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fff"];
+      const particles:FP[]=[]; const colors=["#ff4f8b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fff"];
       function burst(x:number,y:number){for(let i=0;i<60;i++){const a=Math.random()*Math.PI*2;const s=Math.random()*6+1;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,alpha:1,color:colors[Math.floor(Math.random()*colors.length)],size:Math.random()*3+1});}}
       let t=0;let raf2:number;let stopped2=false;
       const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);t++;if(t%40===0)burst(Math.random()*c.width,Math.random()*c.height*0.7);
@@ -1936,7 +1946,7 @@ export default function Home() {
     if (cmd === "confetti") {
       const c=makeCanvas(); const ctx2=c.getContext("2d")!;
       type CP={x:number;y:number;vx:number;vy:number;rot:number;vrot:number;color:string;w:number;h:number};
-      const colors2=["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fbbf24","#34d399"];
+      const colors2=["#ff4f8b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#fbbf24","#34d399"];
       const pieces:CP[]=Array.from({length:180},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height,vx:(Math.random()-0.5)*3,vy:Math.random()*3+2,rot:Math.random()*360,vrot:(Math.random()-0.5)*8,color:colors2[Math.floor(Math.random()*colors2.length)],w:Math.random()*10+6,h:Math.random()*6+4}));
       let raf2:number;let stopped2=false;
       const tick=()=>{if(stopped2)return;ctx2.clearRect(0,0,c.width,c.height);pieces.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vrot;if(p.y>c.height){p.y=-20;p.x=Math.random()*c.width;}ctx2.save();ctx2.translate(p.x,p.y);ctx2.rotate(p.rot*Math.PI/180);ctx2.fillStyle=p.color;ctx2.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx2.restore();});raf2=requestAnimationFrame(tick);};
@@ -2634,22 +2644,22 @@ export default function Home() {
   // ── MODALS ───────────────────────────────────────────────────────────────────
   const InfoModal = ({ type }: { type: "about"|"updates" }) => (
     <div onClick={() => setModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, width:"100%", maxWidth:400, maxHeight:"85vh", display:"flex", flexDirection:"column", position:"relative", color:"#fff" }}>
-        <div style={{ padding:"20px 24px 12px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #2d2d44", flexShrink:0 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, width:"100%", maxWidth:400, maxHeight:"85vh", display:"flex", flexDirection:"column", position:"relative", color:"#fff" }}>
+        <div style={{ padding:"20px 24px 12px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #3a2760", flexShrink:0 }}>
           <div style={{ fontSize:"1.2rem", fontWeight:900 }}>{type === "about" ? "⚡ About" : "🆕 Updates"}</div>
-          <button onClick={() => setModal(null)} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:20, cursor:"pointer", lineHeight:1 }}>×</button>
+          <button onClick={() => setModal(null)} style={{ background:"transparent", border:"none", color:"#a094c4", fontSize:20, cursor:"pointer", lineHeight:1 }}>×</button>
         </div>
         <div style={{ overflowY:"auto", padding:"16px 24px 24px", flex:1 }}>
         {type === "about" && (<>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:12 }}>
-            <strong style={{ color:"#f59e0b" }}>TrivQuic</strong> is a fast-paced trivia game — 6 categories, real-time duels, global leaderboards, and a full social layer. Fast trivia. No mercy.
+          <p style={{ color:"#e6defa", lineHeight:1.7, marginBottom:12 }}>
+            <strong style={{ color:"#ff4f8b" }}>TrivQuic</strong> is a fast-paced trivia game — 6 categories, real-time duels, global leaderboards, and a full social layer. Fast trivia. No mercy.
           </p>
-          <p style={{ color:"#d1d5db", lineHeight:1.7, marginBottom:20 }}>
+          <p style={{ color:"#e6defa", lineHeight:1.7, marginBottom:20 }}>
             Play solo, go head-to-head in multiplayer rooms, or jump into skill-matched 1v1 duels with custom rounds and break time.
           </p>
 
           <div style={{ marginBottom:20 }}>
-            <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>Built with</div>
+            <div style={{ fontSize:11, color:"#ff4f8b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>Built with</div>
             {[
               { icon:"⚛️", name:"Next.js 16", desc:"React framework, App Router, API routes" },
               { icon:"🔥", name:"Firebase", desc:"Realtime Database, Authentication, Cloud Messaging (FCM)" },
@@ -2659,35 +2669,35 @@ export default function Home() {
               { icon:"🎨", name:"Tailwind CSS", desc:"Utility styling" },
               { icon:"🌐", name:"Google Translate API", desc:"14-language support" },
             ].map(t => (
-              <div key={t.name} style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 0", borderBottom:"1px solid #2d2d44" }}>
+              <div key={t.name} style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 0", borderBottom:"1px solid #3a2760" }}>
                 <span style={{ fontSize:20, flexShrink:0, width:28, textAlign:"center" as const }}>{t.icon}</span>
                 <div>
-                  <div style={{ fontWeight:700, fontSize:13, color:"#e5e7eb" }}>{t.name}</div>
-                  <div style={{ fontSize:11, color:"#6b7280" }}>{t.desc}</div>
+                  <div style={{ fontWeight:700, fontSize:13, color:"#f3eeff" }}>{t.name}</div>
+                  <div style={{ fontSize:11, color:"#a094c4" }}>{t.desc}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ borderTop:"1px solid #2d2d44", paddingTop:16, fontSize:13, color:"#4b5563", lineHeight:1.9 }}>
-            <div>By: <span style={{ color:"#e5e7eb" }}>Chris</span></div>
-            <div>Made in: <span style={{ color:"#e5e7eb" }}>2026</span></div>
-            <div>Email: <a href="mailto:chris0622ha@gmail.com" style={{ color:"#f59e0b", textDecoration:"none" }}>chris0622ha@gmail.com</a></div>
+          <div style={{ borderTop:"1px solid #3a2760", paddingTop:16, fontSize:13, color:"#7d6f9f", lineHeight:1.9 }}>
+            <div>By: <span style={{ color:"#f3eeff" }}>Chris</span></div>
+            <div>Made in: <span style={{ color:"#f3eeff" }}>2026</span></div>
+            <div>Email: <a href="mailto:chris0622ha@gmail.com" style={{ color:"#ff4f8b", textDecoration:"none" }}>chris0622ha@gmail.com</a></div>
           </div>
         </>)}
         {type === "updates" && (<>
           <div style={{ display:"flex", gap:6, marginBottom:16 }}>
             <div onClick={() => setUpdatesSub("updates")}
-              style={{ padding:"5px 14px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer",
-                background: updatesSub === "updates" ? "#f59e0b" : "rgba(255,255,255,0.06)",
-                color: updatesSub === "updates" ? "#000" : "#9ca3af" }}>
+              style={{ padding:"5px 14px", borderRadius:28, fontSize:12, fontWeight:700, cursor:"pointer",
+                background: updatesSub === "updates" ? "#ff4f8b" : "rgba(255,255,255,0.06)",
+                color: updatesSub === "updates" ? "#000" : "#c4b8e0" }}>
               📋 Updates
             </div>
             {userData?.isAdmin && (
               <div onClick={() => setUpdatesSub("admin")}
-                style={{ padding:"5px 14px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer",
-                  background: updatesSub === "admin" ? "#f59e0b" : "rgba(255,255,255,0.06)",
-                  color: updatesSub === "admin" ? "#000" : "#9ca3af" }}>
+                style={{ padding:"5px 14px", borderRadius:28, fontSize:12, fontWeight:700, cursor:"pointer",
+                  background: updatesSub === "admin" ? "#ff4f8b" : "rgba(255,255,255,0.06)",
+                  color: updatesSub === "admin" ? "#000" : "#c4b8e0" }}>
                 👑 Admin
               </div>
             )}
@@ -2702,9 +2712,9 @@ export default function Home() {
             ] },
           ].map(({ version, items }) => (
             <div key={version} style={{ marginBottom:16 }}>
-              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
+              <div style={{ color:"#ff4f8b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
               {items.map(item => (
-                <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid #2d2d44", marginBottom:3 }}>{item}</div>
+                <div key={item} style={{ color:"#e6defa", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid #3a2760", marginBottom:3 }}>{item}</div>
               ))}
             </div>
           ))}
@@ -2720,9 +2730,9 @@ export default function Home() {
             ] },
           ].map(({ version, items }) => (
             <div key={version} style={{ marginBottom:16 }}>
-              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
+              <div style={{ color:"#ff4f8b", fontWeight:800, fontSize:14, marginBottom:6 }}>{version}</div>
               {items.map(item => (
-                <div key={item} style={{ color:"#d1d5db", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid rgba(245,158,11,0.3)", marginBottom:3 }}>{item}</div>
+                <div key={item} style={{ color:"#e6defa", fontSize:13, lineHeight:1.6, paddingLeft:12, borderLeft:"2px solid rgba(255,79,139,0.3)", marginBottom:3 }}>{item}</div>
               ))}
             </div>
           ))}
@@ -2735,7 +2745,7 @@ export default function Home() {
   // ── AUTH HEADER ──────────────────────────────────────────────────────────────
   // Apply dark/light mode + font size
   React.useEffect(() => {
-    const bg = darkMode ? "#0f0f1a" : "#f5f5f0";
+    const bg = darkMode ? "#130a24" : "#fff3f6";
     const fg = darkMode ? "#fff" : "#111";
     const fz = fontSize === "small" ? "13px" : fontSize === "large" ? "17px" : "15px";
     const s = document.getElementById("__theme_style") || Object.assign(document.createElement("style"), { id:"__theme_style" });
@@ -2772,31 +2782,31 @@ export default function Home() {
       {/* Achievement toast */}
       {newAchievement && (
         <div data-protect="1" style={{ position:"fixed", top: announcement ? 52 : 12, left:"50%", transform:"translateX(-50%)", zIndex:600,
-          background:"linear-gradient(135deg,#1a1a2e,#0f0f1a)", border:"1px solid #f59e0b",
-          borderRadius:14, padding:"10px 20px", maxWidth:"min(340px,90vw)",
-          boxShadow:"0 0 30px rgba(245,158,11,0.4)", textAlign:"center" as const, pointerEvents:"none" }}>
-          <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:2 }}>🏆 ACHIEVEMENT UNLOCKED</div>
+          background:"linear-gradient(135deg,#1e1236,#130a24)", border:"1px solid #ff4f8b",
+          borderRadius:20, padding:"10px 20px", maxWidth:"min(340px,90vw)",
+          boxShadow:"0 0 30px rgba(255,79,139,0.4)", textAlign:"center" as const, pointerEvents:"none" }}>
+          <div style={{ fontSize:11, color:"#ff4f8b", fontWeight:700, letterSpacing:"0.1em", marginBottom:2 }}>🏆 ACHIEVEMENT UNLOCKED</div>
           <div style={{ color:"#fff", fontSize:15, fontWeight:700 }}>{newAchievement}</div>
         </div>
       )}
       {/* Broadcast message toast */}
       {broadcastMsg && (
-        <div data-protect="1" style={{ position:"fixed", bottom: 80, left:"50%", transform:"translateX(-50%)", zIndex:600, background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:12, padding:"12px 20px", maxWidth:"min(400px,90vw)", boxShadow:"0 4px 20px rgba(0,0,0,0.5)", cursor:"pointer" }}
+        <div data-protect="1" style={{ position:"fixed", bottom: 80, left:"50%", transform:"translateX(-50%)", zIndex:600, background:"#1e1236", border:"1px solid #ff4f8b", borderRadius:18, padding:"12px 20px", maxWidth:"min(400px,90vw)", boxShadow:"0 4px 20px rgba(0,0,0,0.5)", cursor:"pointer" }}
           onClick={() => setBroadcastMsg(null)}>
-          <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, marginBottom:4 }}>📣 {broadcastMsg.from}</div>
-          <div style={{ color:"#e5e7eb", fontSize:14 }}>{broadcastMsg.text}</div>
+          <div style={{ fontSize:11, color:"#ff4f8b", fontWeight:700, marginBottom:4 }}>📣 {broadcastMsg.from}</div>
+          <div style={{ color:"#f3eeff", fontSize:14 }}>{broadcastMsg.text}</div>
         </div>
       )}
       {/* Global Announcement Banner — fixed, centered, all screens */}
       {announcement && (
-        <div data-protect="1" style={{ position:"fixed", top:0, left:0, right:0, zIndex:490, background:"rgba(245,158,11,0.15)", borderBottom:"2px solid rgba(245,158,11,0.5)", padding:"10px 16px", backdropFilter:"blur(8px)", boxShadow:"0 2px 20px rgba(0,0,0,0.4)", textAlign:"center" as const, fontSize: isMobile ? 14 : 16, lineHeight:1.5, pointerEvents:"none", whiteSpace:"normal" as const, wordBreak:"break-word" as const }}>
-          <span style={{ color:"#f59e0b", fontWeight:700 }}>{announcement.postedBy || "admin"}: </span>
-          <span style={{ color:"#e5e7eb" }}>{announcement.text}</span>
+        <div data-protect="1" style={{ position:"fixed", top:0, left:0, right:0, zIndex:490, background:"rgba(255,79,139,0.15)", borderBottom:"2px solid rgba(255,79,139,0.5)", padding:"10px 16px", backdropFilter:"blur(8px)", boxShadow:"0 2px 20px rgba(0,0,0,0.4)", textAlign:"center" as const, fontSize: isMobile ? 14 : 16, lineHeight:1.5, pointerEvents:"none", whiteSpace:"normal" as const, wordBreak:"break-word" as const }}>
+          <span style={{ color:"#ff4f8b", fontWeight:700 }}>{announcement.postedBy || "admin"}: </span>
+          <span style={{ color:"#f3eeff" }}>{announcement.text}</span>
         </div>
       )}
       {/* Language button — top left, fixed */}
       <button onClick={() => setShowLangModal(true)}
-        style={{ position:"fixed", top: announcement ? (isMobile ? 44 : 50) : 12, left:16, zIndex:200, transition:"top 0.2s", display: screen === "game" ? "none" : undefined, background:"rgba(15,15,26,0.7)", border:"1px solid rgba(45,45,68,0.6)", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
+        style={{ position:"fixed", top: announcement ? (isMobile ? 44 : 50) : 12, left:16, zIndex:200, transition:"top 0.2s", display: screen === "game" ? "none" : undefined, background:"rgba(15,15,26,0.7)", border:"1px solid rgba(45,45,68,0.6)", borderRadius:12, color:"#c4b8e0", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
         🌐 {LANGUAGES.find(l => l.code === currentLang)?.flag || "🌐"}
       </button>
 
@@ -2804,12 +2814,12 @@ export default function Home() {
       {userData?.isAdmin && (
         <div data-protect="1" style={{ position:"fixed", bottom: isMobile ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "auto", top: isMobile ? "auto" : (announcement ? 86 : 48), left:"50%", transform:"translateX(-50%)", zIndex:1000, display:"flex", gap:6 }}>
           <div onClick={() => setAnnounceModal(true)}
-            style={{ background:"#f59e0b", color:"#000", fontSize:11, fontWeight:700, padding:"5px 10px", borderRadius:20, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
+            style={{ background:"#ff4f8b", color:"#000", fontSize:11, fontWeight:700, padding:"5px 10px", borderRadius:28, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
             📢 {isMobile ? "" : "Announcement"}
           </div>
           {announcement && (
             <div onClick={async () => { await remove(ref(db, "config/announcement")); setAnnouncement(null); }}
-              style={{ background:"#ef4444", color:"#fff", fontSize:11, fontWeight:700, padding:"5px 10px", borderRadius:20, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
+              style={{ background:"#ef4444", color:"#fff", fontSize:11, fontWeight:700, padding:"5px 10px", borderRadius:28, cursor:"pointer", whiteSpace:"nowrap" as const, boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
               ✕ {isMobile ? "" : "Delete"}
             </div>
           )}
@@ -2818,19 +2828,19 @@ export default function Home() {
       {/* Sign out confirm modal */}
       {showSignOutConfirm && (
         <div onClick={() => setShowSignOutConfirm(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:380, color:"#fff", textAlign:"center" as const }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, padding:"28px 24px", width:"100%", maxWidth:380, color:"#fff", textAlign:"center" as const }}>
             <div style={{ fontSize:36, marginBottom:12 }}>👋</div>
             <div style={{ fontSize:"1.2rem", fontWeight:900, marginBottom:10 }}>Sign out?</div>
-            <div style={{ color:"#9ca3af", fontSize:14, lineHeight:1.7, marginBottom:24 }}>
+            <div style={{ color:"#c4b8e0", fontSize:14, lineHeight:1.7, marginBottom:24 }}>
               Signing out keeps all of your data.<br/>You just need to log back in.
             </div>
             <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
               <button onClick={() => { signOut(auth); setShowSignOutConfirm(false); }}
-                style={{ background:"linear-gradient(135deg,#ef4444,#b91c1c)", border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:14, padding:"11px 24px", cursor:"pointer" }}>
+                style={{ background:"linear-gradient(135deg,#ef4444,#b91c1c)", border:"none", borderRadius:16, color:"#fff", fontWeight:800, fontSize:14, padding:"11px 24px", cursor:"pointer" }}>
                 Yes, sign out
               </button>
               <button onClick={() => setShowSignOutConfirm(false)}
-                style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:10, color:"#9ca3af", fontWeight:600, fontSize:14, padding:"11px 24px", cursor:"pointer" }}>
+                style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #3a2760", borderRadius:16, color:"#c4b8e0", fontWeight:600, fontSize:14, padding:"11px 24px", cursor:"pointer" }}>
                 Cancel
               </button>
             </div>
@@ -2847,40 +2857,40 @@ export default function Home() {
               <div style={{ position:"relative", display:"inline-block" }}>
                 {(userData?.photoURL || user.photoURL) ? (
                   <img src={userData?.photoURL || user.photoURL} alt="" width={32} height={32}
-                    style={{ borderRadius:"50%", border:"2px solid #f59e0b", display:"block" }} />
+                    style={{ borderRadius:"50%", border:"2px solid #ff4f8b", display:"block" }} />
                 ) : (
-                  <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(245,158,11,0.2)",
-                    border:"2px solid #f59e0b", display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:14, fontWeight:900, color:"#f59e0b" }}>
+                  <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,79,139,0.2)",
+                    border:"2px solid #ff4f8b", display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:14, fontWeight:900, color:"#ff4f8b" }}>
                     {(userData?.username || user.email || "?")[0].toUpperCase()}
                   </div>
                 )}
                 {pendingCount > 0 && (
                   <div style={{ position:"absolute", top:-3, right:-3, width:16, height:16,
-                    borderRadius:"50%", background:"#ef4444", border:"2px solid #0f0f1a",
+                    borderRadius:"50%", background:"#ef4444", border:"2px solid #130a24",
                     display:"flex", alignItems:"center", justifyContent:"center",
                     fontSize:9, fontWeight:900, color:"#fff", lineHeight:1 }}>
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </div>
                 )}
               </div>
-              <span style={{ color:"#e5e7eb", fontSize:13, fontWeight:600, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const, display:"flex", alignItems:"center", gap:3 }}>
+              <span style={{ color:"#f3eeff", fontSize:13, fontWeight:600, maxWidth:100, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const, display:"flex", alignItems:"center", gap:3 }}>
                 {userData?.username || user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
                 <BadgeIcon badge={userData?.badge} size={12} />
               </span>
             </button>
             <button onClick={() => setShowSignOutConfirm(true)}
-              style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #2d2d44", borderRadius:8, color:"#9ca3af", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
+              style={{ background:"rgba(255,255,255,0.07)", border:"1px solid #3a2760", borderRadius:12, color:"#c4b8e0", fontSize:12, fontWeight:600, padding:"5px 12px", cursor:"pointer" }}>
               Sign out
             </button>
           </div>
         ) : isUnder13 ? (
-          <div style={{ background:"rgba(255,255,255,0.06)", border:"1px solid #2d2d44", borderRadius:8, color:"#6b7280", fontSize:11, fontWeight:600, padding:"7px 12px", maxWidth:180, textAlign:"center" }}>
+          <div style={{ background:"rgba(255,255,255,0.06)", border:"1px solid #3a2760", borderRadius:12, color:"#a094c4", fontSize:11, fontWeight:600, padding:"7px 12px", maxWidth:180, textAlign:"center" }}>
             Accounts aren't available under 13. You can still play below.
           </div>
         ) : isEmbed ? null : (
           <button onClick={async () => { try { await signInWithPopup(auth, googleProvider); } catch {} }}
-            style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:8, color:"#1f2937", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}>
+            style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:12, color:"#2a1c47", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}>
             <svg width="16" height="16" viewBox="0 0 48 48">
               <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.7 29.3 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.4-4z"/>
               <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 16.3 3 9.7 7.9 6.3 14.7z"/>
@@ -2943,9 +2953,9 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
 
   const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
     <button onClick={onClick} style={{
-      background: active ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)",
-      border: `1px solid ${active ? "#f59e0b" : "#2d2d44"}`,
-      borderRadius: 99, color: active ? "#f59e0b" : "#6b7280",
+      background: active ? "rgba(255,79,139,0.2)" : "rgba(255,255,255,0.04)",
+      border: `1px solid ${active ? "#ff4f8b" : "#3a2760"}`,
+      borderRadius: 99, color: active ? "#ff4f8b" : "#a094c4",
       fontSize: 11, fontWeight: 700, padding: "4px 10px", cursor: "pointer",
       whiteSpace: "nowrap" as const, flexShrink: 0,
     }}>{label}</button>
@@ -2953,13 +2963,13 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
 
   if (globalLB.length === 0) return null;
   return (
-    <div style={{ width:"100%", maxWidth:400, background:"#1a1a2e", borderRadius:16, padding:"20px" }}>
-      <div style={{ fontSize:13, color:"#f59e0b", marginBottom:12, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
+    <div style={{ width:"100%", maxWidth:400, background:"#1e1236", borderRadius:24, padding:"20px" }}>
+      <div style={{ fontSize:13, color:"#ff4f8b", marginBottom:12, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:700 }}>
         🏆 Global Leaderboard
       </div>
 
       {/* Category filter */}
-      <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Category</div>
+      <div style={{ fontSize:10, color:"#7d6f9f", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Category</div>
       <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
         <Pill label="All" active={catFilter === "all"} onClick={() => setCatFilter("all")} />
         {Object.entries(CATEGORY_MAP).filter(([k]) => k !== "all").map(([k, v]) => (
@@ -2968,7 +2978,7 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
       </div>
 
       {/* Questions filter */}
-      <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Questions</div>
+      <div style={{ fontSize:10, color:"#7d6f9f", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Questions</div>
       <div style={{ display:"flex", gap:5, marginBottom:10 }}>
         {[["All", 0], ["10", 10], ["20", 20], ["30", 30]].map(([label, val]) => (
           <Pill key={val} label={label as string} active={roundFilter === val} onClick={() => setRoundFilter(val as number)} />
@@ -2976,7 +2986,7 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
       </div>
 
       {/* Timer filter */}
-      <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Time limit</div>
+      <div style={{ fontSize:10, color:"#7d6f9f", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Time limit</div>
       <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
         {TIMER_BUCKETS.map((b, i) => (
           <Pill key={i} label={b.label} active={timerFilter === i} onClick={() => setTimerFilter(i)} />
@@ -2984,35 +2994,35 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
       </div>
 
       {/* Difficulty filter */}
-      <div style={{ fontSize:10, color:"#4b5563", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Difficulty</div>
+      <div style={{ fontSize:10, color:"#7d6f9f", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Difficulty</div>
       <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:14 }}>
-        {([["all","All","#6b7280"],["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#f59e0b"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col]) => (
+        {([["all","All","#a094c4"],["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#fbbf24"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col]) => (
           <button key={d} onClick={() => setDiffFilter(d)} style={{
-            background: diffFilter===d ? `rgba(${d==="easy"?"16,185,129":d==="medium"?"245,158,11":d==="hard"?"239,68,68":d==="mixed"?"168,85,247":"107,114,128"},0.2)` : "rgba(255,255,255,0.04)",
-            border: `1px solid ${diffFilter===d ? col : "#2d2d44"}`,
-            borderRadius:99, color: diffFilter===d ? col : "#6b7280",
+            background: diffFilter===d ? `rgba(${d==="easy"?"16,185,129":d==="medium"?"251,191,36":d==="hard"?"239,68,68":d==="mixed"?"168,85,247":"107,114,128"},0.2)` : "rgba(255,255,255,0.04)",
+            border: `1px solid ${diffFilter===d ? col : "#3a2760"}`,
+            borderRadius:99, color: diffFilter===d ? col : "#a094c4",
             fontSize:11, fontWeight:700, padding:"4px 10px", cursor:"pointer", whiteSpace:"nowrap" as const, flexShrink:0,
           }}>{label}</button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <div style={{ color:"#4b5563", fontSize:13, textAlign:"center", padding:"16px 0" }}>No scores yet for this combination</div>
+        <div style={{ color:"#7d6f9f", fontSize:13, textAlign:"center", padding:"16px 0" }}>No scores yet for this combination</div>
       ) : (
         <>
           <div style={{ maxHeight: expanded ? 420 : "none", overflowY: expanded ? "auto" : "visible" }}>
             {visible.map((e, i) => {
               const rankLabel = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
-              const rankColor = i < 3 ? undefined : "#4b5563";
+              const rankColor = i < 3 ? undefined : "#7d6f9f";
               const timerLabel = e.timerDuration === 0 ? "∞" : e.timerDuration != null ? `${e.timerDuration}s` : "—";
               return (
-                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 6px", borderBottom:"1px solid #2d2d44" }}>
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 6px", borderBottom:"1px solid #3a2760" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                     <span style={{ fontSize: i < 3 ? 18 : 12, fontWeight:800, color: rankColor, width:28, textAlign:"right", flexShrink:0 }}>{rankLabel}</span>
                     <div>
-                      <span onClick={() => e.uid && !isUnder13 && setViewedUser(e.uid)} style={{ color:"#e5e7eb", fontWeight:600, fontSize:14, cursor: (e.uid && !isUnder13) ? "pointer" : "default" }}>{e.name}</span>
+                      <span onClick={() => e.uid && !isUnder13 && setViewedUser(e.uid)} style={{ color:"#f3eeff", fontWeight:600, fontSize:14, cursor: (e.uid && !isUnder13) ? "pointer" : "default" }}>{e.name}</span>
                       <BadgeIcon badge={e.badge} size={13} />
-                      <div style={{ fontSize:10, color:"#4b5563" }}>
+                      <div style={{ fontSize:10, color:"#7d6f9f" }}>
                         {CATEGORY_MAP[e.category]?.emoji} {CATEGORY_MAP[e.category]?.label ?? e.category}
                         {e.roundSize != null ? ` · ${e.roundSize}Q` : ""}
                         {` · ${timerLabel}`}
@@ -3020,10 +3030,10 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
                     </div>
                   </div>
                   <div style={{ textAlign:"right", display:"flex", flexDirection:"column", alignItems:"flex-end", gap:2 }}>
-                    <div style={{ color:"#f59e0b", fontWeight:800, fontSize:16 }}>{e.score}</div>
-                    <div style={{ color:"#6b7280", fontSize:11 }}>🔥{e.streak}</div>
+                    <div style={{ color:"#ff4f8b", fontWeight:800, fontSize:16 }}>{e.score}</div>
+                    <div style={{ color:"#a094c4", fontSize:11 }}>🔥{e.streak}</div>
                     {user && (
-                      <button onClick={() => setReportTarget(e)} style={{ background:"transparent", border:"none", color:"#4b5563", fontSize:10, cursor:"pointer", padding:0, marginTop:1 }}>
+                      <button onClick={() => setReportTarget(e)} style={{ background:"transparent", border:"none", color:"#7d6f9f", fontSize:10, cursor:"pointer", padding:0, marginTop:1 }}>
                         🚩 report
                       </button>
                     )}
@@ -3034,7 +3044,7 @@ function LeaderboardView({ globalLB }: { globalLB: any[] }) {
           </div>
           {filtered.length > INITIAL && (
             <button onClick={() => setExpanded(x => !x)}
-              style={{ width:"100%", background:"transparent", border:"none", color:"#6b7280",
+              style={{ width:"100%", background:"transparent", border:"none", color:"#a094c4",
                 fontSize:12, fontWeight:600, padding:"10px 0 0", cursor:"pointer",
                 letterSpacing:"0.05em", textTransform:"uppercase" }}>
               {expanded ? "Show less ▲" : "Show all ▼"}
@@ -3121,46 +3131,46 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
 
   return (
     <div onClick={onClose} style={{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.85)", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, width:"100%", maxWidth:420, maxHeight:"80vh", display:"flex", flexDirection:"column" as const, color:"#fff" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, width:"100%", maxWidth:420, maxHeight:"80vh", display:"flex", flexDirection:"column" as const, color:"#fff" }}>
         <div style={{ padding:"20px 20px 0", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <div style={{ fontWeight:900, fontSize:"1.1rem" }}>🔍 Search Users</div>
-          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:22, cursor:"pointer" }}>×</button>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", color:"#a094c4", fontSize:22, cursor:"pointer" }}>×</button>
         </div>
         <div style={{ padding:"0 20px 16px", display:"flex", gap:8 }}>
           <input
             value={query} onChange={e=>setQuery(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&search()}
             placeholder="Username or Friend ID…"
-            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none" }}
+            style={{ flex:1, background:"#130a24", border:"1px solid #3a2760", borderRadius:16, color:"#fff", fontSize:14, padding:"10px 14px", outline:"none" }}
           />
-          <button onClick={search} disabled={searching} style={{ background:"rgba(245,158,11,0.2)", border:"1px solid rgba(245,158,11,0.4)", borderRadius:10, color:"#f59e0b", fontWeight:700, fontSize:14, padding:"10px 16px", cursor:"pointer" }}>
+          <button onClick={search} disabled={searching} style={{ background:"rgba(255,79,139,0.2)", border:"1px solid rgba(255,79,139,0.4)", borderRadius:16, color:"#ff4f8b", fontWeight:700, fontSize:14, padding:"10px 16px", cursor:"pointer" }}>
             {searching ? "…" : "Search"}
           </button>
         </div>
         <div style={{ flex:1, overflowY:"auto" as const, padding:"0 20px 20px" }}>
           {results.length === 0 && query && !searching && (
-            <div style={{ color:"#4b5563", textAlign:"center" as const, padding:"20px 0" }}>No users found</div>
+            <div style={{ color:"#7d6f9f", textAlign:"center" as const, padding:"20px 0" }}>No users found</div>
           )}
           {results.map(u => (
-            <div key={u.uid} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid #2d2d44" }}>
+            <div key={u.uid} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid #3a2760" }}>
               <div onClick={() => { onClose(); onViewProfile(u.uid); }} style={{ cursor:"pointer", flexShrink:0 }}>
                 {u.photoURL
-                  ? <img src={u.photoURL} width={40} height={40} style={{ borderRadius:"50%", border:"2px solid #2d2d44", objectFit:"cover" as const }} />
-                  : <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(245,158,11,0.15)", border:"2px solid #2d2d44", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, color:"#f59e0b" }}>{(u.username||"?")[0].toUpperCase()}</div>
+                  ? <img src={u.photoURL} width={40} height={40} style={{ borderRadius:"50%", border:"2px solid #3a2760", objectFit:"cover" as const }} />
+                  : <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(255,79,139,0.15)", border:"2px solid #3a2760", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, color:"#ff4f8b" }}>{(u.username||"?")[0].toUpperCase()}</div>
                 }
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div onClick={() => { onClose(); onViewProfile(u.uid); }} style={{ fontWeight:700, fontSize:14, cursor:"pointer", display:"flex", alignItems:"center", gap:4 }}>
                   {u.username} <BadgeIcon badge={u.badge} size={12} />
                 </div>
-                {u.bio && <div style={{ fontSize:12, color:"#6b7280", fontStyle:"italic" as const }}>"{u.bio}"</div>}
-                <div style={{ fontSize:11, color:"#4b5563" }}>Best: {u.bestScore||0}</div>
+                {u.bio && <div style={{ fontSize:12, color:"#a094c4", fontStyle:"italic" as const }}>"{u.bio}"</div>}
+                <div style={{ fontSize:11, color:"#7d6f9f" }}>Best: {u.bestScore||0}</div>
               </div>
               {currentUser && u.uid !== currentUser.uid && (
                 <button onClick={() => addFriend(u)} disabled={sent[u.uid]} style={{
-                  background: sent[u.uid] ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
-                  border:`1px solid ${sent[u.uid] ? "rgba(16,185,129,0.4)" : "rgba(245,158,11,0.4)"}`,
-                  borderRadius:8, color: sent[u.uid] ? "#10b981" : "#f59e0b",
+                  background: sent[u.uid] ? "rgba(16,185,129,0.15)" : "rgba(255,79,139,0.15)",
+                  border:`1px solid ${sent[u.uid] ? "rgba(16,185,129,0.4)" : "rgba(255,79,139,0.4)"}`,
+                  borderRadius:12, color: sent[u.uid] ? "#10b981" : "#ff4f8b",
                   fontSize:12, fontWeight:700, padding:"6px 12px", cursor: sent[u.uid] ? "default" : "pointer", flexShrink:0,
                 }}>
                   {sent[u.uid] ? "Sent ✓" : "Add"}
@@ -3178,11 +3188,11 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   // ── HOME ──────────────────────────────────────────────────────────────────────
   // Maintenance mode — block non-admins
   if (maintenanceMode && !userData?.isAdmin) return (
-    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 20px 20px`, color:"#fff", textAlign:"center" }}>
+    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#130a24", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 20px 20px`, color:"#fff", textAlign:"center" }}>
       <AuthHeader />
       <div style={{ fontSize:56, marginBottom:16 }}>🔧</div>
       <h1 style={{ fontSize:"2rem", fontWeight:900, margin:"0 0 12px" }}>Down for Maintenance</h1>
-      <p style={{ color:"#6b7280", maxWidth:360, lineHeight:1.7 }}>TrivQuic is currently undergoing maintenance. Check back soon!</p>
+      <p style={{ color:"#a094c4", maxWidth:360, lineHeight:1.7 }}>TrivQuic is currently undergoing maintenance. Check back soon!</p>
     </div>
   );
 
@@ -3205,10 +3215,10 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
     const years: number[] = [];
     for (let y = currentYear; y >= currentYear - 100; y--) years.push(y);
     return (
-      <div style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px 16px", color:"#fff", textAlign:"center" }}>
-        <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
-        <h1 style={{ fontSize:"2.2rem", fontWeight:900, letterSpacing:"-0.03em", margin:"0 0 8px", background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrivQuic</h1>
-        <p style={{ color:"#9ca3af", fontSize:"1rem", marginBottom:24, maxWidth:380 }}>What year were you born?</p>
+      <div style={{ minHeight:"100vh", background:"#130a24", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px 16px", color:"#fff", textAlign:"center" }}>
+        <div style={{ marginBottom:12 }}><LogoMark size={64} /></div>
+        <h1 style={{ fontSize:"2.2rem", fontWeight:900, letterSpacing:"-0.03em", margin:"0 0 8px", background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrivQuic</h1>
+        <p style={{ color:"#c4b8e0", fontSize:"1rem", marginBottom:24, maxWidth:380 }}>What year were you born?</p>
         <select
           defaultValue=""
           onChange={(e) => {
@@ -3217,21 +3227,21 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             try { localStorage.setItem("tq_age_gate_year", String(y)); } catch {}
             setAgeGateYear(y);
           }}
-          style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#fff", fontSize:"1.1rem", fontWeight:700, padding:"14px 24px", outline:"none", minWidth:200, textAlign:"center" }}
+          style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:18, color:"#fff", fontSize:"1.1rem", fontWeight:700, padding:"14px 24px", outline:"none", minWidth:200, textAlign:"center" }}
         >
           <option value="" disabled>Select a year</option>
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
         <div style={{ position:"fixed", bottom:18, display:"flex", gap:18 }}>
-          <a href="/privacy" style={{ color:"#3f4452", fontSize:11, textDecoration:"underline" }}>Privacy Policy</a>
-          <a href="/childrens-privacy" style={{ color:"#3f4452", fontSize:11, textDecoration:"underline" }}>Children's Privacy</a>
+          <a href="/privacy" style={{ color:"#6a5c8c", fontSize:11, textDecoration:"underline" }}>Privacy Policy</a>
+          <a href="/childrens-privacy" style={{ color:"#6a5c8c", fontSize:11, textDecoration:"underline" }}>Children's Privacy</a>
         </div>
       </div>
     );
   }
 
   if (screen === "home") return (
-    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
+    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#130a24", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
       <AuthHeader />
 
 
@@ -3239,24 +3249,24 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       {duelChallenges.length > 0 && (
         <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, marginBottom:16, display:"flex", flexDirection:"column", gap:8 }}>
           {duelChallenges.map(ch => (
-            <div key={ch.fromUid} style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:12, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
+            <div key={ch.fromUid} style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:18, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
               <span style={{ fontSize:20, flexShrink:0 }}>⚔️</span>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:700, fontSize:14, color:"#a5b4fc" }}>
                   {ch.fromName} challenged you to a duel!
                 </div>
-                <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>
+                <div style={{ fontSize:12, color:"#a094c4", marginTop:2 }}>
                   {ch.settings?.rounds}R · {ch.settings?.questionsPerRound}Q · {ch.settings?.breakTime}s break
                 </div>
               </div>
               <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-                <a href="/duels" style={{ background:"linear-gradient(135deg,#6366f1,#a855f7)", border:"none", borderRadius:8, color:"#fff", fontWeight:800, fontSize:13, padding:"8px 14px", cursor:"pointer", textDecoration:"none", display:"block" }}>
+                <a href="/duels" style={{ background:"linear-gradient(135deg,#6366f1,#a855f7)", border:"none", borderRadius:12, color:"#fff", fontWeight:800, fontSize:13, padding:"8px 14px", cursor:"pointer", textDecoration:"none", display:"block" }}>
                   Accept ⚔️
                 </a>
                 <button onClick={async () => {
                   await remove(ref(db, `duelChallenges/${user!.uid}/${ch.fromUid}`));
                   setDuelChallenges(c => c.filter(x => x.fromUid !== ch.fromUid));
-                }} style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.4)", borderRadius:8, color:"#ef4444", fontWeight:700, fontSize:13, padding:"8px 12px", cursor:"pointer" }}>
+                }} style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.4)", borderRadius:12, color:"#ef4444", fontWeight:700, fontSize:13, padding:"8px 12px", cursor:"pointer" }}>
                   ✕
                 </button>
               </div>
@@ -3319,23 +3329,23 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
       {/* Warn / Ban popup */}
       {warnModal && warnModal.type === "warn" && (
         <div style={{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.9)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-          <div style={{ background:"#1a1a2e", border:"2px solid rgba(245,158,11,0.6)", borderRadius:20, padding:"28px 24px", maxWidth:380, width:"100%", textAlign:"center" as const, color:"#fff" }}>
+          <div style={{ background:"#1e1236", border:"2px solid rgba(255,79,139,0.6)", borderRadius:28, padding:"28px 24px", maxWidth:380, width:"100%", textAlign:"center" as const, color:"#fff" }}>
             <div style={{ fontSize:52, marginBottom:12 }}>⚠️</div>
-            <h2 style={{ fontSize:"1.4rem", fontWeight:900, margin:"0 0 8px", color:"#f59e0b" }}>You've been warned</h2>
+            <h2 style={{ fontSize:"1.4rem", fontWeight:900, margin:"0 0 8px", color:"#ff4f8b" }}>You've been warned</h2>
             {warnModal.subject && (
-              <div style={{ fontSize:12, color:"#6b7280", marginBottom:4 }}>
-                Subject: <span style={{ color:"#f59e0b", fontWeight:700 }}>{warnModal.subject}</span>
+              <div style={{ fontSize:12, color:"#a094c4", marginBottom:4 }}>
+                Subject: <span style={{ color:"#ff4f8b", fontWeight:700 }}>{warnModal.subject}</span>
                 {warnModal.subjectCount > 1 && <span style={{ color:"#ef4444", marginLeft:6 }}>({warnModal.subjectCount}× on this subject)</span>}
               </div>
             )}
             {warnModal.totalWarns > 1 && (
-              <div style={{ fontSize:12, color:"#6b7280", marginBottom:4 }}>Total warnings: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalWarns}</span></div>
+              <div style={{ fontSize:12, color:"#a094c4", marginBottom:4 }}>Total warnings: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalWarns}</span></div>
             )}
-            <p style={{ color:"#d1d5db", fontSize:14, lineHeight:1.6, margin:"12px 0 20px", background:"rgba(255,255,255,0.04)", borderRadius:10, padding:"12px" }}>
+            <p style={{ color:"#e6defa", fontSize:14, lineHeight:1.6, margin:"12px 0 20px", background:"rgba(255,255,255,0.04)", borderRadius:16, padding:"12px" }}>
               {warnModal.reason || "No reason given"}
             </p>
-            <div style={{ fontSize:11, color:"#4b5563", marginBottom:16 }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
-            <button onClick={() => setWarnModal(null)} style={{ background:"linear-gradient(135deg,#f59e0b,#ef4444)", border:"none", borderRadius:10, color:"#fff", fontWeight:800, fontSize:"1rem", padding:"12px 32px", cursor:"pointer" }}>
+            <div style={{ fontSize:11, color:"#7d6f9f", marginBottom:16 }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
+            <button onClick={() => setWarnModal(null)} style={{ background:"linear-gradient(135deg,#ff4f8b,#8b5cf6)", border:"none", borderRadius:16, color:"#fff", fontWeight:800, fontSize:"1rem", padding:"12px 32px", cursor:"pointer" }}>
               I understand
             </button>
           </div>
@@ -3344,7 +3354,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
 
       {/* BAN — full screen, no dismiss */}
       {warnModal && warnModal.type === "ban" && (
-        <div style={{ position:"fixed" as const, inset:0, background:"#0a0a0a", zIndex:9999, display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:24, color:"#fff" }}>
+        <div style={{ position:"fixed" as const, inset:0, background:"#0b0614", zIndex:9999, display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:24, color:"#fff" }}>
           <div style={{ fontSize:80, marginBottom:20 }}>🔨</div>
           <h1 style={{ fontSize:"2rem", fontWeight:900, color:"#ef4444", margin:"0 0 12px", textAlign:"center" as const }}>You've been banned</h1>
           {warnModal.duration && (
@@ -3353,43 +3363,43 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             </div>
           )}
           {warnModal.expiresAt && (
-            <div style={{ fontSize:13, color:"#6b7280", marginBottom:16 }}>
+            <div style={{ fontSize:13, color:"#a094c4", marginBottom:16 }}>
               Expires: {new Date(warnModal.expiresAt).toLocaleString()}
             </div>
           )}
           {warnModal.subject && (
-            <div style={{ fontSize:13, color:"#9ca3af", marginBottom:6 }}>
+            <div style={{ fontSize:13, color:"#c4b8e0", marginBottom:6 }}>
               Subject: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.subject}</span>
               {warnModal.subjectCount > 1 && <span style={{ color:"#ef4444", marginLeft:6 }}>({warnModal.subjectCount}× on this subject)</span>}
             </div>
           )}
           {warnModal.totalBans > 1 && (
-            <div style={{ fontSize:13, color:"#9ca3af", marginBottom:8 }}>Times banned: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalBans}</span></div>
+            <div style={{ fontSize:13, color:"#c4b8e0", marginBottom:8 }}>Times banned: <span style={{ color:"#ef4444", fontWeight:700 }}>{warnModal.totalBans}</span></div>
           )}
-          <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:14, padding:"16px 24px", maxWidth:360, margin:"16px 0 24px", textAlign:"center" as const }}>
-            <div style={{ fontSize:14, color:"#d1d5db", lineHeight:1.7 }}>{warnModal.reason || "No reason given"}</div>
+          <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"16px 24px", maxWidth:360, margin:"16px 0 24px", textAlign:"center" as const }}>
+            <div style={{ fontSize:14, color:"#e6defa", lineHeight:1.7 }}>{warnModal.reason || "No reason given"}</div>
           </div>
-          <div style={{ fontSize:12, color:"#4b5563" }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
-          <div style={{ fontSize:11, color:"#2d2d44", marginTop:40 }}>If you believe this is a mistake, contact <a href="mailto:chris0622ha@gmail.com" style={{ color:"#2d2d44" }}>chris0622ha@gmail.com</a></div>
+          <div style={{ fontSize:12, color:"#7d6f9f" }}>— {warnModal.adminUsername || "TrivQuic Admin"}</div>
+          <div style={{ fontSize:11, color:"#3a2760", marginTop:40 }}>If you believe this is a mistake, contact <a href="mailto:chris0622ha@gmail.com" style={{ color:"#3a2760" }}>chris0622ha@gmail.com</a></div>
         </div>
       )}
 
       {/* UNBANNED screen */}
       {warnModal && warnModal.type === "unbanned" && (
-        <div style={{ position:"fixed" as const, inset:0, background:"#0a0a0a", zIndex:9999, display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:24, color:"#fff" }}>
+        <div style={{ position:"fixed" as const, inset:0, background:"#0b0614", zIndex:9999, display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", padding:24, color:"#fff" }}>
           <div style={{ fontSize:80, marginBottom:20 }}>🎉</div>
           <h1 style={{ fontSize:"2rem", fontWeight:900, color:"#10b981", margin:"0 0 12px", textAlign:"center" as const }}>
             {warnModal.removedBy ? "Your ban was removed" : "Your ban has expired"}
           </h1>
-          <p style={{ color:"#9ca3af", fontSize:15, textAlign:"center" as const, marginBottom:warnModal.removedBy ? 8 : 32, maxWidth:320 }}>
+          <p style={{ color:"#c4b8e0", fontSize:15, textAlign:"center" as const, marginBottom:warnModal.removedBy ? 8 : 32, maxWidth:320 }}>
             You're free to continue playing. Please follow the community rules going forward.
           </p>
           {warnModal.removedBy && (
-            <div style={{ color:"#6b7280", fontSize:13, marginBottom:32 }}>— removed by {warnModal.removedBy}</div>
+            <div style={{ color:"#a094c4", fontSize:13, marginBottom:32 }}>— removed by {warnModal.removedBy}</div>
           )}
           <button onClick={() => setWarnModal(null)} style={{
             background:"linear-gradient(135deg,#10b981,#059669)", border:"none",
-            borderRadius:14, color:"#fff", fontWeight:900, fontSize:"1.1rem",
+            borderRadius:20, color:"#fff", fontWeight:900, fontSize:"1.1rem",
             padding:"16px 48px", cursor:"pointer",
           }}>
             Continue →
@@ -3397,14 +3407,19 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
         </div>
       )}
 
-      <div style={{ textAlign:"center", marginBottom:28 }}>
-        <div style={{ fontSize:56, marginBottom:8 }}>⚡</div>
-        <h1 style={{ fontSize:"2.8rem", fontWeight:900, letterSpacing:"-0.03em", margin:0, background:"linear-gradient(135deg, #f59e0b, #ef4444)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>TrivQuic</h1>
-        <p style={{ color:"#6b7280", marginTop:8, fontSize:"1.1rem" }}>Fast trivia. No mercy.</p>
+      <div style={{ textAlign:"center", marginBottom:32, display:"flex", flexDirection:"column", alignItems:"center" }}>
+        <LogoMark size={72} />
+        <h1 style={{ fontSize:"clamp(2.8rem, 9vw, 4.6rem)", fontWeight:800, letterSpacing:"-0.045em", lineHeight:1, margin:"16px 0 0", color:"#fff" }}>Triv<span style={{ background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>Quic</span></h1>
+        <p style={{ color:"#c4b8e0", marginTop:10, fontSize:"1.15rem", fontWeight:500 }}>Fast trivia. No mercy.</p>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", marginTop:14 }}>
+          {["6 categories","10 · 20 · 30 question rounds","1v1 duels","14 languages"].map(c => (
+            <span key={c} style={{ fontSize:11, fontWeight:700, letterSpacing:"0.04em", color:"#e6defa", background:"rgba(255,255,255,0.06)", border:"1px solid #3a2760", borderRadius:99, padding:"5px 12px" }}>{c}</span>
+          ))}
+        </div>
       </div>
 
-      <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, background:"#1a1a2e", borderRadius:16, padding:"16px 24px", marginBottom:16 }}>
-        <div style={{ fontSize:12, color:"#6b7280", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase" }}>
+      <div style={{ width:"100%", maxWidth: isMobile ? 460 : 860, background:"#1e1236", borderRadius:24, padding:"16px 24px", marginBottom:16 }}>
+        <div style={{ fontSize:12, color:"#a094c4", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase" }}>
           {isUnder13 ? "Player name" : user ? "Name for this round" : "Your name"}
         </div>
         <input
@@ -3417,12 +3432,12 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             try { localStorage.setItem("onetap_name", e.target.value); } catch {}
           }}
           placeholder={userData?.username || "Enter your name..."}
-          style={{ width:"100%", background: isUnder13 ? "#0a0a12" : "#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color: isUnder13 ? "#6b7280" : "#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box", cursor: isUnder13 ? "not-allowed" : "text" }}
+          style={{ width:"100%", background: isUnder13 ? "#0d0618" : "#130a24", border:"1px solid #3a2760", borderRadius:16, color: isUnder13 ? "#a094c4" : "#fff", fontSize:16, padding:"12px 16px", outline:"none", boxSizing:"border-box", cursor: isUnder13 ? "not-allowed" : "text" }}
         />
         {nameError && !isUnder13 && <div style={{ fontSize:12, color:"#ef4444", marginTop:6 }}>{nameError}</div>}
         {!nameError && user && userData?.username && name && name.toLowerCase() !== userData.username.toLowerCase() && (
-          <div style={{ fontSize:11, color:"#6b7280", marginTop:6 }}>
-            Will show as <span style={{ color:"#f59e0b" }}>{name}({userData.username})</span> on the leaderboard
+          <div style={{ fontSize:11, color:"#a094c4", marginTop:6 }}>
+            Will show as <span style={{ color:"#ff4f8b" }}>{name}({userData.username})</span> on the leaderboard
           </div>
         )}
       </div>
@@ -3431,31 +3446,31 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
 
         {/* LEFT — Solo + Duels */}
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>⚡ Solo</div>
-          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
-            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Category</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+          <div style={{ fontSize:11, color:"#ff4f8b", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>⚡ Solo</div>
+          <div style={{ background:"#1e1236", borderRadius:24, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#a094c4", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Category</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
               {Object.entries(CATEGORY_MAP).map(([key, cat]) => (
                 <button key={key} onClick={() => { setCategory(key); try { localStorage.setItem("onetap_category", key); } catch {} }}
-                  style={{ background: category === key ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${category === key ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: category === key ? "#f59e0b" : "#9ca3af", fontSize:12, fontWeight:600, padding:"9px 6px", cursor:"pointer", transition:"all 0.15s", gridColumn: key === "all" ? "span 2" : "span 1" }}>
-                  {cat.emoji} {cat.label}
+                  style={{ background: category === key ? "rgba(255,79,139,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${category === key ? "#ff4f8b" : "#3a2760"}`, borderRadius:16, color: category === key ? "#ff4f8b" : "#c4b8e0", fontSize:12, fontWeight:600, padding:"14px 6px", cursor:"pointer", transition:"all 0.15s", gridColumn: key === "all" ? "span 3" : "span 1", display:"flex", flexDirection: key === "all" ? "row" : "column", alignItems:"center", justifyContent:"center", gap: key === "all" ? 8 : 6 }}>
+                  <span style={{ fontSize: key === "all" ? 18 : 26, lineHeight:1 }}>{cat.emoji}</span><span>{cat.label}</span>
                 </button>
               ))}
             </div>
           </div>
-          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
-            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Questions per round</div>
+          <div style={{ background:"#1e1236", borderRadius:24, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#a094c4", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Questions per round</div>
             <div style={{ display:"flex", gap:8 }}>
               {ROUND_SIZES.map((n) => (
                 <button key={n} onClick={() => { setRoundSize(n); try { localStorage.setItem("onetap_round", String(n)); } catch {} }}
-                  style={{ flex:1, background: roundSize === n ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${roundSize === n ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: roundSize === n ? "#f59e0b" : "#9ca3af", fontSize:15, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
+                  style={{ flex:1, background: roundSize === n ? "rgba(255,79,139,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${roundSize === n ? "#ff4f8b" : "#3a2760"}`, borderRadius:16, color: roundSize === n ? "#ff4f8b" : "#c4b8e0", fontSize:15, fontWeight:700, padding:"10px 0", cursor:"pointer", transition:"all 0.15s" }}>
                   {n}
                 </button>
               ))}
             </div>
           </div>
-          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
-            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Timer (seconds)</div>
+          <div style={{ background:"#1e1236", borderRadius:24, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#a094c4", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" }}>Timer (seconds)</div>
             <div style={{ display:"flex", gap:8, alignItems:"center" }}>
               <input type="text" inputMode="numeric" maxLength={3}
                 value={timerDuration === 0 ? "" : String(timerDuration)}
@@ -3471,32 +3486,32 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                   setTimerDuration(num);
                   try { localStorage.setItem("onetap_timer", String(num)); } catch {}
                 }}
-                style={{ flex:1, background: timerDuration === 0 ? "rgba(255,255,255,0.02)" : "#0f0f1a", border:`1px solid ${timerDuration === 0 ? "#2d2d44" : "#f59e0b"}`, borderRadius:10, color: timerDuration === 0 ? "#4b5563" : "#fff", fontSize:18, fontWeight:700, padding:"10px 14px", outline:"none", textAlign:"center", opacity: timerDuration === 0 ? 0.4 : 1 }}
+                style={{ flex:1, background: timerDuration === 0 ? "rgba(255,255,255,0.02)" : "#130a24", border:`1px solid ${timerDuration === 0 ? "#3a2760" : "#ff4f8b"}`, borderRadius:16, color: timerDuration === 0 ? "#7d6f9f" : "#fff", fontSize:18, fontWeight:700, padding:"10px 14px", outline:"none", textAlign:"center", opacity: timerDuration === 0 ? 0.4 : 1 }}
               />
               <button onClick={() => { const next = timerDuration === 0 ? 3 : 0; setTimerDuration(next); try { localStorage.setItem("onetap_timer", String(next)); } catch {} }}
-                style={{ background: timerDuration === 0 ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${timerDuration === 0 ? "#f59e0b" : "#2d2d44"}`, borderRadius:10, color: timerDuration === 0 ? "#f59e0b" : "#9ca3af", fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0 }}>
+                style={{ background: timerDuration === 0 ? "rgba(255,79,139,0.2)" : "rgba(255,255,255,0.04)", border:`1px solid ${timerDuration === 0 ? "#ff4f8b" : "#3a2760"}`, borderRadius:16, color: timerDuration === 0 ? "#ff4f8b" : "#c4b8e0", fontSize:20, fontWeight:700, padding:"10px 18px", cursor:"pointer", transition:"all 0.15s", flexShrink:0 }}>
                 ∞
               </button>
             </div>
           </div>
           {/* Difficulty picker */}
-          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px" }}>
-            <div style={{ fontSize:11, color:"#6b7280", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" as const }}>Difficulty</div>
+          <div style={{ background:"#1e1236", borderRadius:24, padding:"16px 20px" }}>
+            <div style={{ fontSize:11, color:"#a094c4", marginBottom:10, letterSpacing:"0.05em", textTransform:"uppercase" as const }}>Difficulty</div>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const }}>
-              {([["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#f59e0b"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col]) => (
+              {([["easy","🟢 Easy","#10b981"],["medium","🟡 Medium","#fbbf24"],["hard","🔴 Hard","#ef4444"],["mixed","🌈 Mixed","#a855f7"]] as const).map(([d,label,col]) => (
                 <button key={d} onClick={() => setDifficulty(d)} style={{
-                  flex:1, background: difficulty===d ? `rgba(${d==="easy"?"16,185,129":d==="medium"?"245,158,11":d==="hard"?"239,68,68":"168,85,247"},0.2)` : "rgba(255,255,255,0.04)",
-                  border:`1px solid ${difficulty===d ? col : "#2d2d44"}`,
-                  borderRadius:10, color: difficulty===d ? col : "#6b7280",
+                  flex:1, background: difficulty===d ? `rgba(${d==="easy"?"16,185,129":d==="medium"?"251,191,36":d==="hard"?"239,68,68":"168,85,247"},0.2)` : "rgba(255,255,255,0.04)",
+                  border:`1px solid ${difficulty===d ? col : "#3a2760"}`,
+                  borderRadius:16, color: difficulty===d ? col : "#a094c4",
                   fontSize:13, fontWeight:700, padding:"9px 4px", cursor:"pointer", whiteSpace:"nowrap" as const,
                 }}>{label}</button>
               ))}
             </div>
-            {difficulty === "mixed" && <div style={{ fontSize:11, color:"#6b7280", marginTop:8 }}>Shows difficulty label on each question as it appears</div>}
+            {difficulty === "mixed" && <div style={{ fontSize:11, color:"#a094c4", marginTop:8 }}>Shows difficulty label on each question as it appears</div>}
           </div>
 
           <button onClick={() => startGame(category, roundSize, timerDuration, difficulty)}
-            style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:14, color:"#fff", fontSize:"1.1rem", fontWeight:800, padding:"16px", cursor:"pointer", width:"100%" }}>
+            style={{ background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)", border:"none", borderRadius:20, color:"#fff", fontSize:"1.2rem", fontWeight:800, letterSpacing:"0.04em", padding:"18px", cursor:"pointer", width:"100%", boxShadow:"0 6px 0 #5b2fc4, 0 14px 30px rgba(139,92,246,0.35)" }}>
             START GAME ⚡
           </button>
 
@@ -3505,7 +3520,7 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           <a href="/duels" style={{
             display:"flex", alignItems:"center", justifyContent:"center", gap:10,
             background:"linear-gradient(135deg, #10b981, #059669)",
-            border:"none", borderRadius:14, color:"#fff",
+            border:"none", borderRadius:20, color:"#fff",
             fontSize:"1.15rem", fontWeight:900, padding:"18px 16px",
             cursor:"pointer", textDecoration:"none", width:"100%",
             boxSizing:"border-box", letterSpacing:"0.01em",
@@ -3520,8 +3535,8 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           {!isUnder13 && (
           <button onClick={() => setModal("search")} style={{
             display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-            width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid #2d2d44",
-            borderRadius:14, color:"#9ca3af", fontSize:"1rem", fontWeight:700,
+            width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid #3a2760",
+            borderRadius:20, color:"#c4b8e0", fontSize:"1rem", fontWeight:700,
             padding:"14px", cursor:"pointer", boxSizing:"border-box" as const,
           }}>
             🔍 {t("searchUsers", currentLang as LangCode)}
@@ -3533,29 +3548,29 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           {!isUnder13 && (<>
           <div style={{ fontSize:11, color:"#10b981", fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", paddingLeft:4 }}>🎮 {t("multiplayer", currentLang as LangCode)}</div>
-          <div style={{ background:"#1a1a2e", borderRadius:16, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
-            <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:10, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>🎮 Host a Game</a>
-            <div style={{ fontSize:11, color:"#4b5563", textAlign:"center", letterSpacing:"0.05em" }}>— or join with a code —</div>
+          <div style={{ background:"#1e1236", borderRadius:24, padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
+            <a href="/multiplayer" style={{ display:"block", background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.4)", borderRadius:16, color:"#10b981", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer", textAlign:"center", textDecoration:"none" }}>🎮 Host a Game</a>
+            <div style={{ fontSize:11, color:"#7d6f9f", textAlign:"center", letterSpacing:"0.05em" }}>— or join with a code —</div>
             <input id="jc" maxLength={6} placeholder="GAME CODE"
-              style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:10, color:"#fff", fontSize:18, fontWeight:700, letterSpacing:"0.3em", padding:"11px 14px", outline:"none", textTransform:"uppercase", boxSizing:"border-box", textAlign:"center" }} />
+              style={{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:16, color:"#fff", fontSize:18, fontWeight:700, letterSpacing:"0.3em", padding:"11px 14px", outline:"none", textTransform:"uppercase", boxSizing:"border-box", textAlign:"center" }} />
             <button onClick={() => { const c = (document.getElementById("jc") as HTMLInputElement).value.trim().toUpperCase(); window.location.href = c ? `/multiplayer?join=${c}` : "/multiplayer"; }}
-              style={{ width:"100%", background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:10, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer" }}>
+              style={{ width:"100%", background:"linear-gradient(135deg,#10b981,#059669)", border:"none", borderRadius:16, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"13px", cursor:"pointer" }}>
               Join Game →
             </button>
           </div>
           </>)}
           {recentScores.length > 0 && (
             <div style={{ width:"100%", maxWidth:460, marginBottom:16 }}>
-              <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em", marginBottom:8 }}>📊 RECENT SCORES</div>
+              <div style={{ fontSize:11, color:"#ff4f8b", fontWeight:700, letterSpacing:"0.1em", marginBottom:8 }}>📊 RECENT SCORES</div>
               {recentScores.map((s: any, i: number) => (
-                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"rgba(255,255,255,0.04)", borderRadius:8, padding:"7px 12px", marginBottom:4 }}>
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"rgba(255,255,255,0.04)", borderRadius:12, padding:"7px 12px", marginBottom:4 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    <span style={{ fontSize:12, color:"#6b7280" }}>{s.date}</span>
-                    <span style={{ fontSize:12, color:"#9ca3af", textTransform:"capitalize" as const }}>{s.category}</span>
+                    <span style={{ fontSize:12, color:"#a094c4" }}>{s.date}</span>
+                    <span style={{ fontSize:12, color:"#c4b8e0", textTransform:"capitalize" as const }}>{s.category}</span>
                   </div>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <span style={{ fontSize:12, color:"#6b7280" }}>{s.correct}/{s.total}</span>
-                    <span style={{ fontWeight:700, color:"#f59e0b", fontSize:14 }}>{s.score}pts</span>
+                    <span style={{ fontSize:12, color:"#a094c4" }}>{s.correct}/{s.total}</span>
+                    <span style={{ fontWeight:700, color:"#ff4f8b", fontSize:14 }}>{s.score}pts</span>
                   </div>
                 </div>
               ))}
@@ -3570,27 +3585,27 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
         <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.8)", display:"flex", alignItems:"center", justifyContent:"center" }}
           onClick={() => setAnnounceModal(false)}>
           <div onClick={e => e.stopPropagation()} data-protect="1"
-            style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"24px", width:"min(440px,92vw)", boxShadow:"0 0 40px rgba(245,158,11,0.3)" }}>
-            <div style={{ fontSize:13, color:"#f59e0b", fontWeight:700, marginBottom:16 }}>📢 Post Announcement</div>
+            style={{ background:"#1e1236", border:"1px solid #ff4f8b", borderRadius:20, padding:"24px", width:"min(440px,92vw)", boxShadow:"0 0 40px rgba(255,79,139,0.3)" }}>
+            <div style={{ fontSize:13, color:"#ff4f8b", fontWeight:700, marginBottom:16 }}>📢 Post Announcement</div>
             <textarea value={announceText} onChange={e => setAnnounceText(e.target.value)}
               placeholder="Type your announcement..."
               rows={3}
-              style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", resize:"vertical", boxSizing:"border-box" as const, fontFamily:"inherit", marginBottom:12 }} />
+              style={{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:12, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", resize:"vertical", boxSizing:"border-box" as const, fontFamily:"inherit", marginBottom:12 }} />
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
               <div onClick={() => setAnnounceIsTemp(t => !t)}
-                style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer", padding:"6px 10px", borderRadius:8,
-                  background: announceIsTemp ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                  border: announceIsTemp ? "1px solid #f59e0b" : "1px solid transparent" }}>
-                <div style={{ width:14, height:14, borderRadius:3, border:"2px solid #f59e0b", background: announceIsTemp ? "#f59e0b" : "transparent", flexShrink:0 }} />
-                <span style={{ color:"#d1d5db", fontSize:13 }}>Temporary</span>
+                style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer", padding:"6px 10px", borderRadius:12,
+                  background: announceIsTemp ? "rgba(255,79,139,0.15)" : "rgba(255,255,255,0.04)",
+                  border: announceIsTemp ? "1px solid #ff4f8b" : "1px solid transparent" }}>
+                <div style={{ width:14, height:14, borderRadius:3, border:"2px solid #ff4f8b", background: announceIsTemp ? "#ff4f8b" : "transparent", flexShrink:0 }} />
+                <span style={{ color:"#e6defa", fontSize:13 }}>Temporary</span>
               </div>
               {announceIsTemp && (
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                   <input type="number" min={1} value={announceTempMin ?? 10}
                     onChange={e => setAnnounceTempMin(Math.max(1, parseInt(e.target.value)||30))}
                     onFocus={e => e.currentTarget.select()}
-                    style={{ width:60, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:6, color:"#fff", fontSize:13, padding:"4px 8px", textAlign:"center" as const }} />
-                  <span style={{ color:"#6b7280", fontSize:13 }}>sec</span>
+                    style={{ width:60, background:"#130a24", border:"1px solid #3a2760", borderRadius:10, color:"#fff", fontSize:13, padding:"4px 8px", textAlign:"center" as const }} />
+                  <span style={{ color:"#a094c4", fontSize:13 }}>sec</span>
                 </div>
               )}
             </div>
@@ -3603,11 +3618,11 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                   if (announceIsTemp && announceTempMin) setTimeout(async () => { await remove(ref(db, "config/announcement")); setAnnouncement(null); }, announceTempMin * 1000);
                   setAnnounceModal(false); setAnnounceText("");
                 }}
-                style={{ flex:1, padding:"10px", borderRadius:8, background:"#f59e0b", color:"#000", fontWeight:700, fontSize:14, cursor:"pointer", textAlign:"center" as const }}>
+                style={{ flex:1, padding:"10px", borderRadius:12, background:"#ff4f8b", color:"#000", fontWeight:700, fontSize:14, cursor:"pointer", textAlign:"center" as const }}>
                 📢 Post{announceIsTemp ? ` (${announceTempMin ?? 30}sec)` : " (Permanent)"}
               </div>
               <div onClick={() => setAnnounceModal(false)}
-                style={{ padding:"10px 16px", borderRadius:8, background:"rgba(255,255,255,0.06)", color:"#9ca3af", fontSize:14, cursor:"pointer" }}>
+                style={{ padding:"10px 16px", borderRadius:12, background:"rgba(255,255,255,0.06)", color:"#c4b8e0", fontSize:14, cursor:"pointer" }}>
                 Cancel
               </div>
             </div>
@@ -3620,16 +3635,16 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
         <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
           onClick={() => setCmdOpen(false)}>
           <div onClick={e => e.stopPropagation()} data-protect="1"
-            style={{ background:"#1a1a2e", border:"1px solid #f59e0b", borderRadius:14, padding:"16px", width:"min(480px, 95vw)", boxShadow:"0 0 40px rgba(245,158,11,0.3)", maxHeight:"85vh", display:"flex", flexDirection:"column" as const }}>
+            style={{ background:"#1e1236", border:"1px solid #ff4f8b", borderRadius:20, padding:"16px", width:"min(480px, 95vw)", boxShadow:"0 0 40px rgba(255,79,139,0.3)", maxHeight:"85vh", display:"flex", flexDirection:"column" as const }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10, flexShrink:0 }}>
-              <div style={{ fontSize:11, color:"#f59e0b", fontWeight:700, letterSpacing:"0.1em" }}>⚡ COMMAND PALETTE</div>
+              <div style={{ fontSize:11, color:"#ff4f8b", fontWeight:700, letterSpacing:"0.1em" }}>⚡ COMMAND PALETTE</div>
               <div style={{ display:"flex", gap:4 }}>
                 <div onClick={() => runCommand("undo")}
-                  style={{ padding:"3px 8px", borderRadius:6, background:"rgba(245,158,11,0.15)", color:"#f59e0b", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(245,158,11,0.3)" }}
-                  onMouseEnter={e=>(e.currentTarget.style.background="rgba(245,158,11,0.3)")}
-                  onMouseLeave={e=>(e.currentTarget.style.background="rgba(245,158,11,0.15)")}>↩ Undo</div>
+                  style={{ padding:"3px 8px", borderRadius:10, background:"rgba(255,79,139,0.15)", color:"#ff4f8b", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(255,79,139,0.3)" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background="rgba(255,79,139,0.3)")}
+                  onMouseLeave={e=>(e.currentTarget.style.background="rgba(255,79,139,0.15)")}>↩ Undo</div>
                 <div onClick={() => { effectsRef.current.forEach(ef=>ef.stop()); effectsRef.current=[]; remove(ref(db,"config/activeEffects")).catch(()=>{}); const r=(document.getElementById("__next")||document.documentElement) as HTMLElement; r.style.cssText=""; document.querySelectorAll("style[id^='__']").forEach(s=>s.remove()); document.querySelectorAll("canvas").forEach(c=>{if((c as HTMLElement).style.zIndex)c.remove();}); document.querySelectorAll("[data-orig-text]").forEach((el:any)=>{el.innerText=el.dataset.origText;delete el.dataset.origText;}); document.querySelectorAll("[data-orig-style]").forEach((el:any)=>{el.style.cssText=el.dataset.origStyle;delete el.dataset.origStyle;}); (r as any).dataset.pixelLevel="0"; }}
-                  style={{ padding:"3px 8px", borderRadius:6, background:"rgba(239,68,68,0.15)", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(239,68,68,0.3)" }}
+                  style={{ padding:"3px 8px", borderRadius:10, background:"rgba(239,68,68,0.15)", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(239,68,68,0.3)" }}
                   onMouseEnter={e=>(e.currentTarget.style.background="rgba(239,68,68,0.3)")}
                   onMouseLeave={e=>(e.currentTarget.style.background="rgba(239,68,68,0.15)")}>⏹ Stop</div>
               </div>
@@ -3637,14 +3652,14 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
             <input autoFocus value={cmdInput} onChange={e => setCmdInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Escape") { setCmdOpen(false); setCmdInput(""); } }}
               placeholder="type a command..."
-              style={{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:12, flexShrink:0 }} />
+              style={{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:12, color:"#fff", fontSize:14, padding:"10px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:12, flexShrink:0 }} />
             <div style={{ overflowY:"auto" as const, flex:1 }}>
               <div>
                 <div style={{ fontSize:10, color:"#10b981", fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase" as const, padding:"4px 4px 8px" }}>🌐 Global</div>
                 {globalCmds.filter(([cmd,label]) => !cmdInput.trim() || cmd.includes(cmdInput.trim().toLowerCase()) || label.toLowerCase().includes(cmdInput.trim().toLowerCase())).map(([cmd, label]) => (
                   <div key={cmd} style={{ marginBottom:2 }}>
                     <div onClick={() => setExpandedCmd(expandedCmd === cmd ? null : cmd)}
-                      style={{ padding:"7px 12px", borderRadius:8, background: expandedCmd === cmd ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.04)", color:"#d1d5db", fontSize:13, cursor:"pointer" }}
+                      style={{ padding:"7px 12px", borderRadius:12, background: expandedCmd === cmd ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.04)", color:"#e6defa", fontSize:13, cursor:"pointer" }}
                       onMouseEnter={e => { if(expandedCmd !== cmd) e.currentTarget.style.background = "rgba(16,185,129,0.1)"; }}
                       onMouseLeave={e => { if(expandedCmd !== cmd) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}>
                       {label}
@@ -3652,18 +3667,18 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                     {expandedCmd === cmd && (
                       <div style={{ padding:"4px 8px 8px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                          <span style={{ color:"#6b7280", fontSize:11 }}>Duration:</span>
+                          <span style={{ color:"#a094c4", fontSize:11 }}>Duration:</span>
                           <input type="number" min={1} value={cmdDuration}
                             onChange={e => setCmdDuration(Math.max(1, parseInt(e.target.value)||10))}
                             onClick={e => e.stopPropagation()}
                             onFocus={e => e.currentTarget.select()}
-                            style={{ width:52, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:5, color:"#fff", fontSize:12, padding:"2px 6px", textAlign:"center" as const }} />
-                          <span style={{ color:"#6b7280", fontSize:11 }}>sec</span>
+                            style={{ width:52, background:"#130a24", border:"1px solid #3a2760", borderRadius:9, color:"#fff", fontSize:12, padding:"2px 6px", textAlign:"center" as const }} />
+                          <span style={{ color:"#a094c4", fontSize:11 }}>sec</span>
                         </div>
                         <div style={{ display:"flex", gap:4, flexWrap:"wrap" as const, marginBottom:6 }}>
                           {([ ["🙋 Me","just_me"],["🌐 Everyone","all"],["👑 Crown","crown"],["🥇 Gold","gold"],["🥈 Silver","silver"],["🥉 Bronze","bronze"] ] as [string,string][]).map(([lbl, aud]) => (
                             <div key={aud} onClick={async (e) => { e.stopPropagation(); runCommand(cmd, cmdDuration); if (aud !== "just_me") await broadcastCmd(cmd, aud as any, cmdDuration); setExpandedCmd(null); }}
-                              style={{ padding:"3px 8px", borderRadius:6, background:"rgba(16,185,129,0.15)", color:"#10b981", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(16,185,129,0.3)" }}
+                              style={{ padding:"3px 8px", borderRadius:10, background:"rgba(16,185,129,0.15)", color:"#10b981", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(16,185,129,0.3)" }}
                               onMouseEnter={e => (e.currentTarget.style.background = "rgba(16,185,129,0.35)")}
                               onMouseLeave={e => (e.currentTarget.style.background = "rgba(16,185,129,0.15)")}>
                               {lbl}
@@ -3674,14 +3689,14 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                           <input value={cmdTargetUser} onChange={e => setCmdTargetUser(e.target.value)}
                             onClick={e => e.stopPropagation()}
                             placeholder="username..."
-                            style={{ flex:1, background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:5, color:"#fff", fontSize:12, padding:"3px 8px", outline:"none" }} />
+                            style={{ flex:1, background:"#130a24", border:"1px solid #3a2760", borderRadius:9, color:"#fff", fontSize:12, padding:"3px 8px", outline:"none" }} />
                           <div onClick={async (e) => {
                               e.stopPropagation();
                               if (!cmdTargetUser.trim()) return;
                               await broadcastCmd(cmd, `user:${cmdTargetUser.trim()}`, cmdDuration);
                               setExpandedCmd(null); setCmdTargetUser("");
                             }}
-                            style={{ padding:"3px 10px", borderRadius:6, background:"rgba(139,92,246,0.2)", color:"#a78bfa", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(139,92,246,0.4)", whiteSpace:"nowrap" as const }}
+                            style={{ padding:"3px 10px", borderRadius:10, background:"rgba(139,92,246,0.2)", color:"#a78bfa", fontSize:11, fontWeight:700, cursor:"pointer", border:"1px solid rgba(139,92,246,0.4)", whiteSpace:"nowrap" as const }}
                             onMouseEnter={e => (e.currentTarget.style.background = "rgba(139,92,246,0.4)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "rgba(139,92,246,0.2)")}>
                             👤 Send
@@ -3693,20 +3708,20 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
                 ))}
               </div>
             </div>
-            <div style={{ fontSize:10, color:"#4b5563", marginTop:10, textAlign:"center" as const, flexShrink:0 }}>` or ~ or Ctrl+K · Esc to close</div>
+            <div style={{ fontSize:10, color:"#7d6f9f", marginTop:10, textAlign:"center" as const, flexShrink:0 }}>` or ~ or Ctrl+K · Esc to close</div>
           </div>
         </div>
       )}
 
       <div style={{ display:"flex", gap:8, marginTop:24, marginBottom:8 }}>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"about" }))}
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>About</button>
+          style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>About</button>
         <button onClick={() => window.dispatchEvent(new CustomEvent("onetap-modal", { detail:"updates" }))}
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
+          style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
         <a href="/admin"
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Admin</a>
+          style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Admin</a>
         <a href="https://www.youtube.com/watch?v=jNQXAC9IVRw" target="_blank" rel="noreferrer"
-          style={{ background:"transparent", border:"1px solid #2d2d44", borderRadius:8, color:"#4b5563", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Don't click</a>
+          style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Don't click</a>
       </div>
     </div>
   );
@@ -3718,26 +3733,26 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
     const emoji = r.correct >= Math.round(r.total * 0.85) ? "🏆" : r.correct >= Math.round(r.total * 0.6) ? "🔥" : r.correct >= Math.round(r.total * 0.35) ? "👍" : "💀";
     const msg = r.correct >= Math.round(r.total * 0.85) ? "Legendary!" : r.correct >= Math.round(r.total * 0.6) ? "On Fire!" : r.correct >= Math.round(r.total * 0.35) ? "Not Bad!" : "Keep Practicing!";
     return (
-      <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
+      <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#130a24", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
         <AuthHeader />
         {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
           <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontSize:64, marginBottom:8 }}>{emoji}</div>
           <h2 style={{ fontSize:"2rem", fontWeight:900, margin:0 }}>{msg}</h2>
-          <p style={{ color:"#6b7280", marginTop:6 }}>{r.correct}/{r.total} correct · {CATEGORY_MAP[r.category]?.emoji} {CATEGORY_MAP[r.category]?.label}</p>
+          <p style={{ color:"#a094c4", marginTop:6 }}>{r.correct}/{r.total} correct · {CATEGORY_MAP[r.category]?.emoji} {CATEGORY_MAP[r.category]?.label}</p>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:32, width:"100%", maxWidth:400 }}>
-          {([["Score", r.score, "#f59e0b"], ["Best Streak", `${r.bestStreak}🔥`, "#ef4444"], ["Accuracy", `${acc}%`, "#10b981"]] as [string,any,string][]).map(([label, val, color]) => (
-            <div key={label} style={{ background:"#1a1a2e", borderRadius:12, padding:"16px 12px", textAlign:"center" }}>
+          {([["Score", r.score, "#ff4f8b"], ["Best Streak", `${r.bestStreak}🔥`, "#ef4444"], ["Accuracy", `${acc}%`, "#10b981"]] as [string,any,string][]).map(([label, val, color]) => (
+            <div key={label} style={{ background:"#1e1236", borderRadius:18, padding:"16px 12px", textAlign:"center" }}>
               <div style={{ fontSize:22, fontWeight:900, color }}>{val}</div>
-              <div style={{ fontSize:11, color:"#6b7280", marginTop:4, textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
+              <div style={{ fontSize:11, color:"#a094c4", marginTop:4, textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</div>
             </div>
           ))}
         </div>
-        {user && <button onClick={() => setModal("profile")} style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, color:"#f59e0b", fontSize:13, fontWeight:600, padding:"10px 20px", cursor:"pointer", marginBottom:20 }}>📊 View My Stats</button>}
+        {user && <button onClick={() => setModal("profile")} style={{ background:"rgba(255,79,139,0.1)", border:"1px solid rgba(255,79,139,0.3)", borderRadius:16, color:"#ff4f8b", fontSize:13, fontWeight:600, padding:"10px 20px", cursor:"pointer", marginBottom:20 }}>📊 View My Stats</button>}
         <div style={{ display:"flex", gap:12, marginBottom:32 }}>
-          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background:"linear-gradient(135deg, #f59e0b, #ef4444)", border:"none", borderRadius:12, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"14px 28px", cursor:"pointer" }}>PLAY AGAIN ⚡</button>
-          <button onClick={() => setScreen("home")} style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:12, color:"#9ca3af", fontSize:"1rem", fontWeight:600, padding:"14px 28px", cursor:"pointer" }}>Home</button>
+          <button onClick={() => startGame(r.category, roundSize, timerDuration)} style={{ background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)", border:"none", borderRadius:18, color:"#fff", fontSize:"1rem", fontWeight:800, padding:"14px 28px", cursor:"pointer" }}>PLAY AGAIN ⚡</button>
+          <button onClick={() => setScreen("home")} style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:18, color:"#c4b8e0", fontSize:"1rem", fontWeight:600, padding:"14px 28px", cursor:"pointer" }}>Home</button>
         </div>
         <LeaderboardView globalLB={globalLB} />
       </div>
@@ -3747,27 +3762,27 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
   // ── GAME ──────────────────────────────────────────────────────────────────────
   if (!q) return null;
   return (
-    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#0f0f1a", display:"flex", flexDirection:"column", alignItems:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
+    <div className="trivquic-fx" style={{ minHeight:"100vh", background:"#130a24", display:"flex", flexDirection:"column", alignItems:"center", padding:`${announcement ? 112 : 72}px 16px 20px`, color:"#fff" }}>
       <AuthHeader />
       {modal === "profile" && user && <ProfileModal user={user} userData={userData} onClose={() => setModal(null)} onUserDataChange={(d) => { setUserData(d); setName(d.username); }} />}
       <div style={{ width:"100%", maxWidth:480, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <div style={{ fontSize:22, fontWeight:900, color:"#f59e0b" }}>{score}</div>
-        <div style={{ fontSize:13, color:"#6b7280" }}>{qIndex + 1} / {questions.length}</div>
+        <div style={{ fontSize:22, fontWeight:900, color:"#ff4f8b" }}>{score}</div>
+        <div style={{ fontSize:13, color:"#a094c4" }}>{qIndex + 1} / {questions.length}</div>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ fontSize:16, fontWeight:700, color: streak > 0 ? "#ef4444" : "#4b5563" }}>🔥{streak}</div>
-          <button onClick={() => setScreen("home")} style={{ background:"transparent", border:"none", color:"#4b5563", fontSize:13, fontWeight:700, cursor:"pointer", padding:"4px 0" }}>✕</button>
+          <div style={{ fontSize:16, fontWeight:700, color: streak > 0 ? "#ef4444" : "#7d6f9f" }}>🔥{streak}</div>
+          <button onClick={() => setScreen("home")} style={{ background:"transparent", border:"none", color:"#7d6f9f", fontSize:13, fontWeight:700, cursor:"pointer", padding:"4px 0" }}>✕</button>
         </div>
       </div>
-      <div style={{ width:"100%", maxWidth:480, height:4, background:"#1a1a2e", borderRadius:2, marginBottom:24, overflow:"hidden" }}>
-        <div style={{ height:"100%", width: pct + "%", background:"linear-gradient(90deg, #f59e0b, #ef4444)", borderRadius:2, transition:"width 0.3s" }} />
+      <div style={{ width:"100%", maxWidth:480, height:4, background:"#1e1236", borderRadius:2, marginBottom:24, overflow:"hidden" }}>
+        <div style={{ height:"100%", width: pct + "%", background:"linear-gradient(90deg, #ff4f8b, #8b5cf6)", borderRadius:2, transition:"width 0.3s" }} />
       </div>
-      <div style={{ fontSize:11, color:"#4b5563", marginBottom:16, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+      <div style={{ fontSize:11, color:"#7d6f9f", marginBottom:16, letterSpacing:"0.08em", textTransform:"uppercase" }}>
         {CATEGORY_MAP[category]?.emoji} {CATEGORY_MAP[category]?.label}
       </div>
       {gameStateRef.current.timerDuration !== 0 && <div style={{ position:"relative", width:80, height:80, marginBottom:24 }}>
         <svg width="80" height="80" style={{ transform:"rotate(-90deg)" }}>
-          <circle cx="40" cy="40" r="34" fill="none" stroke="#1a1a2e" strokeWidth="6" />
-          <circle cx="40" cy="40" r="34" fill="none" stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#f59e0b" : "#10b981"}
+          <circle cx="40" cy="40" r="34" fill="none" stroke="#1e1236" strokeWidth="6" />
+          <circle cx="40" cy="40" r="34" fill="none" stroke={timeLeft <= 1 ? "#ef4444" : timeLeft <= 2 ? "#ff4f8b" : "#10b981"}
             strokeWidth="6" strokeDasharray={213.6} strokeDashoffset={213.6 * (1 - timeLeft / gameStateRef.current.timerDuration)}
             style={{ transition:`stroke-dashoffset ${Math.min(timeLeft, 1)}s linear, stroke 0.3s` }} />
         </svg>
@@ -3775,22 +3790,22 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           {selected ? "✓" : timeLeft}
         </div>
       </div>}
-      {showStreak && <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg, #f59e0b, #ef4444)", borderRadius:16, padding:"12px 24px", fontSize:22, fontWeight:900, zIndex:100 }}>🔥 {streak}x STREAK!</div>}
-      <div style={{ width:"100%", maxWidth:480, background:"#1a1a2e", borderRadius:20, padding:"28px 24px", marginBottom:20, textAlign:"center" }}>
+      {showStreak && <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg, #ff4f8b, #8b5cf6)", borderRadius:24, padding:"12px 24px", fontSize:22, fontWeight:900, zIndex:100 }}>🔥 {streak}x STREAK!</div>}
+      <div style={{ width:"100%", maxWidth:520, background:"linear-gradient(160deg, #2a1850, #1e1236)", border:"1px solid #3a2760", borderRadius:28, padding:"32px 26px", marginBottom:20, textAlign:"center", boxShadow:"0 18px 40px rgba(0,0,0,0.35)" }}>
         {difficulty === "mixed" && q.d && (
           <div style={{ marginBottom:10 }}>
             <span style={{ fontSize:11, fontWeight:700, borderRadius:99, padding:"3px 10px",
-              background: q.d===1?"rgba(16,185,129,0.15)":q.d===3?"rgba(239,68,68,0.15)":"rgba(245,158,11,0.15)",
-              color: q.d===1?"#10b981":q.d===3?"#ef4444":"#f59e0b",
-              border: `1px solid ${q.d===1?"rgba(16,185,129,0.3)":q.d===3?"rgba(239,68,68,0.3)":"rgba(245,158,11,0.3)"}`,
+              background: q.d===1?"rgba(16,185,129,0.15)":q.d===3?"rgba(239,68,68,0.15)":"rgba(251,191,36,0.15)",
+              color: q.d===1?"#10b981":q.d===3?"#ef4444":"#fbbf24",
+              border: `1px solid ${q.d===1?"rgba(16,185,129,0.3)":q.d===3?"rgba(239,68,68,0.3)":"rgba(251,191,36,0.3)"}`,
             }}>
               {q.d===1?"🟢 Easy":q.d===3?"🔴 Hard":"🟡 Medium"}
             </span>
           </div>
         )}
-        <div style={{ fontSize:"1.3rem", fontWeight:700, lineHeight:1.4 }}>{q.q}</div>
+        <div style={{ fontSize:"1.45rem", fontWeight:700, lineHeight:1.35, fontFamily:"'Bricolage Grotesque', 'DM Sans', sans-serif" }}>{q.q}</div>
       </div>
-      <div style={{ width:"100%", maxWidth:480, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+      <div style={{ width:"100%", maxWidth:520, display:"grid", gridTemplateColumns:"1fr", gap:10 }}>
         {options.map((opt, i) => {
           const isCorrect = opt === q.a;
           const isWrong = selected === opt && !isCorrect;
@@ -3798,8 +3813,9 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           return (
             <button key={i} onClick={() => handleAnswer(opt, questions, qIndex)} disabled={!!selected}
               className={selected === opt ? anim : ""}
-              style={{ background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1a1a2e", border:`2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#2d2d44"}`, borderRadius:14, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#e5e7eb", fontSize:"1rem", fontWeight:700, padding:"18px 14px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3 }}>
-              {opt}
+              style={{ background: showResult && isCorrect ? "#064e3b" : showResult && isWrong ? "#450a0a" : "#1e1236", border:`2px solid ${showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#3a2760"}`, borderRadius:20, color: showResult && isCorrect ? "#10b981" : showResult && isWrong ? "#ef4444" : "#f3eeff", fontSize:"1rem", fontWeight:700, padding:"14px 16px", cursor: selected ? "default" : "pointer", transition:"all 0.2s", lineHeight:1.3, textAlign:"left" as const, display:"flex", alignItems:"center", gap:14 }}>
+              <span style={{ flexShrink:0, width:30, height:30, borderRadius:10, background:"rgba(255,255,255,0.1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800 }}>{"ABCD"[i] || i + 1}</span>
+              <span style={{ flex:1 }}>{opt}</span>
             </button>
           );
         })}

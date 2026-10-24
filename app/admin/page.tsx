@@ -9,23 +9,23 @@ import type { User } from "firebase/auth";
 // ── Styles ────────────────────────────────────────────────────────────────────
 const c = {
   page:    { minHeight:"100vh", background:"#0a0a14", color:"#fff", fontFamily:"system-ui,sans-serif" } as React.CSSProperties,
-  sidebar: { width:220, background:"#0f0f1a", borderRight:"1px solid #1e1e30", minHeight:"100vh", padding:"0", flexShrink:0, display:"flex", flexDirection:"column" as const } as React.CSSProperties,
+  sidebar: { width:220, background:"#130a24", borderRight:"1px solid #2a1c47", minHeight:"100vh", padding:"0", flexShrink:0, display:"flex", flexDirection:"column" as const } as React.CSSProperties,
   main:    { flex:1, padding:"28px 32px", overflowY:"auto" as const, maxWidth:"calc(100vw - 220px)" } as React.CSSProperties,
-  card:    { background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:14, padding:"20px 24px", marginBottom:20 } as React.CSSProperties,
+  card:    { background:"#1e1236", border:"1px solid #3a2760", borderRadius:20, padding:"20px 24px", marginBottom:20 } as React.CSSProperties,
   h1:      { fontSize:"1.4rem", fontWeight:900, marginBottom:20, margin:"0 0 20px" } as React.CSSProperties,
   h2:      { fontSize:"1rem", fontWeight:800, marginBottom:14, color:"#fff" } as React.CSSProperties,
-  label:   { fontSize:11, color:"#6b7280", textTransform:"uppercase" as const, letterSpacing:"0.06em", marginBottom:6, display:"block" },
-  input:   { width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"9px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10 },
-  textarea:{ width:"100%", background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, color:"#fff", fontSize:14, padding:"9px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10, resize:"vertical" as const, minHeight:80 },
-  row:     { display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid #1e1e30", flexWrap:"wrap" as const } as React.CSSProperties,
+  label:   { fontSize:11, color:"#a094c4", textTransform:"uppercase" as const, letterSpacing:"0.06em", marginBottom:6, display:"block" },
+  input:   { width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:12, color:"#fff", fontSize:14, padding:"9px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10 },
+  textarea:{ width:"100%", background:"#130a24", border:"1px solid #3a2760", borderRadius:12, color:"#fff", fontSize:14, padding:"9px 12px", outline:"none", boxSizing:"border-box" as const, marginBottom:10, resize:"vertical" as const, minHeight:80 },
+  row:     { display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid #2a1c47", flexWrap:"wrap" as const } as React.CSSProperties,
   grid2:   { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 } as React.CSSProperties,
   grid4:   { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 } as React.CSSProperties,
 };
 
-const btn = (color = "#f59e0b", full = false) => ({
-  background:`rgba(${color==="r"?"239,68,68":color==="g"?"16,185,129":color==="b"?"99,102,241":color==="y"?"245,158,11":"107,114,128"},0.15)`,
-  border:`1px solid ${color==="r"?"#ef4444":color==="g"?"#10b981":color==="b"?"#6366f1":color==="y"?"#f59e0b":"#6b7280"}44`,
-  borderRadius:8, color:color==="r"?"#ef4444":color==="g"?"#10b981":color==="b"?"#6366f1":color==="y"?"#f59e0b":"#9ca3af",
+const btn = (color = "#ff4f8b", full = false) => ({
+  background:`rgba(${color==="r"?"239,68,68":color==="g"?"16,185,129":color==="b"?"99,102,241":color==="y"?"255,79,139":"107,114,128"},0.15)`,
+  border:`1px solid ${color==="r"?"#ef4444":color==="g"?"#10b981":color==="b"?"#6366f1":color==="y"?"#ff4f8b":"#a094c4"}44`,
+  borderRadius:12, color:color==="r"?"#ef4444":color==="g"?"#10b981":color==="b"?"#6366f1":color==="y"?"#ff4f8b":"#c4b8e0",
   fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer",
   width: full ? "100%" : "auto",
 } as React.CSSProperties);
@@ -62,7 +62,7 @@ function BadgeIcon({ badge, size=13 }: { badge?:string|null; size?:number }) {
   if (badge==="star")   return <span title="Loyal Player" style={{fontSize:size}}>⭐</span>;
   if (badge==="check")  return <span title="Verified" style={{fontSize:size,color:"#3b82f6",fontWeight:900}}>✓</span>;
   if (badge==="crown")  return <span title="Champion" style={{fontSize:size}}>👑</span>;
-  if (badge==="tester") return <span title="Tester" style={{fontSize:size*0.85,background:"#ca8a04",color:"#fff",borderRadius:4,padding:"1px 5px",fontWeight:900,fontFamily:"monospace"}}>T</span>;
+  if (badge==="tester") return <span title="Tester" style={{fontSize:size*0.85,background:"#ca8a04",color:"#fff",borderRadius:8,padding:"1px 5px",fontWeight:900,fontFamily:"monospace"}}>T</span>;
   if (badge==="gold")   return <span title="Gold Medal" style={{fontSize:size}}>🥇</span>;
   if (badge==="silver") return <span title="Silver Medal" style={{fontSize:size}}>🥈</span>;
   if (badge==="bronze") return <span title="Bronze Medal" style={{fontSize:size}}>🥉</span>;
@@ -70,9 +70,9 @@ function BadgeIcon({ badge, size=13 }: { badge?:string|null; size?:number }) {
 }
 function Avatar({ src, name, size=32 }: { src?:string|null; name:string; size?:number }) {
   return src ? (
-    <img src={src} alt="" width={size} height={size} style={{ borderRadius:"50%", border:"2px solid #2d2d44", flexShrink:0, display:"block", objectFit:"cover" }} />
+    <img src={src} alt="" width={size} height={size} style={{ borderRadius:"50%", border:"2px solid #3a2760", flexShrink:0, display:"block", objectFit:"cover" }} />
   ) : (
-    <div style={{ width:size, height:size, borderRadius:"50%", background:"rgba(245,158,11,0.2)", border:"2px solid #2d2d44", display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.4, fontWeight:900, color:"#f59e0b", flexShrink:0 }}>
+    <div style={{ width:size, height:size, borderRadius:"50%", background:"rgba(255,79,139,0.2)", border:"2px solid #3a2760", display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.4, fontWeight:900, color:"#ff4f8b", flexShrink:0 }}>
       {(name||"?")[0].toUpperCase()}
     </div>
   );
@@ -81,7 +81,7 @@ function Avatar({ src, name, size=32 }: { src?:string|null; name:string; size?:n
 function Flash({ msg }: { msg:{text:string;type:"success"|"error"|"info"}|null }) {
   if (!msg) return null;
   const col = msg.type==="success"?"16,185,129":msg.type==="error"?"239,68,68":"99,102,241";
-  return <div style={{ background:`rgba(${col},0.1)`, border:`1px solid rgba(${col},0.3)`, borderRadius:10, padding:"10px 14px", marginBottom:14, fontSize:13, color:`rgb(${col})` }}>{msg.text}</div>;
+  return <div style={{ background:`rgba(${col},0.1)`, border:`1px solid rgba(${col},0.3)`, borderRadius:16, padding:"10px 14px", marginBottom:14, fontSize:13, color:`rgb(${col})` }}>{msg.text}</div>;
 }
 
 function useFlash() {
@@ -142,29 +142,29 @@ function StatsPanel() {
     });
   }, []);
 
-  const Stat = ({ label, value, color="#f59e0b", sub="" }: any) => (
+  const Stat = ({ label, value, color="#ff4f8b", sub="" }: any) => (
     <div style={{ ...c.card, marginBottom:0, textAlign:"center" as const }}>
       <div style={{ fontSize:28, fontWeight:900, color }}>{value}</div>
-      <div style={{ fontSize:11, color:"#6b7280", marginTop:4, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{label}</div>
-      {sub && <div style={{ fontSize:10, color:"#4b5563", marginTop:2 }}>{sub}</div>}
+      <div style={{ fontSize:11, color:"#a094c4", marginTop:4, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{label}</div>
+      {sub && <div style={{ fontSize:10, color:"#7d6f9f", marginTop:2 }}>{sub}</div>}
     </div>
   );
 
-  if (loading) return <div style={{ color:"#6b7280" }}>Loading…</div>;
+  if (loading) return <div style={{ color:"#a094c4" }}>Loading…</div>;
   const acc = stats.totalQuestions > 0 ? Math.round(stats.totalCorrect/stats.totalQuestions*100) : 0;
 
   return (
     <div>
       <h1 style={c.h1}>📊 Dashboard</h1>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12, marginBottom:24 }}>
-        <Stat label="Total Users" value={stats.totalUsers} color="#f59e0b" />
+        <Stat label="Total Users" value={stats.totalUsers} color="#ff4f8b" />
         <Stat label="Total Games" value={stats.totalGames.toLocaleString()} color="#10b981" />
         <Stat label="Active Today" value={stats.playedToday} color="#6366f1" />
         <Stat label="Top Score" value={stats.topScore.toLocaleString()} color="#ef4444" />
-        <Stat label="Leaderboard Entries" value={stats.lbEntries} color="#f59e0b" />
+        <Stat label="Leaderboard Entries" value={stats.lbEntries} color="#ff4f8b" />
         <Stat label="Active Bans" value={stats.activeBans} color="#ef4444" />
         <Stat label="Accuracy" value={`${acc}%`} color="#10b981" sub={`${stats.totalCorrect.toLocaleString()} / ${stats.totalQuestions.toLocaleString()}`} />
-        <Stat label="Top Category" value={CAT_EMOJI[stats.topCat]||"—"} color="#f59e0b" sub={stats.topCat} />
+        <Stat label="Top Category" value={CAT_EMOJI[stats.topCat]||"—"} color="#ff4f8b" sub={stats.topCat} />
         <Stat label="Total Duels" value={stats.totalDuels||0} color="#6366f1" />
         <Stat label="Duel Wins" value={stats.totalDuelWins||0} color="#a855f7" />
       </div>
@@ -212,7 +212,7 @@ function AnnouncementPanel() {
 
       <div style={c.card}>
         <div style={c.h2}>Maintenance Mode</div>
-        <p style={{ color:"#9ca3af", fontSize:13, marginBottom:14, lineHeight:1.6 }}>
+        <p style={{ color:"#c4b8e0", fontSize:13, marginBottom:14, lineHeight:1.6 }}>
           When ON, non-admins see a maintenance screen instead of the game. You can still access everything.
         </p>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
@@ -228,12 +228,12 @@ function AnnouncementPanel() {
 
       <div style={c.card}>
         <div style={c.h2}>Global Announcement</div>
-        <p style={{ color:"#9ca3af", fontSize:13, marginBottom:14 }}>Shows as a banner on everyone's home screen.</p>
+        <p style={{ color:"#c4b8e0", fontSize:13, marginBottom:14 }}>Shows as a banner on everyone's home screen.</p>
         {current && (
-          <div style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:14 }}>
-            <div style={{ fontSize:13, color:"#f59e0b", fontWeight:700, marginBottom:4 }}>Current announcement:</div>
-            <div style={{ color:"#e5e7eb" }}>{current.text}</div>
-            <div style={{ fontSize:11, color:"#4b5563", marginTop:6 }}>Posted: {current.postedAt}</div>
+          <div style={{ background:"rgba(255,79,139,0.1)", border:"1px solid rgba(255,79,139,0.3)", borderRadius:16, padding:"12px 16px", marginBottom:14 }}>
+            <div style={{ fontSize:13, color:"#ff4f8b", fontWeight:700, marginBottom:4 }}>Current announcement:</div>
+            <div style={{ color:"#f3eeff" }}>{current.text}</div>
+            <div style={{ fontSize:11, color:"#7d6f9f", marginTop:6 }}>Posted: {current.postedAt}</div>
             <button onClick={clearAnnouncement} style={{ ...btn("r"), marginTop:10 }}>Clear</button>
           </div>
         )}
@@ -244,7 +244,7 @@ function AnnouncementPanel() {
       {/* Mass Push Notification */}
       <div style={c.card}>
         <div style={c.h2}>📣 Mass Push Notification</div>
-        <p style={{ color:"#9ca3af", fontSize:13, marginBottom:12 }}>Sends a real push notification to ALL users who have notifications enabled.</p>
+        <p style={{ color:"#c4b8e0", fontSize:13, marginBottom:12 }}>Sends a real push notification to ALL users who have notifications enabled.</p>
         <MassPushPanel />
       </div>
     </div>
@@ -308,7 +308,7 @@ function QuestionsPanel() {
     <div>
       <h1 style={c.h1}>❓ Question Editor</h1>
       <Flash msg={msg} />
-      <div style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#a5b4fc" }}>
+      <div style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:16, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#a5b4fc" }}>
         Custom questions are stored in Firebase and mixed into the game alongside the built-in questions.
       </div>
 
@@ -347,8 +347,8 @@ function QuestionsPanel() {
           <div style={c.h2}>{CAT_EMOJI[category]} Custom {category} questions ({questions.length})</div>
         </div>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search questions…" style={c.input} />
-        {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
-          filtered.length === 0 ? <div style={{ color:"#4b5563", fontSize:13 }}>No custom questions yet for this category.</div> :
+        {loading ? <div style={{ color:"#a094c4" }}>Loading…</div> :
+          filtered.length === 0 ? <div style={{ color:"#7d6f9f", fontSize:13 }}>No custom questions yet for this category.</div> :
           filtered.map(q => (
             <div key={q.key} style={{ ...c.row, alignItems:"flex-start" }}>
               <div style={{ flex:1, minWidth:0 }}>
@@ -395,9 +395,9 @@ function UserDuelHistory({ uid }: { uid: string }) {
         <span>⚔️ Duel History</span><span>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div style={{ background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, marginTop:6, maxHeight:220, overflowY:"auto" as const }}>
-          {loading ? <div style={{ padding:12, color:"#6b7280", fontSize:13 }}>Loading…</div> :
-            duels.length === 0 ? <div style={{ padding:12, color:"#4b5563", fontSize:13 }}>No duels found</div> :
+        <div style={{ background:"#130a24", border:"1px solid #3a2760", borderRadius:12, marginTop:6, maxHeight:220, overflowY:"auto" as const }}>
+          {loading ? <div style={{ padding:12, color:"#a094c4", fontSize:13 }}>Loading…</div> :
+            duels.length === 0 ? <div style={{ padding:12, color:"#7d6f9f", fontSize:13 }}>No duels found</div> :
             duels.map((d: any, i) => {
               const isP1 = d.p1?.uid === uid;
               const mySlot = isP1 ? "p1" : "p2";
@@ -405,14 +405,14 @@ function UserDuelHistory({ uid }: { uid: string }) {
               const myScore = d[`${mySlot}TotalScore`] ?? 0;
               const theirScore = d[`${theirSlot}TotalScore`] ?? 0;
               const result = myScore > theirScore ? "W" : myScore < theirScore ? "L" : "D";
-              const col = result === "W" ? "#10b981" : result === "L" ? "#ef4444" : "#6b7280";
+              const col = result === "W" ? "#10b981" : result === "L" ? "#ef4444" : "#a094c4";
               return (
-                <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderBottom:"1px solid #1e1e30", fontSize:12 }}>
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderBottom:"1px solid #2a1c47", fontSize:12 }}>
                   <div>
                     <span style={{ color:col, fontWeight:900, marginRight:8 }}>{result}</span>
-                    <span style={{ color:"#d1d5db" }}>vs {d[theirSlot]?.name || "?"}</span>
+                    <span style={{ color:"#e6defa" }}>vs {d[theirSlot]?.name || "?"}</span>
                   </div>
-                  <div style={{ color:"#6b7280" }}>{myScore} – {theirScore} · {new Date(d.createdAt).toLocaleDateString()}</div>
+                  <div style={{ color:"#a094c4" }}>{myScore} – {theirScore} · {new Date(d.createdAt).toLocaleDateString()}</div>
                 </div>
               );
             })
@@ -446,13 +446,13 @@ function LoginHistory({ uid }: { uid: string }) {
         <span>🕐 Login History</span><span>{open?"▲":"▼"}</span>
       </button>
       {open && (
-        <div style={{ background:"#0f0f1a", border:"1px solid #2d2d44", borderRadius:8, marginTop:6, maxHeight:200, overflowY:"auto" as const }}>
-          {loading ? <div style={{ padding:12, color:"#6b7280", fontSize:13 }}>Loading…</div> :
-            history.length === 0 ? <div style={{ padding:12, color:"#4b5563", fontSize:13 }}>No login history yet</div> :
+        <div style={{ background:"#130a24", border:"1px solid #3a2760", borderRadius:12, marginTop:6, maxHeight:200, overflowY:"auto" as const }}>
+          {loading ? <div style={{ padding:12, color:"#a094c4", fontSize:13 }}>Loading…</div> :
+            history.length === 0 ? <div style={{ padding:12, color:"#7d6f9f", fontSize:13 }}>No login history yet</div> :
             history.map((h:any, i) => (
-              <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderBottom:"1px solid #1e1e30", fontSize:12 }}>
-                <span style={{ color:"#d1d5db" }}>{h.loginAt}</span>
-                <span style={{ color: h.durationMin != null ? "#10b981" : "#4b5563" }}>
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderBottom:"1px solid #2a1c47", fontSize:12 }}>
+                <span style={{ color:"#e6defa" }}>{h.loginAt}</span>
+                <span style={{ color: h.durationMin != null ? "#10b981" : "#7d6f9f" }}>
                   {h.durationMin != null ? `${h.durationMin}m` : "active/unknown"}
                 </span>
               </div>
@@ -655,34 +655,34 @@ function UsersPanel() {
 
       <div style={{ display:"grid", gridTemplateColumns:selected?"1fr 360px":"1fr", gap:20 }}>
         <div style={c.card}>
-          {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
+          {loading ? <div style={{ color:"#a094c4" }}>Loading…</div> :
             !search.trim() && !userSort ? (
-              <div style={{ color:"#4b5563", fontSize:13, padding:"12px 4px", lineHeight:1.6 }}>
+              <div style={{ color:"#7d6f9f", fontSize:13, padding:"12px 4px", lineHeight:1.6 }}>
                 Search for a specific account, or pick a moderation view above. There's no default list of every user here on purpose.
               </div>
             ) :
             filtered.length === 0 ? (
-              <div style={{ color:"#4b5563", fontSize:13, padding:"12px 4px" }}>No matching accounts.</div>
+              <div style={{ color:"#7d6f9f", fontSize:13, padding:"12px 4px" }}>No matching accounts.</div>
             ) :
             filtered.map(u => (
               <div key={u.uid} onClick={() => setSelected(selected?.uid===u.uid?null:u)}
-                style={{ ...c.row, cursor:"pointer", background:selected?.uid===u.uid?"rgba(245,158,11,0.05)":"transparent", borderRadius:8, padding:"10px 8px" }}>
+                style={{ ...c.row, cursor:"pointer", background:selected?.uid===u.uid?"rgba(255,79,139,0.05)":"transparent", borderRadius:12, padding:"10px 8px" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, flex:1, minWidth:0 }}>
                   <Avatar src={u.photoURL} name={u.username||"?"} size={36} />
                   <div style={{ minWidth:0 }}>
                     <div style={{ fontWeight:700, fontSize:14, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const }}>
                       {u.username}
                       <BadgeIcon badge={u.badge} size={13} />
-                      {u.isAdmin && <span style={{ marginLeft:6, ...tag("245,158,11") }}>admin</span>}
+                      {u.isAdmin && <span style={{ marginLeft:6, ...tag("255,79,139") }}>admin</span>}
                       {u.banned && (!u.banExpiresAt || Date.now() < u.banExpiresAt) && <span style={{ marginLeft:6, ...tag("239,68,68") }}>banned</span>}
                     </div>
-                    <div style={{ fontSize:11, color:"#4b5563", fontFamily:"monospace" }}>{u.uid.slice(0,18)}…</div>
+                    <div style={{ fontSize:11, color:"#7d6f9f", fontFamily:"monospace" }}>{u.uid.slice(0,18)}…</div>
                   </div>
                 </div>
                 <div style={{ textAlign:"right" as const, flexShrink:0 }}>
-                  <div style={{ color:"#f59e0b", fontWeight:800 }}>{u.bestScore??0}</div>
-                  <div style={{ fontSize:11, color:"#6b7280" }}>{u.gamesPlayed??0} games</div>
-                  {u.lastWarnedAt && <div style={{ fontSize:10, color:"#f59e0b" }}>⚠️</div>}
+                  <div style={{ color:"#ff4f8b", fontWeight:800 }}>{u.bestScore??0}</div>
+                  <div style={{ fontSize:11, color:"#a094c4" }}>{u.gamesPlayed??0} games</div>
+                  {u.lastWarnedAt && <div style={{ fontSize:10, color:"#ff4f8b" }}>⚠️</div>}
                   {u.lastBannedAt && <div style={{ fontSize:10, color:"#ef4444" }}>🔨</div>}
                 </div>
               </div>
@@ -692,22 +692,22 @@ function UsersPanel() {
 
         {selected && (
           <div style={{ ...c.card, position:"sticky" as const, top:20, alignSelf:"start" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16, paddingBottom:16, borderBottom:"1px solid #2d2d44" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16, paddingBottom:16, borderBottom:"1px solid #3a2760" }}>
               <Avatar src={selected.photoURL} name={selected.username} size={48} />
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:900, fontSize:"1.1rem" }}>{selected.username}</div>
-                <div style={{ fontSize:10, color:"#6b7280", fontFamily:"monospace", wordBreak:"break-all" as const }}>{selected.uid}</div>
+                <div style={{ fontSize:10, color:"#a094c4", fontFamily:"monospace", wordBreak:"break-all" as const }}>{selected.uid}</div>
               </div>
-              <button onClick={()=>setSelected(null)} style={{ background:"transparent", border:"none", color:"#6b7280", fontSize:18, cursor:"pointer" }}>×</button>
+              <button onClick={()=>setSelected(null)} style={{ background:"transparent", border:"none", color:"#a094c4", fontSize:18, cursor:"pointer" }}>×</button>
             </div>
 
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 }}>
-              {[["Score",selected.bestScore??0,"#f59e0b"],["Games",selected.gamesPlayed??0,"#e5e7eb"],
+              {[["Score",selected.bestScore??0,"#ff4f8b"],["Games",selected.gamesPlayed??0,"#f3eeff"],
                 ["Streak",selected.bestStreak??0,"#ef4444"],["@ Left",selected.usernameChangesLeft??3,"#10b981"]
               ].map(([l,v,col])=>(
-                <div key={l as string} style={{ background:"#0f0f1a", borderRadius:10, padding:"10px", textAlign:"center" as const, border:"1px solid #2d2d44" }}>
+                <div key={l as string} style={{ background:"#130a24", borderRadius:16, padding:"10px", textAlign:"center" as const, border:"1px solid #3a2760" }}>
                   <div style={{ fontSize:18, fontWeight:900, color:col as string }}>{v as number}</div>
-                  <div style={{ fontSize:10, color:"#6b7280" }}>{l}</div>
+                  <div style={{ fontSize:10, color:"#a094c4" }}>{l}</div>
                 </div>
               ))}
             </div>
@@ -720,10 +720,10 @@ function UsersPanel() {
             <EditRow label="Games played" value={editGames} onChange={setEditGames} onSave={()=>handleSetGames(selected.uid)} placeholder="New count" color="b" />
 
             {/* Badge assignment */}
-            <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid #2d2d44" }}>
+            <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid #3a2760" }}>
               <label style={c.label}>Reward Badge</label>
               <div style={{ display:"flex", gap:8, flexWrap:"wrap" as const, marginBottom:10 }}>
-                {[["none","None","#6b7280"],["star","⭐ Star","#f59e0b"],["check","✓ Verified","#3b82f6"],["crown","👑 Crown","#a855f7"],["tester","T Tester","#ca8a04"],["gold","🥇 Gold","#f59e0b"],["silver","🥈 Silver","#9ca3af"],["bronze","🥉 Bronze","#cd7c3a"]].map(([val,label,col])=>(
+                {[["none","None","#a094c4"],["star","⭐ Star","#ff4f8b"],["check","✓ Verified","#3b82f6"],["crown","👑 Crown","#a855f7"],["tester","T Tester","#ca8a04"],["gold","🥇 Gold","#ff4f8b"],["silver","🥈 Silver","#c4b8e0"],["bronze","🥉 Bronze","#cd7c3a"]].map(([val,label,col])=>(
                   <button key={val} onClick={async()=>{
                     const badgeVal = val==="none" ? null : val;
                     await update(ref(db,`users/${selected.uid}`),{badge:badgeVal});
@@ -741,7 +741,7 @@ function UsersPanel() {
                     patchUser(selected.uid,{badge:badgeVal});
                     logAdminAction("SET_BADGE", selected?.username||"?", val);
                     flash(`Badge ${val==="none"?"removed":`set to ${label}`}`);
-                  }} style={{ ...btn(), borderColor:selected.badge===(val==="none"?null:val)?col+"88":"#2d2d4488", color:selected.badge===(val==="none"?null:val)?col:"#6b7280", background:selected.badge===(val==="none"?null:val)?`${col}22`:"transparent" }}>
+                  }} style={{ ...btn(), borderColor:selected.badge===(val==="none"?null:val)?col+"88":"#2d2d4488", color:selected.badge===(val==="none"?null:val)?col:"#a094c4", background:selected.badge===(val==="none"?null:val)?`${col}22`:"transparent" }}>
                     {label}
                   </button>
                 ))}
@@ -751,7 +751,7 @@ function UsersPanel() {
             {/* Login history */}
             <LoginHistory uid={selected.uid} />
 
-            <div style={{ display:"flex", flexDirection:"column" as const, gap:8, marginTop:12, paddingTop:12, borderTop:"1px solid #2d2d44" }}>
+            <div style={{ display:"flex", flexDirection:"column" as const, gap:8, marginTop:12, paddingTop:12, borderTop:"1px solid #3a2760" }}>
               <button onClick={()=>handleWipeStats(selected.uid)} style={btn("r",true)}>⚠️ Wipe all stats</button>
               <button onClick={()=>handleDeleteLB(selected.uid)} style={btn("r",true)}>Delete leaderboard entries</button>
               <button onClick={()=>handleToggleAdmin(selected.uid,selected.isAdmin)} style={btn(selected.isAdmin?"r":"y",true)}>
@@ -854,14 +854,14 @@ function LeaderboardPanel() {
         <button onClick={handleBulkDelete} style={btn("r")}>Delete shown ({filtered.length})</button>
       </div>
       <div style={c.card}>
-        {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
-          filtered.length===0 ? <div style={{ color:"#4b5563" }}>No entries</div> :
+        {loading ? <div style={{ color:"#a094c4" }}>Loading…</div> :
+          filtered.length===0 ? <div style={{ color:"#7d6f9f" }}>No entries</div> :
           filtered.map((e,i)=>(
             <div key={e.key} style={c.row}>
-              <span style={{ fontSize:12, fontWeight:800, color:"#4b5563", width:28, textAlign:"right" as const, flexShrink:0 }}>{i+1}</span>
+              <span style={{ fontSize:12, fontWeight:800, color:"#7d6f9f", width:28, textAlign:"right" as const, flexShrink:0 }}>{i+1}</span>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:700, fontSize:14, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const }}>{e.name}</div>
-                <div style={{ fontSize:10, color:"#4b5563" }}>{e.category} · {e.roundSize??'?'}Q · {e.timerDuration===0?"∞":`${e.timerDuration??'?'}s`} · {e.date??''}</div>
+                <div style={{ fontSize:10, color:"#7d6f9f" }}>{e.category} · {e.roundSize??'?'}Q · {e.timerDuration===0?"∞":`${e.timerDuration??'?'}s`} · {e.date??''}</div>
               </div>
               {editingKey===e.key ? (
                 <div style={{ display:"flex", gap:6 }}>
@@ -872,7 +872,7 @@ function LeaderboardPanel() {
                 </div>
               ) : (
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <span style={{ color:"#f59e0b", fontWeight:800, fontSize:15 }}>{e.score}</span>
+                  <span style={{ color:"#ff4f8b", fontWeight:800, fontSize:15 }}>{e.score}</span>
                   <button onClick={()=>{setEditingKey(e.key);setEditScore(String(e.score));}} style={btn("b")}>Edit</button>
                   <button onClick={()=>handleDelete(e.key,e.name)} style={btn("r")}>Delete</button>
                 </div>
@@ -910,18 +910,18 @@ function ReportsPanel() {
     <div>
       <h1 style={c.h1}>🚩 Score Reports ({reports.length})</h1>
       <Flash msg={msg} />
-      <div style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#a5b4fc" }}>
+      <div style={{ background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:16, padding:"10px 14px", marginBottom:16, fontSize:13, color:"#a5b4fc" }}>
         Players can report suspicious scores — they'll show up here for you to review.
       </div>
       <div style={c.card}>
-        {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
-          reports.length===0 ? <div style={{ color:"#4b5563" }}>No reports — all clear!</div> :
+        {loading ? <div style={{ color:"#a094c4" }}>Loading…</div> :
+          reports.length===0 ? <div style={{ color:"#7d6f9f" }}>No reports — all clear!</div> :
           reports.map(r=>(
             <div key={r.key} style={c.row}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:700 }}>{r.reportedName} <span style={{ color:"#ef4444" }}>({r.score} pts)</span></div>
-                <div style={{ fontSize:12, color:"#9ca3af", marginTop:2 }}>{r.reason||"No reason given"}</div>
-                <div style={{ fontSize:11, color:"#4b5563" }}>Reported by {r.reporterName} · {r.category} · {r.date}</div>
+                <div style={{ fontSize:12, color:"#c4b8e0", marginTop:2 }}>{r.reason||"No reason given"}</div>
+                <div style={{ fontSize:11, color:"#7d6f9f" }}>Reported by {r.reporterName} · {r.category} · {r.date}</div>
               </div>
               <button onClick={()=>dismiss(r.key)} style={btn()}>Dismiss</button>
             </div>
@@ -1066,9 +1066,9 @@ function BansPanel({ initUid }: { initUid?:string }) {
         <label style={c.label}>Username or UID</label>
         <input value={banUid} onChange={e=>{ setBanUid(e.target.value); ensureUsersLoaded(); }} placeholder="username or full UID" style={c.input} />
         {target && (
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12, padding:"8px 12px", background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.2)", borderRadius:8 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12, padding:"8px 12px", background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.2)", borderRadius:12 }}>
             <Avatar src={target.photoURL} name={target.username} size={32} />
-            <div><div style={{ fontWeight:700 }}>{target.username}</div><div style={{ fontSize:11, color:"#6b7280" }}>{target.uid?.slice(0,20)}…</div></div>
+            <div><div style={{ fontWeight:700 }}>{target.username}</div><div style={{ fontSize:11, color:"#a094c4" }}>{target.uid?.slice(0,20)}…</div></div>
           </div>
         )}
         <label style={c.label}>Reason</label>
@@ -1100,7 +1100,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
           </>
         )}
         <div style={{ display:"flex", gap:8 }}>
-          <button onClick={handleBan} style={{ flex:2, background:"linear-gradient(135deg,#ef4444,#b91c1c)", border:"none", borderRadius:10, color:"#fff", fontSize:"0.95rem", fontWeight:800, padding:"12px", cursor:"pointer" }}>
+          <button onClick={handleBan} style={{ flex:2, background:"linear-gradient(135deg,#ef4444,#b91c1c)", border:"none", borderRadius:16, color:"#fff", fontSize:"0.95rem", fontWeight:800, padding:"12px", cursor:"pointer" }}>
             {banType==="temp"?`🔨 Ban for ${banAmount} ${banUnit}`:"🔒 Permanently Ban"}
           </button>
           <button onClick={()=>{ handleWarn(banUid, banReason, banSubject||undefined); }} style={{ flex:1, ...btn("y"), padding:"12px", fontWeight:800 }}>
@@ -1112,7 +1112,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
       {/* Global chat mute */}
       <div style={c.card}>
         <div style={c.h2}>🔇 Global Chat Mute</div>
-        <p style={{ color:"#9ca3af", fontSize:13, marginBottom:12 }}>Prevents a user from sending chat messages to anyone site-wide.</p>
+        <p style={{ color:"#c4b8e0", fontSize:13, marginBottom:12 }}>Prevents a user from sending chat messages to anyone site-wide.</p>
         <div style={{ display:"flex", gap:8 }}>
           <input placeholder="Username or UID" id="muteInput" style={{ ...c.input, marginBottom:0, flex:1 }} />
           <button onClick={async () => {
@@ -1175,7 +1175,7 @@ function BansPanel({ initUid }: { initUid?:string }) {
           </div>
           <SortBtns sort={activeSort} setSort={setActiveSort} />
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={c.input} />
-          {applySort(activeBans, activeSort).length===0 ? <div style={{ color:"#4b5563" }}>No active bans</div> :
+          {applySort(activeBans, activeSort).length===0 ? <div style={{ color:"#7d6f9f" }}>No active bans</div> :
             applySort(activeBans, activeSort).map(b=>{
               const tl = getTimeLeft(b);
               return (
@@ -1185,11 +1185,11 @@ function BansPanel({ initUid }: { initUid?:string }) {
                     <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" as const }}>
                       <span style={{ fontWeight:700 }}>{b.username}</span>
                       {b.type==="permanent" ? <span style={tag("239,68,68")}>permanent</span>
-                        : <span style={tag("245,158,11")}>{tl}</span>}
+                        : <span style={tag("255,79,139")}>{tl}</span>}
                     </div>
-                    {b.subject && <div style={{ fontSize:11, color:"#f59e0b" }}>Subject: {b.subject}</div>}
-                    <div style={{ fontSize:11, color:"#6b7280" }}>{b.reason}</div>
-                    <div style={{ fontSize:10, color:"#4b5563" }}>{new Date(b.bannedAt).toLocaleString()}</div>
+                    {b.subject && <div style={{ fontSize:11, color:"#ff4f8b" }}>Subject: {b.subject}</div>}
+                    <div style={{ fontSize:11, color:"#a094c4" }}>{b.reason}</div>
+                    <div style={{ fontSize:10, color:"#7d6f9f" }}>{new Date(b.bannedAt).toLocaleString()}</div>
                   </div>
                   <button onClick={()=>handleUnban(b.uid,b.username)} style={btn("g")}>Unban</button>
                 </div>
@@ -1208,10 +1208,10 @@ function BansPanel({ initUid }: { initUid?:string }) {
                 <Avatar src={b.photoURL} name={b.username||"?"} size={36} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <span style={{ fontWeight:700 }}>{b.username}</span>
-                  {b.subject && <div style={{ fontSize:11, color:"#f59e0b" }}>Subject: {b.subject}</div>}
-                  <div style={{ fontSize:11, color:"#6b7280" }}>{b.reason}</div>
+                  {b.subject && <div style={{ fontSize:11, color:"#ff4f8b" }}>Subject: {b.subject}</div>}
+                  <div style={{ fontSize:11, color:"#a094c4" }}>{b.reason}</div>
                   <div style={{ fontSize:11, color:"#10b981" }}>Expired · {b.duration||""}</div>
-                  <div style={{ fontSize:10, color:"#4b5563" }}>{new Date(b.bannedAt).toLocaleString()}</div>
+                  <div style={{ fontSize:10, color:"#7d6f9f" }}>{new Date(b.bannedAt).toLocaleString()}</div>
                 </div>
               </div>
             ))}
@@ -1282,19 +1282,19 @@ function ChatReportsPanel() {
       <h1 style={c.h1}>💬 Chat Reports ({reports.length})</h1>
       <Flash msg={msg} />
       <div style={c.card}>
-        {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
-          reports.length === 0 ? <div style={{ color:"#4b5563" }}>No chat reports — all clear!</div> :
+        {loading ? <div style={{ color:"#a094c4" }}>Loading…</div> :
+          reports.length === 0 ? <div style={{ color:"#7d6f9f" }}>No chat reports — all clear!</div> :
           reports.map((r: any) => (
             <div key={r.key} style={{ ...c.row, alignItems:"flex-start" }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
                   <span style={{ fontWeight:700, color:"#ef4444" }}>{r.senderName}</span>
-                  <span style={{ fontSize:11, color:"#4b5563" }}>reported by {r.reporterName}</span>
+                  <span style={{ fontSize:11, color:"#7d6f9f" }}>reported by {r.reporterName}</span>
                 </div>
-                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, padding:"8px 12px", fontSize:13, color:"#e5e7eb", marginBottom:4 }}>
+                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:12, padding:"8px 12px", fontSize:13, color:"#f3eeff", marginBottom:4 }}>
                   "{r.text}"
                 </div>
-                <div style={{ fontSize:11, color:"#4b5563" }}>{r.reportedAtStr}</div>
+                <div style={{ fontSize:11, color:"#7d6f9f" }}>{r.reportedAtStr}</div>
               </div>
               <div style={{ display:"flex", gap:6, flexShrink:0, marginLeft:10 }}>
                 <button onClick={() => deleteMessage(r)} style={btn("r")}>Delete msg</button>
@@ -1356,7 +1356,7 @@ function AnalyticsPanel() {
 
   const CAT_EMOJI: Record<string,string> = { geography:"🗺️", science:"🔬", history:"📜", math:"🔢", sports:"⚽", entertainment:"🎬" };
 
-  if (loading) return <div style={{ color:"#6b7280" }}>Loading…</div>;
+  if (loading) return <div style={{ color:"#a094c4" }}>Loading…</div>;
 
   return (
     <div>
@@ -1366,7 +1366,7 @@ function AnalyticsPanel() {
       <div style={c.card}>
         <div style={c.h2}>Daily Active Users (last 14 days)</div>
         {data.dauSorted.length === 0 ? (
-          <div style={{ color:"#4b5563" }}>No data yet</div>
+          <div style={{ color:"#7d6f9f" }}>No data yet</div>
         ) : (
           <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:120, marginBottom:8 }}>
             {data.dauSorted.map(([date, count]: [string, number]) => {
@@ -1374,9 +1374,9 @@ function AnalyticsPanel() {
               const h = Math.max(8, Math.round((count / max) * 100));
               return (
                 <div key={date} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <div style={{ fontSize:10, color:"#f59e0b", fontWeight:700 }}>{count}</div>
-                  <div style={{ width:"100%", background:"linear-gradient(180deg,#f59e0b,#ef4444)", borderRadius:"4px 4px 0 0", height:`${h}%` }} />
-                  <div style={{ fontSize:9, color:"#4b5563", whiteSpace:"nowrap" as const, transform:"rotate(-45deg)", transformOrigin:"top center", marginTop:4 }}>
+                  <div style={{ fontSize:10, color:"#ff4f8b", fontWeight:700 }}>{count}</div>
+                  <div style={{ width:"100%", background:"linear-gradient(180deg,#ff4f8b,#8b5cf6)", borderRadius:"4px 4px 0 0", height:`${h}%` }} />
+                  <div style={{ fontSize:9, color:"#7d6f9f", whiteSpace:"nowrap" as const, transform:"rotate(-45deg)", transformOrigin:"top center", marginTop:4 }}>
                     {date.split("/").slice(0,2).join("/")}
                   </div>
                 </div>
@@ -1389,14 +1389,14 @@ function AnalyticsPanel() {
       {/* Stats grid */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12, marginBottom:20 }}>
         {[
-          ["Avg Games/User", data.avgGames, "#f59e0b"],
+          ["Avg Games/User", data.avgGames, "#ff4f8b"],
           ["Duels This Week", data.duelsThisWeek, "#6366f1"],
           ["Total Games", data.totalGames.toLocaleString(), "#10b981"],
-          ["Total Users", data.totalUsers, "#e5e7eb"],
+          ["Total Users", data.totalUsers, "#f3eeff"],
         ].map(([l,v,col]) => (
           <div key={l as string} style={{ ...c.card, marginBottom:0, textAlign:"center" as const }}>
             <div style={{ fontSize:24, fontWeight:900, color:col as string }}>{v as any}</div>
-            <div style={{ fontSize:11, color:"#6b7280", marginTop:4 }}>{l}</div>
+            <div style={{ fontSize:11, color:"#a094c4", marginTop:4 }}>{l}</div>
           </div>
         ))}
       </div>
@@ -1405,10 +1405,10 @@ function AnalyticsPanel() {
       <div style={c.card}>
         <div style={c.h2}>Most Played Categories</div>
         {data.topCat.map(([cat, count]: [string, number], i: number) => (
-          <div key={cat} style={{ ...c.row, borderBottom: i < data.topCat.length-1 ? "1px solid #1e1e30" : "none" }}>
+          <div key={cat} style={{ ...c.row, borderBottom: i < data.topCat.length-1 ? "1px solid #2a1c47" : "none" }}>
             <span style={{ fontSize:18 }}>{CAT_EMOJI[cat] || "❓"}</span>
             <span style={{ flex:1, fontWeight:600 }}>{cat}</span>
-            <span style={{ color:"#f59e0b", fontWeight:800 }}>{count} entries</span>
+            <span style={{ color:"#ff4f8b", fontWeight:800 }}>{count} entries</span>
           </div>
         ))}
       </div>
@@ -1416,15 +1416,15 @@ function AnalyticsPanel() {
       {/* Top duel players */}
       <div style={c.card}>
         <div style={c.h2}>Top Duel Players</div>
-        {data.duelPlayers.length === 0 ? <div style={{ color:"#4b5563" }}>No duels played yet</div> :
+        {data.duelPlayers.length === 0 ? <div style={{ color:"#7d6f9f" }}>No duels played yet</div> :
           data.duelPlayers.map((u: any, i: number) => (
             <div key={u.uid||i} style={{ ...c.row }}>
-              <span style={{ color:"#4b5563", fontWeight:800, width:20 }}>{i+1}</span>
+              <span style={{ color:"#7d6f9f", fontWeight:800, width:20 }}>{i+1}</span>
               <Avatar src={u.photoURL} name={u.username||"?"} size={32} />
               <span style={{ flex:1, fontWeight:700 }}>{u.username}</span>
               <span style={{ color:"#10b981", fontWeight:700 }}>{u.duelWins||0}W</span>
               <span style={{ color:"#ef4444", fontWeight:700, marginLeft:8 }}>{u.duelLosses||0}L</span>
-              <span style={{ color:"#6b7280", fontSize:12, marginLeft:8 }}>{u.duelsPlayed||0} played</span>
+              <span style={{ color:"#a094c4", fontSize:12, marginLeft:8 }}>{u.duelsPlayed||0} played</span>
             </div>
           ))
         }
@@ -1506,9 +1506,9 @@ function MassPushPanel() {
 
   const ModePill = ({ id, label }: { id: typeof mode; label: string }) => (
     <button onClick={() => { setMode(id); setSelectedUsers(new Set()); }} style={{
-      flex:1, background: mode===id?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.04)",
-      border:`1px solid ${mode===id?"#f59e0b":"#2d2d44"}`,
-      borderRadius:8, color:mode===id?"#f59e0b":"#6b7280",
+      flex:1, background: mode===id?"rgba(255,79,139,0.2)":"rgba(255,255,255,0.04)",
+      border:`1px solid ${mode===id?"#ff4f8b":"#3a2760"}`,
+      borderRadius:12, color:mode===id?"#ff4f8b":"#a094c4",
       fontSize:12, fontWeight:700, padding:"8px 4px", cursor:"pointer",
     }}>{label}</button>
   );
@@ -1527,9 +1527,9 @@ function MassPushPanel() {
         <div style={{ marginBottom:14 }}>
           <input value={userSearch} onChange={e => setUserSearch(e.target.value)}
             placeholder="Search username…" style={c.input} />
-          <div style={{ maxHeight:160, overflowY:"auto" as const, border:"1px solid #2d2d44", borderRadius:8, marginTop:6 }}>
+          <div style={{ maxHeight:160, overflowY:"auto" as const, border:"1px solid #3a2760", borderRadius:12, marginTop:6 }}>
             {filteredUsers.length === 0
-              ? <div style={{ padding:"10px 14px", color:"#4b5563", fontSize:13 }}>No users found</div>
+              ? <div style={{ padding:"10px 14px", color:"#7d6f9f", fontSize:13 }}>No users found</div>
               : filteredUsers.map(u => (
                 <div key={u.uid} onClick={() => setSelectedUsers(prev => {
                   const next = new Set(prev);
@@ -1537,14 +1537,14 @@ function MassPushPanel() {
                   return next;
                 })} style={{
                   display:"flex", alignItems:"center", gap:10, padding:"8px 14px",
-                  borderBottom:"1px solid #1e1e30", cursor:"pointer",
-                  background: selectedUsers.has(u.uid) ? "rgba(245,158,11,0.1)" : "transparent",
+                  borderBottom:"1px solid #2a1c47", cursor:"pointer",
+                  background: selectedUsers.has(u.uid) ? "rgba(255,79,139,0.1)" : "transparent",
                 }}>
-                  <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${selectedUsers.has(u.uid)?"#f59e0b":"#4b5563"}`, background: selectedUsers.has(u.uid)?"#f59e0b":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <div style={{ width:16, height:16, borderRadius:8, border:`2px solid ${selectedUsers.has(u.uid)?"#ff4f8b":"#7d6f9f"}`, background: selectedUsers.has(u.uid)?"#ff4f8b":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
                     {selectedUsers.has(u.uid) && <span style={{ color:"#000", fontSize:10, fontWeight:900 }}>✓</span>}
                   </div>
                   <Avatar src={u.photoURL} name={u.username||"?"} size={24} />
-                  <span style={{ fontWeight:700, fontSize:13, color: selectedUsers.has(u.uid)?"#f59e0b":"#e5e7eb" }}>{u.username}</span>
+                  <span style={{ fontWeight:700, fontSize:13, color: selectedUsers.has(u.uid)?"#ff4f8b":"#f3eeff" }}>{u.username}</span>
                   <BadgeIcon badge={u.badge} size={12} />
                   {!u.fcmToken && <span style={{ fontSize:11, color:"#ef4444", marginLeft:"auto" }}>no token</span>}
                 </div>
@@ -1552,7 +1552,7 @@ function MassPushPanel() {
             }
           </div>
           {selectedUsers.size > 0 && (
-            <div style={{ fontSize:12, color:"#f59e0b", marginTop:6 }}>
+            <div style={{ fontSize:12, color:"#ff4f8b", marginTop:6 }}>
               {selectedUsers.size} user{selectedUsers.size > 1 ? "s" : ""} selected
             </div>
           )}
@@ -1562,13 +1562,13 @@ function MassPushPanel() {
       {/* Badge mode */}
       {mode === "badge" && (
         <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:11, color:"#6b7280", marginBottom:8 }}>Send to all users with this badge:</div>
+          <div style={{ fontSize:11, color:"#a094c4", marginBottom:8 }}>Send to all users with this badge:</div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" as const }}>
             {BADGE_OPTIONS.map(b => (
               <button key={b} onClick={() => setBadgeTarget(b)} style={{
-                background: badgeTarget===b?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.04)",
-                border:`1px solid ${badgeTarget===b?"#f59e0b":"#2d2d44"}`,
-                borderRadius:8, color:badgeTarget===b?"#f59e0b":"#6b7280",
+                background: badgeTarget===b?"rgba(255,79,139,0.2)":"rgba(255,255,255,0.04)",
+                border:`1px solid ${badgeTarget===b?"#ff4f8b":"#3a2760"}`,
+                borderRadius:12, color:badgeTarget===b?"#ff4f8b":"#a094c4",
                 fontSize:12, fontWeight:700, padding:"6px 12px", cursor:"pointer",
                 display:"flex", alignItems:"center", gap:4,
               }}>
@@ -1576,7 +1576,7 @@ function MassPushPanel() {
               </button>
             ))}
           </div>
-          <div style={{ fontSize:12, color:"#4b5563", marginTop:8 }}>
+          <div style={{ fontSize:12, color:"#7d6f9f", marginTop:8 }}>
             {allUsers.filter(u => u.badge === badgeTarget && u.fcmToken).length} eligible recipients
           </div>
         </div>
@@ -1613,11 +1613,11 @@ function NotifHistoryPanel() {
     <div>
       <h1 style={c.h1}>📨 Notification History</h1>
       <div style={c.card}>
-        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
+        {loading ? <div style={{color:"#a094c4"}}>Loading…</div> :
          logs.length===0 ? (
            <div style={{textAlign:"center" as const,padding:"30px 0"}}>
              <div style={{fontSize:36,marginBottom:8}}>📭</div>
-             <div style={{color:"#4b5563",fontSize:14,fontWeight:700}}>No notifications sent yet</div>
+             <div style={{color:"#7d6f9f",fontSize:14,fontWeight:700}}>No notifications sent yet</div>
              <div style={{color:"#374151",fontSize:12,marginTop:6}}>Notifications sent via Admin → Announcements will appear here.</div>
            </div>
          ) :
@@ -1626,12 +1626,12 @@ function NotifHistoryPanel() {
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
                 <span style={{fontWeight:700,fontSize:14,color:l.success?"#10b981":"#ef4444"}}>{l.success?"✅":"❌"} {l.title}</span>
-                <span style={{fontSize:11,color:"#4b5563"}}>from {l.sender||"system"}</span>
+                <span style={{fontSize:11,color:"#7d6f9f"}}>from {l.sender||"system"}</span>
               </div>
-              <div style={{fontSize:12,color:"#9ca3af"}}>{l.body}</div>
+              <div style={{fontSize:12,color:"#c4b8e0"}}>{l.body}</div>
               {l.error && <div style={{fontSize:11,color:"#ef4444",marginTop:2}}>{l.error}</div>}
             </div>
-            <div style={{fontSize:11,color:"#4b5563",flexShrink:0,marginLeft:10}}>{l.sentAt}</div>
+            <div style={{fontSize:11,color:"#7d6f9f",flexShrink:0,marginLeft:10}}>{l.sentAt}</div>
           </div>
         ))}
       </div>
@@ -1644,9 +1644,9 @@ function ActivityLogPanel() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const ACTION_COLORS: Record<string,string> = {
-    BAN:"#ef4444", UNBAN:"#10b981", WIPE_STATS:"#f59e0b",
+    BAN:"#ef4444", UNBAN:"#10b981", WIPE_STATS:"#ff4f8b",
     SET_BADGE:"#a855f7", CHANGE_USERNAME:"#6366f1", DELETE_LB:"#ef4444",
-    GRANT_ADMIN:"#f59e0b", REVOKE_ADMIN:"#6b7280",
+    GRANT_ADMIN:"#ff4f8b", REVOKE_ADMIN:"#a094c4",
   };
   useEffect(() => {
     get(ref(db, "adminLog")).then(snap => {
@@ -1660,11 +1660,11 @@ function ActivityLogPanel() {
     <div>
       <h1 style={c.h1}>📋 Admin Activity Log</h1>
       <div style={c.card}>
-        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
+        {loading ? <div style={{color:"#a094c4"}}>Loading…</div> :
          logs.length===0 ? (
            <div style={{textAlign:"center" as const,padding:"30px 0"}}>
              <div style={{fontSize:36,marginBottom:8}}>📋</div>
-             <div style={{color:"#4b5563",fontSize:14,fontWeight:700}}>No admin actions logged yet</div>
+             <div style={{color:"#7d6f9f",fontSize:14,fontWeight:700}}>No admin actions logged yet</div>
              <div style={{color:"#374151",fontSize:12,marginTop:6}}>Actions like banning, changing usernames, wiping stats, and setting badges will be logged here automatically.</div>
              <div style={{color:"#374151",fontSize:12,marginTop:4}}>Try banning someone or changing a username — it'll show up here.</div>
            </div>
@@ -1673,18 +1673,18 @@ function ActivityLogPanel() {
           <div key={i} style={{...c.row}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" as const}}>
-                <span style={{fontWeight:700,fontSize:13,color:ACTION_COLORS[l.action]||"#e5e7eb",background:"rgba(255,255,255,0.06)",borderRadius:4,padding:"1px 6px"}}>{l.action}</span>
-                <span style={{fontSize:12,color:"#9ca3af"}}>by</span>
-                <span style={{fontWeight:700,fontSize:13,color:"#f59e0b"}}>{l.adminUsername}</span>
-                <span style={{fontSize:10,color:"#4b5563",fontFamily:"monospace"}}>({l.adminUid?.slice(0,10)}…)</span>
+                <span style={{fontWeight:700,fontSize:13,color:ACTION_COLORS[l.action]||"#f3eeff",background:"rgba(255,255,255,0.06)",borderRadius:8,padding:"1px 6px"}}>{l.action}</span>
+                <span style={{fontSize:12,color:"#c4b8e0"}}>by</span>
+                <span style={{fontWeight:700,fontSize:13,color:"#ff4f8b"}}>{l.adminUsername}</span>
+                <span style={{fontSize:10,color:"#7d6f9f",fontFamily:"monospace"}}>({l.adminUid?.slice(0,10)}…)</span>
                 {l.target && <>
-                  <span style={{fontSize:12,color:"#6b7280"}}>→</span>
-                  <span style={{fontWeight:600,fontSize:13,color:"#d1d5db"}}>{l.target}</span>
+                  <span style={{fontSize:12,color:"#a094c4"}}>→</span>
+                  <span style={{fontWeight:600,fontSize:13,color:"#e6defa"}}>{l.target}</span>
                 </>}
-                {l.details && <span style={{fontSize:12,color:"#6b7280",background:"rgba(255,255,255,0.04)",borderRadius:4,padding:"1px 6px"}}>({l.details})</span>}
+                {l.details && <span style={{fontSize:12,color:"#a094c4",background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"1px 6px"}}>({l.details})</span>}
               </div>
             </div>
-            <div style={{fontSize:11,color:"#4b5563",flexShrink:0,marginLeft:10,whiteSpace:"nowrap" as const}}>{l.time}</div>
+            <div style={{fontSize:11,color:"#7d6f9f",flexShrink:0,marginLeft:10,whiteSpace:"nowrap" as const}}>{l.time}</div>
           </div>
         ))}
       </div>
@@ -1760,20 +1760,20 @@ function SystemPanel() {
       {/* Database Stats */}
       <div style={c.card}>
         <div style={c.h2}>🗄️ Database Stats</div>
-        {loading ? <div style={{color:"#6b7280",padding:"20px 0",textAlign:"center" as const}}>Loading…</div> : <>
+        {loading ? <div style={{color:"#a094c4",padding:"20px 0",textAlign:"center" as const}}>Loading…</div> : <>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10,marginBottom:16}}>
           {[
-            ["Users",stats.users,"#e5e7eb"],
-            ["LB Entries",stats.lbEntries,"#f59e0b"],
+            ["Users",stats.users,"#f3eeff"],
+            ["LB Entries",stats.lbEntries,"#ff4f8b"],
             ["Duels",stats.duels,"#6366f1"],
             ["Active Bans",stats.bans,"#ef4444"],
             ["Admin Actions",stats.adminActions,"#a855f7"],
             ["Notifs Sent",stats.notifsSent,"#60a5fa"],
             ["Push Enabled",stats.withNotifs,"#10b981"],
           ].map(([l,v,col]) => (
-            <div key={l as string} style={{background:"#0f0f1a",borderRadius:10,padding:"12px",textAlign:"center" as const}}>
+            <div key={l as string} style={{background:"#130a24",borderRadius:16,padding:"12px",textAlign:"center" as const}}>
               <div style={{fontSize:22,fontWeight:900,color:col as string}}>{v}</div>
-              <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{l}</div>
+              <div style={{fontSize:11,color:"#a094c4",marginTop:2}}>{l}</div>
             </div>
           ))}
         </div>
@@ -1782,7 +1782,7 @@ function SystemPanel() {
           <div key={cat} style={{...c.row}}>
             <span style={{fontSize:16}}>{CAT_EMOJI[cat]}</span>
             <span style={{flex:1,fontWeight:600,textTransform:"capitalize" as const}}>{cat}</span>
-            <span style={{color:"#f59e0b",fontWeight:700}}>{count as number} questions</span>
+            <span style={{color:"#ff4f8b",fontWeight:700}}>{count as number} questions</span>
           </div>
         ))}
         </>}
@@ -1791,7 +1791,7 @@ function SystemPanel() {
       {/* Manual Badge Cron */}
       <div style={c.card}>
         <div style={c.h2}>🏅 Run Badge Cron Now</div>
-        <p style={{color:"#9ca3af",fontSize:13,marginBottom:12}}>Normally runs at 3am UTC. Trigger it manually to apply badge changes immediately.</p>
+        <p style={{color:"#c4b8e0",fontSize:13,marginBottom:12}}>Normally runs at 3am UTC. Trigger it manually to apply badge changes immediately.</p>
         <button onClick={runBadgeCron} style={{...btn("y"),width:"100%"}} disabled={cronResult==="Running…"}>
           {cronResult || "▶ Run Badge Cron"}
         </button>
@@ -1813,7 +1813,7 @@ function SystemPanel() {
               <div style={{flex:1}}>
                 <div style={{fontWeight:700,fontSize:13,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" as const}}>
                   {s.username||s.name||"Unknown"}
-                  <span style={{fontSize:10,color:"#4b5563",fontFamily:"monospace"}}>{(s.uid||"").slice(0,12)}…</span>
+                  <span style={{fontSize:10,color:"#7d6f9f",fontFamily:"monospace"}}>{(s.uid||"").slice(0,12)}…</span>
                 </div>
                 <div style={{fontSize:12,color:"#ef4444",marginTop:2}}>{s.reason}</div>
               </div>
@@ -1841,12 +1841,12 @@ function SystemPanel() {
 function LinksPanel() {
   const links = [
     { label:"Firebase Console", desc:"Realtime Database, Auth, Storage", icon:"🔥", color:"#f97316", url:"https://console.firebase.google.com/project/onetap-trivia" },
-    { label:"Firebase Database", desc:"Browse and edit data directly", icon:"🗄️", color:"#f59e0b", url:"https://console.firebase.google.com/project/onetap-trivia/database/onetap-trivia-default-rtdb/data" },
+    { label:"Firebase Database", desc:"Browse and edit data directly", icon:"🗄️", color:"#ff4f8b", url:"https://console.firebase.google.com/project/onetap-trivia/database/onetap-trivia-default-rtdb/data" },
     { label:"Firebase Auth", desc:"View and manage users", icon:"🔐", color:"#6366f1", url:"https://console.firebase.google.com/project/onetap-trivia/authentication/users" },
     { label:"Firebase Cloud Messaging", desc:"Push notification settings, VAPID keys", icon:"🔔", color:"#10b981", url:"https://console.firebase.google.com/project/onetap-trivia/settings/cloudmessaging" },
     { label:"Vercel Dashboard", desc:"Deployments, env vars, domains", icon:"▲", color:"#fff", url:"https://vercel.com/chris0622ha-s-projects" },
     { label:"GitHub Repository", desc:"Source code, commits, branches", icon:"🐙", color:"#a5b4fc", url:"https://github.com/chris0622ha/TrivQuic" },
-    { label:"TrivQuic Live Site", desc:"trivquic.vercel.app", icon:"⚡", color:"#f59e0b", url:"https://trivquic.vercel.app" },
+    { label:"TrivQuic Live Site", desc:"trivquic.vercel.app", icon:"⚡", color:"#ff4f8b", url:"https://trivquic.vercel.app" },
     { label:"Google Cloud Console", desc:"Service accounts, IAM, APIs", icon:"☁️", color:"#60a5fa", url:"https://console.cloud.google.com/iam-admin/serviceaccounts?project=onetap-trivia" },
   ];
 
@@ -1856,18 +1856,18 @@ function LinksPanel() {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:12 }}>
         {links.map(link => (
           <a key={link.url} href={link.url} target="_blank" rel="noreferrer" style={{
-            background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:14,
+            background:"#1e1236", border:"1px solid #3a2760", borderRadius:20,
             padding:"16px 20px", textDecoration:"none", display:"flex", alignItems:"center", gap:14,
             transition:"border-color 0.15s",
           }}
           onMouseEnter={e => (e.currentTarget.style.borderColor = link.color + "88")}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = "#2d2d44")}>
+          onMouseLeave={e => (e.currentTarget.style.borderColor = "#3a2760")}>
             <span style={{ fontSize:28, flexShrink:0 }}>{link.icon}</span>
             <div>
               <div style={{ fontWeight:700, fontSize:14, color:link.color }}>{link.label}</div>
-              <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>{link.desc}</div>
+              <div style={{ fontSize:12, color:"#a094c4", marginTop:2 }}>{link.desc}</div>
             </div>
-            <span style={{ marginLeft:"auto", color:"#4b5563", fontSize:16 }}>↗</span>
+            <span style={{ marginLeft:"auto", color:"#7d6f9f", fontSize:16 }}>↗</span>
           </a>
         ))}
       </div>
@@ -1936,8 +1936,8 @@ function DuelsAdminPanel() {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
             <div style={{ fontWeight:700, fontSize:"1rem", color:"#a5b4fc" }}>
               👁️ Spectating Live Duel
-              {live.status!=="done" && <span style={{ marginLeft:8, fontSize:11, color:"#10b981", background:"rgba(16,185,129,0.1)", borderRadius:4, padding:"1px 6px" }}>● LIVE</span>}
-              {live.status==="done" && <span style={{ marginLeft:8, fontSize:11, color:"#6b7280" }}>Finished</span>}
+              {live.status!=="done" && <span style={{ marginLeft:8, fontSize:11, color:"#10b981", background:"rgba(16,185,129,0.1)", borderRadius:8, padding:"1px 6px" }}>● LIVE</span>}
+              {live.status==="done" && <span style={{ marginLeft:8, fontSize:11, color:"#a094c4" }}>Finished</span>}
             </div>
             <div style={{ display:"flex", gap:6 }}>
               {live.status!=="done" && <button onClick={()=>endDuel(live.id||spectating.id)} style={{ ...btn("r"), fontSize:12 }}>Force End</button>}
@@ -1950,20 +1950,20 @@ function DuelsAdminPanel() {
               <div style={{ fontWeight:700, marginTop:6, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
                 {live.p1?.name} <BadgeIcon badge={live.p1?.badge} size={12} />
               </div>
-              <div style={{ fontSize:32, fontWeight:900, color:"#f59e0b" }}>{live.p1TotalScore||0}</div>
-              <div style={{ fontSize:12, color:"#6b7280" }}>Round: {live.p1RoundScore||0}</div>
+              <div style={{ fontSize:32, fontWeight:900, color:"#ff4f8b" }}>{live.p1TotalScore||0}</div>
+              <div style={{ fontSize:12, color:"#a094c4" }}>Round: {live.p1RoundScore||0}</div>
             </div>
-            <div style={{ textAlign:"center" as const, color:"#4b5563", fontWeight:900, fontSize:18 }}>VS</div>
+            <div style={{ textAlign:"center" as const, color:"#7d6f9f", fontWeight:900, fontSize:18 }}>VS</div>
             <div style={{ textAlign:"center" as const }}>
               <Avatar src={live.p2?.photoURL} name={live.p2?.name||"P2"} size={44} />
               <div style={{ fontWeight:700, marginTop:6, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
                 {live.p2?.name} <BadgeIcon badge={live.p2?.badge} size={12} />
               </div>
               <div style={{ fontSize:32, fontWeight:900, color:"#6366f1" }}>{live.p2TotalScore||0}</div>
-              <div style={{ fontSize:12, color:"#6b7280" }}>Round: {live.p2RoundScore||0}</div>
+              <div style={{ fontSize:12, color:"#a094c4" }}>Round: {live.p2RoundScore||0}</div>
             </div>
           </div>
-          <div style={{ fontSize:12, color:"#6b7280", textAlign:"center" as const }}>
+          <div style={{ fontSize:12, color:"#a094c4", textAlign:"center" as const }}>
             {live.rounds?.length} rounds · {live.questionsPerRound}Q each · Status: {live.status}
           </div>
         </div>
@@ -1977,8 +1977,8 @@ function DuelsAdminPanel() {
             </button>
           ))}
         </div>
-        {loading ? <div style={{ color:"#6b7280" }}>Loading…</div> :
-          filtered.length === 0 ? <div style={{ color:"#4b5563" }}>No duels found</div> :
+        {loading ? <div style={{ color:"#a094c4" }}>Loading…</div> :
+          filtered.length === 0 ? <div style={{ color:"#7d6f9f" }}>No duels found</div> :
           filtered.map((d:any, i) => {
             const isLive = d.status !== "done";
             const p1Total = d.p1TotalScore || 0;
@@ -1987,14 +1987,14 @@ function DuelsAdminPanel() {
               <div key={i} style={{ ...c.row, alignItems:"flex-start" }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontWeight:700, fontSize:14, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" as const }}>
-                    {isLive && <span style={{ fontSize:10, color:"#10b981", background:"rgba(16,185,129,0.15)", borderRadius:4, padding:"1px 6px" }}>● LIVE</span>}
-                    <span style={{ color:"#f59e0b" }}>{d.p1?.name}</span>
-                    <span style={{ color:"#f59e0b", fontWeight:900 }}>{p1Total}</span>
-                    <span style={{ color:"#4b5563" }}>vs</span>
+                    {isLive && <span style={{ fontSize:10, color:"#10b981", background:"rgba(16,185,129,0.15)", borderRadius:8, padding:"1px 6px" }}>● LIVE</span>}
+                    <span style={{ color:"#ff4f8b" }}>{d.p1?.name}</span>
+                    <span style={{ color:"#ff4f8b", fontWeight:900 }}>{p1Total}</span>
+                    <span style={{ color:"#7d6f9f" }}>vs</span>
                     <span style={{ color:"#6366f1", fontWeight:900 }}>{p2Total}</span>
                     <span style={{ color:"#a5b4fc" }}>{d.p2?.name}</span>
                   </div>
-                  <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{d.rounds?.length}R · {d.questionsPerRound}Q · {new Date(d.createdAt).toLocaleString()}</div>
+                  <div style={{ fontSize:11, color:"#7d6f9f", marginTop:2 }}>{d.rounds?.length}R · {d.questionsPerRound}Q · {new Date(d.createdAt).toLocaleString()}</div>
                 </div>
                 <div style={{ display:"flex", gap:6, flexShrink:0, marginLeft:8 }}>
                   <button onClick={()=>setSpectating(spectating?.id===d.id?null:d)} style={{ ...btn(spectating?.id===d.id?"g":""), fontSize:12, padding:"4px 10px" }}>
@@ -2133,20 +2133,20 @@ function WarnsPanel() {
           </div>
         </div>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by username…" style={c.input} />
-        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> :
-          filtered.length===0 ? <div style={{color:"#4b5563",textAlign:"center" as const,padding:"20px 0"}}>No warnings yet</div> :
+        {loading ? <div style={{color:"#a094c4"}}>Loading…</div> :
+          filtered.length===0 ? <div style={{color:"#7d6f9f",textAlign:"center" as const,padding:"20px 0"}}>No warnings yet</div> :
           filtered.map((w,i) => (
             <div key={i} style={c.row}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" as const }}>
-                  <span style={{ fontWeight:700, color:"#f59e0b" }}>{w.username}</span>
-                  <span style={{ fontSize:11, color:"#ef4444", background:"rgba(239,68,68,0.1)", borderRadius:4, padding:"1px 6px" }}>
+                  <span style={{ fontWeight:700, color:"#ff4f8b" }}>{w.username}</span>
+                  <span style={{ fontSize:11, color:"#ef4444", background:"rgba(239,68,68,0.1)", borderRadius:8, padding:"1px 6px" }}>
                     {warnCounts[w.uid]||1} warn{(warnCounts[w.uid]||1)>1?"s":""}
                   </span>
                 </div>
-                {w.subject && <div style={{ fontSize:11, color:"#f59e0b", marginTop:2 }}>Subject: {w.subject}</div>}
-                <div style={{ fontSize:13, color:"#d1d5db", marginTop:1 }}>{w.reason}</div>
-                <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>by {w.adminUsername} · {w.time}</div>
+                {w.subject && <div style={{ fontSize:11, color:"#ff4f8b", marginTop:2 }}>Subject: {w.subject}</div>}
+                <div style={{ fontSize:13, color:"#e6defa", marginTop:1 }}>{w.reason}</div>
+                <div style={{ fontSize:11, color:"#7d6f9f", marginTop:2 }}>by {w.adminUsername} · {w.time}</div>
               </div>
               <button onClick={()=>deleteWarn(w.uid, w.key)} style={{ ...btn("r"), fontSize:12, padding:"4px 10px", flexShrink:0 }}>Remove</button>
             </div>
@@ -2206,16 +2206,16 @@ export default function AdminPage() {
     return () => unsub();
   }, []);
 
-  if (authLoading) return <div style={{ ...c.page, display:"flex", alignItems:"center", justifyContent:"center" }}><div style={{ color:"#6b7280" }}>Loading…</div></div>;
+  if (authLoading) return <div style={{ ...c.page, display:"flex", alignItems:"center", justifyContent:"center" }}><div style={{ color:"#a094c4" }}>Loading…</div></div>;
 
   if (!user) return (
     <div style={{ ...c.page, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"32px 28px", maxWidth:360, textAlign:"center" as const }}>
+      <div style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, padding:"32px 28px", maxWidth:360, textAlign:"center" as const }}>
         <div style={{ fontSize:40, marginBottom:12 }}>🔐</div>
         <div style={{ fontSize:"1.2rem", fontWeight:900, marginBottom:8 }}>Admin Access</div>
-        <div style={{ color:"#6b7280", fontSize:14, marginBottom:24 }}>Sign in to continue</div>
+        <div style={{ color:"#a094c4", fontSize:14, marginBottom:24 }}>Sign in to continue</div>
         <button onClick={()=>signInWithPopup(auth,googleProvider)}
-          style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:10, color:"#1f2937", fontSize:14, fontWeight:700, padding:"10px 20px", cursor:"pointer", margin:"0 auto" }}>
+          style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:16, color:"#2a1c47", fontSize:14, fontWeight:700, padding:"10px 20px", cursor:"pointer", margin:"0 auto" }}>
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.7 29.3 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.1 8.1 2.9l6-6C34.5 5.1 29.5 3 24 3 16.3 3 9.7 7.9 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.3 0 10.2-1.9 13.9-5.1l-6.4-5.4C29.6 36.1 26.9 37 24 37c-5.2 0-9.6-3.3-11.3-8H6.2C9.5 38.9 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.4 5.4C41.2 35.3 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
           Sign in with Google
         </button>
@@ -2225,12 +2225,12 @@ export default function AdminPage() {
 
   if (!isAdmin) return (
     <div style={{ ...c.page, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#1a1a2e", border:"1px solid #2d2d44", borderRadius:20, padding:"32px 28px", maxWidth:360, textAlign:"center" as const }}>
+      <div style={{ background:"#1e1236", border:"1px solid #3a2760", borderRadius:28, padding:"32px 28px", maxWidth:360, textAlign:"center" as const }}>
         <div style={{ fontSize:40, marginBottom:12 }}>🚫</div>
         <div style={{ fontSize:"1.2rem", fontWeight:900, marginBottom:8 }}>Access Denied</div>
-        <div style={{ color:"#6b7280", fontSize:14, marginBottom:6 }}>Signed in as {user.email}</div>
-        <div style={{ color:"#4b5563", fontSize:13 }}>Your account doesn't have admin privileges.</div>
-        <a href="/" style={{ display:"inline-block", marginTop:20, color:"#f59e0b", fontSize:13 }}>← Back to TrivQuic</a>
+        <div style={{ color:"#a094c4", fontSize:14, marginBottom:6 }}>Signed in as {user.email}</div>
+        <div style={{ color:"#7d6f9f", fontSize:13 }}>Your account doesn't have admin privileges.</div>
+        <a href="/" style={{ display:"inline-block", marginTop:20, color:"#ff4f8b", fontSize:13 }}>← Back to TrivQuic</a>
       </div>
     </div>
   );
@@ -2262,14 +2262,14 @@ export default function AdminPage() {
   const currentNav = NAV.find(n => n.id === tab);
 
   if (isMobile) return (
-    <div style={{ background:"#0f0f1a", minHeight:"100vh", color:"#fff", paddingBottom:70 }}>
+    <div style={{ background:"#130a24", minHeight:"100vh", color:"#fff", paddingBottom:70 }}>
       {/* Mobile header */}
-      <div style={{ background:"#0f0f1a", borderBottom:"1px solid #1e1e30", padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky" as const, top:0, zIndex:100 }}>
+      <div style={{ background:"#130a24", borderBottom:"1px solid #2a1c47", padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky" as const, top:0, zIndex:100 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <span style={{ fontSize:20 }}>{currentNav?.icon}</span>
-          <div style={{ fontSize:"1rem", fontWeight:900, color:"#f59e0b" }}>{currentNav?.label}</div>
+          <div style={{ fontSize:"1rem", fontWeight:900, color:"#ff4f8b" }}>{currentNav?.label}</div>
         </div>
-        <button onClick={() => setMobileNavOpen(o => !o)} style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:8, color:"#f59e0b", fontSize:12, fontWeight:700, padding:"6px 12px", cursor:"pointer" }}>
+        <button onClick={() => setMobileNavOpen(o => !o)} style={{ background:"rgba(255,79,139,0.1)", border:"1px solid rgba(255,79,139,0.3)", borderRadius:12, color:"#ff4f8b", fontSize:12, fontWeight:700, padding:"6px 12px", cursor:"pointer" }}>
           {mobileNavOpen ? "✕ Close" : "☰ Menu"}
         </button>
       </div>
@@ -2277,17 +2277,17 @@ export default function AdminPage() {
       {/* Mobile nav drawer */}
       {mobileNavOpen && (
         <div style={{ position:"fixed" as const, inset:0, zIndex:200, background:"rgba(0,0,0,0.7)" }} onClick={() => setMobileNavOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ position:"absolute" as const, top:0, right:0, width:260, height:"100%", background:"#0f0f1a", borderLeft:"1px solid #1e1e30", display:"flex", flexDirection:"column" as const }}>
-            <div style={{ padding:"20px 16px 16px", borderBottom:"1px solid #1e1e30" }}>
-              <div style={{ fontSize:"1rem", fontWeight:900, color:"#f59e0b" }}>⚡ TrivQuic Admin</div>
-              <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{user.email}</div>
+          <div onClick={e => e.stopPropagation()} style={{ position:"absolute" as const, top:0, right:0, width:260, height:"100%", background:"#130a24", borderLeft:"1px solid #2a1c47", display:"flex", flexDirection:"column" as const }}>
+            <div style={{ padding:"20px 16px 16px", borderBottom:"1px solid #2a1c47" }}>
+              <div style={{ fontSize:"1rem", fontWeight:900, color:"#ff4f8b" }}>⚡ TrivQuic Admin</div>
+              <div style={{ fontSize:11, color:"#7d6f9f", marginTop:2 }}>{user.email}</div>
             </div>
             <div style={{ flex:1, overflowY:"auto" as const }}>
               {NAV.map(item => (
                 <button key={item.id} onClick={() => { setTab(item.id); setMobileNavOpen(false); }} style={{
-                  width:"100%", background:tab===item.id?"rgba(245,158,11,0.1)":"transparent",
-                  border:"none", borderLeft:`3px solid ${tab===item.id?"#f59e0b":"transparent"}`,
-                  color:tab===item.id?"#f59e0b":"#9ca3af",
+                  width:"100%", background:tab===item.id?"rgba(255,79,139,0.1)":"transparent",
+                  border:"none", borderLeft:`3px solid ${tab===item.id?"#ff4f8b":"transparent"}`,
+                  color:tab===item.id?"#ff4f8b":"#c4b8e0",
                   fontSize:15, fontWeight:700, padding:"13px 16px", cursor:"pointer",
                   textAlign:"left" as const, display:"flex", alignItems:"center", gap:12,
                 }}>
@@ -2295,8 +2295,8 @@ export default function AdminPage() {
                 </button>
               ))}
             </div>
-            <div style={{ padding:"16px", borderTop:"1px solid #1e1e30" }}>
-              <a href="/" style={{ color:"#4b5563", fontSize:13, textDecoration:"none" }}>← Back to game</a>
+            <div style={{ padding:"16px", borderTop:"1px solid #2a1c47" }}>
+              <a href="/" style={{ color:"#7d6f9f", fontSize:13, textDecoration:"none" }}>← Back to game</a>
             </div>
           </div>
         </div>
@@ -2312,16 +2312,16 @@ export default function AdminPage() {
   return (
     <div style={{ ...c.page, display:"flex" }}>
       <div style={c.sidebar}>
-        <div style={{ padding:"20px 16px 16px", borderBottom:"1px solid #1e1e30" }}>
-          <div style={{ fontSize:"1rem", fontWeight:900, color:"#f59e0b" }}>⚡ TrivQuic Admin</div>
-          <div style={{ fontSize:11, color:"#4b5563", marginTop:2 }}>{user.email}</div>
+        <div style={{ padding:"20px 16px 16px", borderBottom:"1px solid #2a1c47" }}>
+          <div style={{ fontSize:"1rem", fontWeight:900, color:"#ff4f8b" }}>⚡ TrivQuic Admin</div>
+          <div style={{ fontSize:11, color:"#7d6f9f", marginTop:2 }}>{user.email}</div>
         </div>
         <div style={{ flex:1 }}>
           {NAV.map(item=>(
             <button key={item.id} onClick={()=>setTab(item.id)} style={{
-              width:"100%", background:tab===item.id?"rgba(245,158,11,0.1)":"transparent",
-              border:"none", borderLeft:`3px solid ${tab===item.id?"#f59e0b":"transparent"}`,
-              color:tab===item.id?"#f59e0b":"#6b7280",
+              width:"100%", background:tab===item.id?"rgba(255,79,139,0.1)":"transparent",
+              border:"none", borderLeft:`3px solid ${tab===item.id?"#ff4f8b":"transparent"}`,
+              color:tab===item.id?"#ff4f8b":"#a094c4",
               fontSize:14, fontWeight:700, padding:"11px 16px", cursor:"pointer",
               textAlign:"left" as const, display:"flex", alignItems:"center", gap:10,
             }}>
@@ -2330,7 +2330,7 @@ export default function AdminPage() {
           ))}
         </div>
         <div style={{ padding:"16px" }}>
-          <a href="/" style={{ color:"#4b5563", fontSize:12, textDecoration:"none" }}>← Back to game</a>
+          <a href="/" style={{ color:"#7d6f9f", fontSize:12, textDecoration:"none" }}>← Back to game</a>
         </div>
       </div>
 
@@ -2392,21 +2392,21 @@ function SessionsPanel() {
       <h1 style={c.h1}>🎮 Sessions</h1>
       <div style={c.card}>
         <div style={c.h2}>Solo Games ({sessions.length} active)</div>
-        {loading ? <div style={{color:"#6b7280"}}>Loading…</div> : sessions.length === 0 ? <div style={{color:"#6b7280"}}>No active solo sessions</div> : sessions.map(s => (
+        {loading ? <div style={{color:"#a094c4"}}>Loading…</div> : sessions.length === 0 ? <div style={{color:"#a094c4"}}>No active solo sessions</div> : sessions.map(s => (
           <div key={s.uid} style={{...c.row}}>
             <span style={{fontWeight:700}}>{s.username}</span>
-            <span style={{color:"#6b7280",fontSize:12}}>playing for {Math.floor((Date.now()-s.gameStartedAt)/60000)}m</span>
+            <span style={{color:"#a094c4",fontSize:12}}>playing for {Math.floor((Date.now()-s.gameStartedAt)/60000)}m</span>
           </div>
         ))}
       </div>
       <div style={c.card}>
         <div style={c.h2}>Multiplayer Games ({games.length} active)</div>
-        {games.length === 0 ? <div style={{color:"#6b7280"}}>No active multiplayer games</div> : games.map(g => (
+        {games.length === 0 ? <div style={{color:"#a094c4"}}>No active multiplayer games</div> : games.map(g => (
           <div key={g.id} style={{...c.card, marginBottom:8}}>
             <div style={{fontWeight:700, marginBottom:6}}>Game #{g.id} — {g.category || "All"}</div>
             {g.players.map((p: any) => (
               <div key={p.name} style={{...c.row}}>
-                <span>{p.name}</span><span style={{color:"#f59e0b",fontWeight:700}}>{p.score} pts</span>
+                <span>{p.name}</span><span style={{color:"#ff4f8b",fontWeight:700}}>{p.score} pts</span>
               </div>
             ))}
           </div>
@@ -2449,11 +2449,11 @@ function BroadcastPanel() {
       <h1 style={c.h1}>📣 Broadcast Message</h1>
       <div style={c.card}>
         <div style={c.h2}>Send to all online users</div>
-        <p style={{color:"#6b7280",fontSize:13,marginBottom:12}}>Shows as a popup notification in-game for all users currently on the site.</p>
+        <p style={{color:"#a094c4",fontSize:13,marginBottom:12}}>Shows as a popup notification in-game for all users currently on the site.</p>
         <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={4} placeholder="Type your message..."
-          style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:8,color:"#fff",fontSize:14,padding:"10px 12px",resize:"vertical",boxSizing:"border-box" as const,fontFamily:"inherit",marginBottom:12}} />
+          style={{width:"100%",background:"#0a0a14",border:"1px solid #3a2760",borderRadius:12,color:"#fff",fontSize:14,padding:"10px 12px",resize:"vertical",boxSizing:"border-box" as const,fontFamily:"inherit",marginBottom:12}} />
         <button onClick={send} disabled={sending || !msg.trim()}
-          style={{background:sent?"#10b981":"#f59e0b",border:"none",borderRadius:8,color:"#000",fontWeight:700,padding:"10px 24px",cursor:"pointer",fontSize:14}}>
+          style={{background:sent?"#10b981":"#ff4f8b",border:"none",borderRadius:12,color:"#000",fontWeight:700,padding:"10px 24px",cursor:"pointer",fontSize:14}}>
           {sent ? "✓ Sent!" : sending ? "Sending…" : "📣 Broadcast"}
         </button>
       </div>
@@ -2501,13 +2501,13 @@ function UserNotesPanel() {
       <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}}>
         <div style={c.card}>
           <input value={search} onChange={e => { setSearch(e.target.value); if(e.target.value.trim()) loadAllUsers(); }} placeholder="Search users…"
-            style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"8px 10px",boxSizing:"border-box" as const,marginBottom:10}} />
+            style={{width:"100%",background:"#0a0a14",border:"1px solid #3a2760",borderRadius:10,color:"#fff",fontSize:13,padding:"8px 10px",boxSizing:"border-box" as const,marginBottom:10}} />
           <div style={{maxHeight:400,overflowY:"auto" as const}}>
             {filtered.map(u => (
               <div key={u.uid} onClick={() => loadNote(u)}
-                style={{padding:"8px 10px",borderRadius:6,cursor:"pointer",background:selected?.uid===u.uid?"rgba(245,158,11,0.15)":"transparent",fontWeight:700,fontSize:13}}
+                style={{padding:"8px 10px",borderRadius:10,cursor:"pointer",background:selected?.uid===u.uid?"rgba(255,79,139,0.15)":"transparent",fontWeight:700,fontSize:13}}
                 onMouseEnter={e=>(e.currentTarget.style.background="rgba(255,255,255,0.05)")}
-                onMouseLeave={e=>(e.currentTarget.style.background=selected?.uid===u.uid?"rgba(245,158,11,0.15)":"transparent")}>
+                onMouseLeave={e=>(e.currentTarget.style.background=selected?.uid===u.uid?"rgba(255,79,139,0.15)":"transparent")}>
                 {u.username || u.uid.slice(0,8)}
               </div>
             ))}
@@ -2517,12 +2517,12 @@ function UserNotesPanel() {
           {selected ? <>
             <div style={{fontWeight:700,marginBottom:10}}>Notes for {selected.username}</div>
             <textarea value={note} onChange={e => setNote(e.target.value)} rows={8} placeholder="Add private notes…"
-              style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:8,color:"#fff",fontSize:14,padding:"10px 12px",resize:"vertical",boxSizing:"border-box" as const,fontFamily:"inherit",marginBottom:10}} />
+              style={{width:"100%",background:"#0a0a14",border:"1px solid #3a2760",borderRadius:12,color:"#fff",fontSize:14,padding:"10px 12px",resize:"vertical",boxSizing:"border-box" as const,fontFamily:"inherit",marginBottom:10}} />
             <button onClick={saveNote} disabled={saving}
-              style={{background:"#f59e0b",border:"none",borderRadius:8,color:"#000",fontWeight:700,padding:"8px 20px",cursor:"pointer"}}>
+              style={{background:"#ff4f8b",border:"none",borderRadius:12,color:"#000",fontWeight:700,padding:"8px 20px",cursor:"pointer"}}>
               {saving ? "Saving…" : "💾 Save"}
             </button>
-          </> : <div style={{color:"#6b7280"}}>Select a user to view/edit notes</div>}
+          </> : <div style={{color:"#a094c4"}}>Select a user to view/edit notes</div>}
         </div>
       </div>
     </div>
@@ -2580,7 +2580,7 @@ function QuestionEditorPanel() {
       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap" as const}}>
         {CATS.map(ct => (
           <button key={ct} onClick={() => {setCat(ct);setEditIdx(null);}}
-            style={{background:cat===ct?"#f59e0b":"rgba(255,255,255,0.06)",border:"none",borderRadius:8,color:cat===ct?"#000":"#9ca3af",fontWeight:700,padding:"6px 14px",cursor:"pointer",textTransform:"capitalize" as const}}>
+            style={{background:cat===ct?"#ff4f8b":"rgba(255,255,255,0.06)",border:"none",borderRadius:12,color:cat===ct?"#000":"#c4b8e0",fontWeight:700,padding:"6px 14px",cursor:"pointer",textTransform:"capitalize" as const}}>
             {ct}
           </button>
         ))}
@@ -2590,16 +2590,16 @@ function QuestionEditorPanel() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <div style={c.h2}>Custom Questions ({filtered.length})</div>
             <button onClick={() => {setEditIdx(null);setEditQ({q:"",a:"",opts:["","","",""]});}}
-              style={{background:"#f59e0b",border:"none",borderRadius:6,color:"#000",fontWeight:700,padding:"4px 12px",cursor:"pointer",fontSize:12}}>+ Add</button>
+              style={{background:"#ff4f8b",border:"none",borderRadius:10,color:"#000",fontWeight:700,padding:"4px 12px",cursor:"pointer",fontSize:12}}>+ Add</button>
           </div>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
-            style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"6px 10px",boxSizing:"border-box" as const,marginBottom:8}} />
-          {loading ? <div style={{color:"#6b7280"}}>Loading…</div> : filtered.length === 0 ?
-            <div style={{color:"#6b7280",fontSize:13}}>No custom questions yet. Add some above!</div> :
+            style={{width:"100%",background:"#0a0a14",border:"1px solid #3a2760",borderRadius:10,color:"#fff",fontSize:13,padding:"6px 10px",boxSizing:"border-box" as const,marginBottom:8}} />
+          {loading ? <div style={{color:"#a094c4"}}>Loading…</div> : filtered.length === 0 ?
+            <div style={{color:"#a094c4",fontSize:13}}>No custom questions yet. Add some above!</div> :
             filtered.map((q, i) => (
-              <div key={i} style={{padding:"8px 10px",borderRadius:6,background:"rgba(255,255,255,0.04)",marginBottom:4,cursor:"pointer"}}
+              <div key={i} style={{padding:"8px 10px",borderRadius:10,background:"rgba(255,255,255,0.04)",marginBottom:4,cursor:"pointer"}}
                 onClick={() => {setEditIdx(i);setEditQ({...q,opts:[...q.opts]});}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#e5e7eb",marginBottom:2}}>{q.q.slice(0,60)}{q.q.length>60?"…":""}</div>
+                <div style={{fontSize:13,fontWeight:600,color:"#f3eeff",marginBottom:2}}>{q.q.slice(0,60)}{q.q.length>60?"…":""}</div>
                 <div style={{display:"flex",justifyContent:"space-between"}}>
                   <span style={{color:"#10b981",fontSize:11}}>✓ {q.a}</span>
                   <span onClick={e=>{e.stopPropagation();deleteQ(i);}} style={{color:"#ef4444",fontSize:11,cursor:"pointer"}}>🗑 Delete</span>
@@ -2612,28 +2612,28 @@ function QuestionEditorPanel() {
           <div style={c.h2}>{editIdx === null ? "Add Question" : "Edit Question"}</div>
           {msg && <div style={{color:msg.startsWith("✓")?"#10b981":"#ef4444",fontSize:13,marginBottom:8}}>{msg}</div>}
           <div style={{marginBottom:10}}>
-            <label style={{color:"#9ca3af",fontSize:12,display:"block",marginBottom:4}}>Question</label>
+            <label style={{color:"#c4b8e0",fontSize:12,display:"block",marginBottom:4}}>Question</label>
             <textarea value={editQ.q} onChange={e=>setEditQ({...editQ,q:e.target.value})} rows={2}
-              style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"8px",resize:"vertical",boxSizing:"border-box" as const}} />
+              style={{width:"100%",background:"#0a0a14",border:"1px solid #3a2760",borderRadius:10,color:"#fff",fontSize:13,padding:"8px",resize:"vertical",boxSizing:"border-box" as const}} />
           </div>
           <div style={{marginBottom:10}}>
-            <label style={{color:"#9ca3af",fontSize:12,display:"block",marginBottom:4}}>4 Options</label>
+            <label style={{color:"#c4b8e0",fontSize:12,display:"block",marginBottom:4}}>4 Options</label>
             {editQ.opts.map((opt,i) => (
               <input key={i} value={opt} onChange={e=>{const o=[...editQ.opts];o[i]=e.target.value;setEditQ({...editQ,opts:o});}}
                 placeholder={`Option ${i+1}`}
-                style={{width:"100%",background:"#0a0a14",border:`1px solid ${opt&&opt===editQ.a?"#10b981":"#2d2d44"}`,borderRadius:6,color:"#fff",fontSize:13,padding:"6px 10px",marginBottom:4,boxSizing:"border-box" as const}} />
+                style={{width:"100%",background:"#0a0a14",border:`1px solid ${opt&&opt===editQ.a?"#10b981":"#3a2760"}`,borderRadius:10,color:"#fff",fontSize:13,padding:"6px 10px",marginBottom:4,boxSizing:"border-box" as const}} />
             ))}
           </div>
           <div style={{marginBottom:12}}>
-            <label style={{color:"#9ca3af",fontSize:12,display:"block",marginBottom:4}}>Correct Answer</label>
+            <label style={{color:"#c4b8e0",fontSize:12,display:"block",marginBottom:4}}>Correct Answer</label>
             <select value={editQ.a} onChange={e=>setEditQ({...editQ,a:e.target.value})}
-              style={{width:"100%",background:"#0a0a14",border:"1px solid #2d2d44",borderRadius:6,color:"#fff",fontSize:13,padding:"6px 10px"}}>
+              style={{width:"100%",background:"#0a0a14",border:"1px solid #3a2760",borderRadius:10,color:"#fff",fontSize:13,padding:"6px 10px"}}>
               <option value="">Select correct answer…</option>
               {editQ.opts.filter(o=>o.trim()).map((o,i) => <option key={i} value={o}>{o}</option>)}
             </select>
           </div>
           <button onClick={saveQ} disabled={saving}
-            style={{background:"#f59e0b",border:"none",borderRadius:8,color:"#000",fontWeight:700,padding:"8px 20px",cursor:"pointer"}}>
+            style={{background:"#ff4f8b",border:"none",borderRadius:12,color:"#000",fontWeight:700,padding:"8px 20px",cursor:"pointer"}}>
             {saving ? "Saving…" : "💾 Save Question"}
           </button>
         </div>
