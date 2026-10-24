@@ -3720,6 +3720,8 @@ function SearchUsersModal({ currentUser, currentUserData, onClose, onViewProfile
           style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em" }}>Updates</button>
         <a href="/admin"
           style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Admin</a>
+        <a href="https://accuratkey.vercel.app" target="_blank" rel="noopener noreferrer" style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>AccuratKey</a>
+        <a href="https://tqak.vercel.app" target="_blank" rel="noopener noreferrer" style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>tqak</a>
         <a href="https://www.youtube.com/watch?v=jNQXAC9IVRw" target="_blank" rel="noreferrer"
           style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#7d6f9f", fontSize:12, fontWeight:600, padding:"6px 14px", cursor:"pointer", letterSpacing:"0.04em", textDecoration:"none" }}>Don't click</a>
       </div>

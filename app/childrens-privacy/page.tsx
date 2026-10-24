@@ -7,7 +7,7 @@ export default function ChildrensPrivacyPage() {
       { h:'1. How we treat under-13 players', ul:[
         'Players who say they are under 13 (or skip the age check) can play quizzes without an account.',
         'They cannot sign in, enter a name, join leaderboards, add friends, or play duels or multiplayer.',
-        'Their name is always shown as "Player" and nothing about them is sent to our servers.',
+        'Their name is always shown as "Player" and we do not store any personal information about them.',
         'No ads, no behavioral tracking, no analytics trackers, and no sharing of information with third parties.',
       ] },
       { h:'2. What stays on the device', p:['The age-check answer and quiz settings are kept in the browser on that device. Clearing browser data removes them.'] },
