@@ -1,18 +1,18 @@
-import Link from 'next/link';
-export const dynamic = 'force-dynamic';
+import Legal from '../legal-shared';
+export const metadata = { title: "Children's Privacy — TrivQuic" };
 export default function ChildrensPrivacyPage() {
-  return (
-    <div style={{minHeight:'100vh',background:'#130a24',fontFamily:"'JetBrains Mono',monospace",color:'#f3eeff',padding:'0 20px'}}>
-      <nav style={{maxWidth:740,margin:'0 auto',padding:'20px 0',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #3a2760'}}>
-        <Link href="/" style={{color:'#ff4f8b',fontWeight:800,fontSize:18,textDecoration:'none'}}>TrivQuic</Link>
-        <Link href="/" style={{color:'#a094c4',fontSize:13,textDecoration:'none'}}>← Back</Link>
-      </nav>
-      <main style={{maxWidth:740,margin:'120px auto',textAlign:'center'}}>
-        <div style={{fontSize:48,marginBottom:20}}>🧒</div>
-        <h1 style={{fontSize:24,fontWeight:800,marginBottom:12}}>Children's Privacy</h1>
-        <p style={{color:'#a094c4',fontSize:14,lineHeight:1.7}}>Coming soon. Check back later.</p>
-        <Link href="/" style={{display:'inline-block',marginTop:32,padding:'10px 24px',background:'#ff4f8b',borderRadius:12,color:'#130a24',fontWeight:700,fontSize:13,textDecoration:'none'}}>Back to TrivQuic</Link>
-      </main>
-    </div>
-  );
+  return <Legal title="Children's Privacy"
+    intro="This page is for parents and guardians. TrivQuic does not knowingly collect personal information from children under 13."
+    sections={[
+      { h:'1. How we treat under-13 players', ul:[
+        'Players who say they are under 13 (or skip the age check) can play quizzes without an account.',
+        'They cannot sign in, enter a name, join leaderboards, add friends, or play duels or multiplayer.',
+        'Their name is always shown as "Player" and nothing about them is sent to our servers.',
+        'No ads, no behavioral tracking, no analytics trackers, and no sharing of information with third parties.',
+      ] },
+      { h:'2. What stays on the device', p:['The age-check answer and quiz settings are kept in the browser on that device. Clearing browser data removes them.'] },
+      { h:'3. Why no parental consent flow', p:['Because we collect no personal information from children, there is nothing to ask a parent to approve. If that ever changes, we will first add verifiable parental consent as COPPA requires.'] },
+      { h:'4. If a child gets an account anyway', p:['If you believe a child under 13 signed in or sent us information, email us and we will delete it promptly.'] },
+      { h:'5. Retention and sharing', p:['We keep no children\'s personal information. For how long we keep data about older players, and who receives it, see the Privacy Policy.'] },
+    ]} />;
 }
