@@ -6,7 +6,7 @@ export default function PrivacyPage() {
     sections={[
       { h:'1. Age check', p:['When you first open TrivQuic we ask for your birth year without suggesting an answer. If you are under 13, or skip the question, you are treated as a child: you can play, but you cannot sign in, set a name, appear on leaderboards, or use friends and duels.'] },
       { h:'2. What we collect from players 13 and older who sign in', ul:[
-        'Google sign-in details: your email address and Google account ID, through Firebase Authentication.',
+        'Google sign-in details: your email address and Google account ID, through Firebase Authentication. If you choose "Sign in with tqak", we receive an ID derived from your tqak account; accounts that a parent created for a child cannot sign in.',
         'Your chosen username, scores, achievements, friends, duel challenges and reports you send.',
         'Login history: the time and length of each sign-in, used for security and abuse prevention.',
         'A push-notification token, only if you turn notifications on.',

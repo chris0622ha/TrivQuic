@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { db, auth, googleProvider } from "./lib/firebase";
 import { ref, get, set, update, remove, onValue, off, query, orderByChild, equalTo } from "firebase/database";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { signInWithTqak } from "./lib/tqakLogin";
 import type { User } from "firebase/auth";
 import { t, type LangCode } from "./translations";
 
@@ -2023,6 +2024,7 @@ export default function Home() {
   const [showLangModal, setShowLangModal] = useState(false);
   const [currentLang, setCurrentLang] = useState("en");
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [tqakErr, setTqakErr] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
   const [category, setCategory] = useState("all");
@@ -2889,6 +2891,7 @@ export default function Home() {
             Accounts aren't available under 13. You can still play below.
           </div>
         ) : isEmbed ? null : (
+          <div style={{ display:"flex", flexDirection:"column", gap:6, alignItems:"stretch" }}>
           <button onClick={async () => { try { await signInWithPopup(auth, googleProvider); } catch {} }}
             style={{ display:"flex", alignItems:"center", gap:8, background:"#fff", border:"none", borderRadius:12, color:"#2a1c47", fontSize:13, fontWeight:700, padding:"8px 14px", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.3)" }}>
             <svg width="16" height="16" viewBox="0 0 48 48">
@@ -2899,6 +2902,12 @@ export default function Home() {
             </svg>
             Log in / Sign up
           </button>
+          <button onClick={async () => { setTqakErr(""); try { await signInWithTqak(); } catch (e: any) { const m = String(e?.message || ""); if (!/popup-closed|cancelled/i.test(m)) setTqakErr(m.replace(/^Firebase: /, "").slice(0, 120) || "tqak sign-in failed"); } }}
+            style={{ background:"transparent", border:"1px solid #3a2760", borderRadius:12, color:"#c4b8e0", fontSize:12, fontWeight:700, padding:"7px 12px", cursor:"pointer" }}>
+            Sign in with tqak
+          </button>
+          {tqakErr && <div style={{ fontSize:11, color:"#f87171", maxWidth:180 }}>{tqakErr}</div>}
+          </div>
         )}
       </div>
     </>
