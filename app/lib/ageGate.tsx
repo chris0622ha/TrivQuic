@@ -15,7 +15,7 @@ export function useBlockUnder13Redirect() {
   useEffect(() => {
     let allowed = false;
     try {
-      const stored = sessionStorage.getItem("tq_age_gate_year");
+      const stored = localStorage.getItem("tq_age_gate_year") || sessionStorage.getItem("tq_age_gate_year");
       if (stored) {
         const y = parseInt(stored, 10);
         const age = new Date().getFullYear() - y;
